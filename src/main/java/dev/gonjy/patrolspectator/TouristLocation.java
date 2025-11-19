@@ -1,74 +1,126 @@
 package dev.gonjy.patrolspectator;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
-
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 /**
  * 巡回スポット1件分
  */
 public class TouristLocation {
-    private final String id;
-    private final String name;
-    private final Location location;
+    public final String id;
+    public final String name;
+    public final String world;
+    public final double x, y, z;
+    public final float yaw, pitch;
+    public final String description;
+    public final String worldType; // "overworld", "nether", "end"
 
-    public TouristLocation(String id, String name, Location location) {
+    public TouristLocation(String id, String name, String world, double x, double y, double z, float yaw, float pitch,
+            String description, String worldType) {
         this.id = id;
         this.name = name;
-        this.location = location;
+        this.world = world;
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.yaw = yaw;
+        this.pitch = pitch;
+        this.description = description != null ? description : "";
+        this.worldType = worldType != null ? worldType : "overworld";
     }
-
-    public String getId() { return id; }
-    public String getName() { return name; }
-    public Location getLocation() { return location; }
 
     /**
-     * YAMLの1要素（Map）から安全に生成する。
-     * id/name/world/x/y/z/yaw/pitch を読み取り、欠損はデフォルトで補完。
+     * YAMLファイルから観光地リストを読み込みます。
      */
-    public static TouristLocation fromMap(Map<?, ?> m) {
-        if (m == null) return null;
+    public static List<TouristLocation> loadFromYaml(File file) {
+        List<TouristLocation> list = new ArrayList<>();
+        if (!file.exists())
+            return list;
 
-        String id = asString(m.get("id"));
-        if (id == null || id.isEmpty()) id = UUID.randomUUID().toString();
+        org.bukkit.configuration.file.YamlConfiguration config = org.bukkit.configuration.file.YamlConfiguration
+                .loadConfiguration(file);
+        List<Map<?, ?>> maps = config.getMapList("locations");
+        return fromMapList(maps);
+    }
 
-        String name = asString(m.get("name"));
-        if (name == null || name.isEmpty()) name = id;
+    /**
+     * MapのリストからTouristLocationのリストを生成します。
+     */
+    public static List<TouristLocation> fromMapList(List<Map<?, ?>> maps) {
+        List<TouristLocation> list = new ArrayList<>();
+        if (maps == null)
+            return list;
 
-        String worldName = asString(m.get("world"));
-        World world = (worldName != null) ? Bukkit.getWorld(worldName) : null;
-        if (world == null) {
-            // world指定なし/不正時は既定ワールドを使う
-            world = Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0);
-            if (worldName == null) worldName = (world != null ? world.getName() : "world");
+        for (Map<?, ?> map : maps) {
+            try {
+                TouristLocation loc = fromMap((Map<String, Object>) map);
+                if (loc != null) {
+                    list.add(loc);
+                }
+            } catch (Exception e) {
+                // ログ出力などは呼び出し元に任せるか、ここで標準出力に出す
+                System.err.println("Failed to parse location: " + e.getMessage());
+            }
         }
-
-        double x = asDouble(m.get("x"), 0.0);
-        double y = asDouble(m.get("y"), 64.0);
-        double z = asDouble(m.get("z"), 0.0);
-        float yaw = (float) asDouble(m.get("yaw"), 0.0);
-        float pitch = (float) asDouble(m.get("pitch"), 0.0);
-
-        if (world == null) return null; // サーバ起動直後などでワールド未ロードの場合の保険
-
-        Location loc = new Location(world, x, y, z, yaw, pitch);
-        return new TouristLocation(id, name, loc);
+        return list;
     }
 
-    // ===== helpers =====
-    private static String asString(Object v) {
-        if (v == null) return null;
-        String s = v.toString();
-        return s.trim().isEmpty() ? null : s;
+    /**
+     * 指定されたワールド内でランダムな観光地を自動生成します。
+     * （簡易実装：ランダムな座標を生成）
+     */
+    public static List<TouristLocation> autoGenerate(org.bukkit.World world, int count, int radius, double yOffset) {
+        List<TouristLocation> list = new ArrayList<>();
+        if (world == null)
+            return list;
+
+        Random random = new Random();
+        for (int i = 0; i < count; i++) {
+            double x = (random.nextDouble() * 2 - 1) * radius;
+            double z = (random.nextDouble() * 2 - 1) * radius;
+            double y = world.getHighestBlockYAt((int) x, (int) z) + yOffset + 1.5; // 地面より少し上
+
+            String id = "auto_" + i;
+            String name = "Auto Point " + (i + 1);
+
+            list.add(new TouristLocation(id, name, world.getName(), x, y, z, 0f, 0f, "Auto Generated", "overworld"));
+        }
+        return list;
     }
 
-    private static double asDouble(Object v, double def) {
-        if (v == null) return def;
-        if (v instanceof Number n) return n.doubleValue();
-        try { return Double.parseDouble(v.toString()); } catch (Exception ignored) {}
-        return def;
+    public static TouristLocation fromMap(Map<String, Object> map) {
+        String id = (String) map.getOrDefault("id", UUID.randomUUID().toString());
+        String name = (String) map.getOrDefault("name", "Unknown");
+        String world = (String) map.getOrDefault("world", "world");
+
+        // 座標の取得（数値型へのキャストを安全に）
+        double x = getDouble(map, "x");
+        double y = getDouble(map, "y");
+        double z = getDouble(map, "z");
+        float yaw = (float) getDouble(map, "yaw");
+        float pitch = (float) getDouble(map, "pitch");
+
+        String description = (String) map.getOrDefault("description", "");
+        String worldType = (String) map.getOrDefault("worldType", "overworld");
+
+        return new TouristLocation(id, name, world, x, y, z, yaw, pitch, description, worldType);
+    }
+
+    private static double getDouble(Map<String, Object> map, String key) {
+        Object val = map.get(key);
+        if (val instanceof Number) {
+            return ((Number) val).doubleValue();
+        }
+        return 0.0;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("TouristLocation{id='%s', name='%s', loc=(%s,%.1f,%.1f,%.1f)}",
+                id, name, world, x, y, z);
     }
 }
