@@ -1,0 +1,16 @@
+# src/main/resources/plugin.yml
+name: PatrolSpectatorPlugin
+main: dev.gonjy.patrolspectator.PatrolSpectatorPlugin
+version: 1.8.1
+api-version: '1.21'
+authors: [ 'gonjy' ]
+commands:
+  patrol:
+    description: Start/stop patrol or tour camera
+    usage: /patrol <start|stop|next|tour|reload>
+    permission: patrolspectator.use
+permissions:
+  patrolspectator.use:
+    default: op
+  patrolspectator.exempt:
+    default: false

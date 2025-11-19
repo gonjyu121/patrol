@@ -1,0 +1,66 @@
+# tourist_locations.yml
+# 巡回用の手動登録スポット一覧（誰もいない時はここを順番に案内）
+# world名は必要に応じて変更してね。
+
+- id: ocean_monument_ne_01
+  name: "海底神殿（北東沖）"
+  world: "world"
+  x: -1375.527
+  y: 41.094
+  z: 1787.430
+  yaw: 81.4
+  pitch: -10.9
+
+- id: mineshaft_south_01
+  name: "廃坑（南の断層）"
+  world: "world"
+  x: -2220.950
+  y: 33.256
+  z: 1176.430
+  yaw: -17.3
+  pitch: 25.3
+
+- id: ancient_city_south_01
+  name: "古代都市（南の入口）"
+  world: "world"
+  x: -2202.609
+  y: -38.330
+  z: 1188.476
+  yaw: -42.6
+  pitch: 5.9
+
+- id: woodland_mansion_east_01
+  name: "森の洋館（東ホール）"
+  world: "world"
+  x: -3423.155
+  y: 68.946
+  z: -5796.797
+  yaw: -50.6
+  pitch: -5.2
+
+- id: pillager_outpost_savanna_01
+  name: "ピリジャーの前哨基地（サバンナ）"
+  world: "world"
+  x: -3359.100
+  y: 70.816
+  z: -6957.015
+  yaw: 22.5
+  pitch: 12.3
+
+- id: desert_pyramid_ridge_01
+  name: "砂漠のピラミッド（断崖）"
+  world: "world"
+  x: 4378.067
+  y: 67.071
+  z: -1149.061
+  yaw: -129.6
+  pitch: -5.6
+
+- id: trial_chambers_east_01
+  name: "トライアルチャンバー（東向き）"
+  world: "world"
+  x: 4632.198
+  y: -16.162
+  z: -1585.506
+  yaw: -54.5
+  pitch: -5.0

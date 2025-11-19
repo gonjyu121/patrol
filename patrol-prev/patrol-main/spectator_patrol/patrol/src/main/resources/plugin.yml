@@ -1,0 +1,10 @@
+main: spectator.patrol.App
+name: patrol
+version: "0.1"
+api: 1.18.1
+api-version: 1.18
+
+commands:
+    patrol:
+        description: patrol command.
+        usage: '/ : 説明'

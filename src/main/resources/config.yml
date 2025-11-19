@@ -1,0 +1,17 @@
+# src/main/resources/config.yml（差し替え）
+patrol:
+  intervalSeconds: 10
+  announce: true
+  tour:
+    enabled: true
+    dwellSeconds: 10
+    # 外部ファイルの相対パス（プラグインデータフォルダ直下）
+    file: tourist_locations.yml
+    # 既存の内蔵リスト（外部ファイルが無い時のフォールバック）
+    locations: []
+    # 自動生成（0〜1件しかない時に補完）
+    autogen:
+      enabled: true
+      points: 6
+      radius: 60
+      yOffset: 0.0

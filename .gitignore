@@ -1,0 +1,15 @@
+.idea/
+.vscode/
+.gradle/
+build/
+target/
+*.jar
+*.log
+backup/
+.DS_Store
+*.iml
+.jdk/
+.maven/
+test_output.txt
+test_result.txt
+*.zip
