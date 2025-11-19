@@ -11,7 +11,7 @@
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <paper.api.version>1.21.3-R0.1-SNAPSHOT</paper.api.version>
+    <paper.api.version>1.21.1-R0.1-SNAPSHOT</paper.api.version>
   </properties>
 
   <repositories>
@@ -36,9 +36,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.seeseemelk</groupId>
-      <artifactId>MockBukkit-v1.21</artifactId>
-      <version>3.116.0</version>
+      <groupId>org.mockbukkit.mockbukkit</groupId>
+      <artifactId>mockbukkit-v1.21</artifactId>
+      <version>4.1.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
