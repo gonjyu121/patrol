@@ -57,6 +57,7 @@ public class TouristLocation {
 
         for (Map<?, ?> map : maps) {
             try {
+                @SuppressWarnings("unchecked")
                 TouristLocation loc = fromMap((Map<String, Object>) map);
                 if (loc != null) {
                     list.add(loc);

@@ -16,10 +16,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * などをプレイヤー毎に保持します。
  *
  * 機能:
- *  - extendProtectionDuration(UUID, long)
- *  - extendProtectionRadius(UUID, int)
- *  - isProtected(UUID)
- *  - getRemainingMillis(UUID)
+ * - extendProtectionDuration(UUID, long)
+ * - extendProtectionRadius(UUID, int)
+ * - isProtected(UUID)
+ * - getRemainingMillis(UUID)
  */
 public class ProtectionData {
 
@@ -48,7 +48,8 @@ public class ProtectionData {
     public long getRemainingMillis(UUID playerId) {
         long now = System.currentTimeMillis();
         Long expire = expireMap.get(playerId);
-        if (expire == null) return 0L;
+        if (expire == null)
+            return 0L;
         return Math.max(0L, expire - now);
     }
 
@@ -84,10 +85,21 @@ public class ProtectionData {
         return Math.max(0, radiusMap.getOrDefault(playerId, 0));
     }
 
+    /**
+     * 保護期間を延長します（extendProtectionDurationのエイリアス）。
+     * 
+     * @param playerId プレイヤーのUUID
+     * @param deltaMs  延長するミリ秒
+     */
+    public void extend(UUID playerId, long deltaMs) {
+        extendProtectionDuration(playerId, deltaMs);
+    }
+
     // ====== 内部：YAMLロード/セーブ ======
 
     private void loadFromYaml() {
-        if (!yaml.isConfigurationSection("players")) return;
+        if (!yaml.isConfigurationSection("players"))
+            return;
         Set<String> keys = Objects.requireNonNull(yaml.getConfigurationSection("players")).getKeys(false);
         for (String key : keys) {
             try {
