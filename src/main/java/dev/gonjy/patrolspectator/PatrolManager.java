@@ -98,6 +98,9 @@ public class PatrolManager {
         this.cameraUuid = camera.getUniqueId();
         PatrolSpectatorPlugin.TourConf tourConf = plugin.getTourConf();
 
+        // カメラ役をスペクテイターモードに変更（観光中の事故防止）
+        camera.setGameMode(GameMode.SPECTATOR);
+
         // 観光地リストが空の場合の自動生成処理
         if (touristLocations.isEmpty()) {
             // ワールドが存在する場合のみ自動生成
@@ -141,10 +144,8 @@ public class PatrolManager {
             patrolTask = null;
         }
 
-        // 安全策: カメラ役以外はSurvivalに戻す
+        // 安全策: 全プレイヤーをSurvivalに戻す（カメラ役含む）
         for (Player pl : Bukkit.getOnlinePlayers()) {
-            if (cameraUuid != null && cameraUuid.equals(pl.getUniqueId()))
-                continue;
             gameModeEnforcer.ensurePlayerIsSurvival(pl);
         }
 
