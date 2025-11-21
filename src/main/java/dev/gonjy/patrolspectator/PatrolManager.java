@@ -43,6 +43,9 @@ public class PatrolManager {
     private UUID cameraUuid;
     // パトロール開始時の位置（終了時に戻るため）
     private org.bukkit.Location startLocation;
+    // パトロール開始時のインベントリ（終了時に戻すため）
+    private org.bukkit.inventory.ItemStack[] savedInventory;
+    private org.bukkit.inventory.ItemStack[] savedArmor;
 
     /**
      * コンストラクタ。
@@ -99,6 +102,12 @@ public class PatrolManager {
 
         this.cameraUuid = camera.getUniqueId();
         this.startLocation = camera.getLocation(); // 開始地点を保存
+        this.savedInventory = camera.getInventory().getContents(); // インベントリ保存
+        this.savedArmor = camera.getInventory().getArmorContents(); // 防具保存
+
+        // GameModeEnforcerの設定と開始
+        gameModeEnforcer.setCameraOperator(cameraUuid);
+        gameModeEnforcer.start();
 
         PatrolSpectatorPlugin.TourConf tourConf = plugin.getTourConf();
 
@@ -148,19 +157,33 @@ public class PatrolManager {
             patrolTask = null;
         }
 
+        // GameModeEnforcerの停止
+        gameModeEnforcer.clearCameraOperator();
+        gameModeEnforcer.stop();
+
         // 安全策: 全プレイヤーをSurvivalに戻す（カメラ役含む）
         for (Player pl : Bukkit.getOnlinePlayers()) {
             gameModeEnforcer.ensurePlayerIsSurvival(pl);
         }
 
-        // カメラ役を開始地点に戻す
+        // カメラ役を開始地点とインベントリに戻す
         Player camera = getCamera();
-        if (camera != null && startLocation != null) {
-            camera.teleport(startLocation);
+        if (camera != null) {
+            if (startLocation != null) {
+                camera.teleport(startLocation);
+            }
+            if (savedInventory != null) {
+                camera.getInventory().setContents(savedInventory);
+            }
+            if (savedArmor != null) {
+                camera.getInventory().setArmorContents(savedArmor);
+            }
         }
 
         cameraUuid = null;
         startLocation = null;
+        savedInventory = null;
+        savedArmor = null;
         plugin.getLogger().info("パトロールを停止しました。");
     }
 
