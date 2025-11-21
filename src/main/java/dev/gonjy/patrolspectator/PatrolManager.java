@@ -41,6 +41,8 @@ public class PatrolManager {
 
     // カメラ役（/patrol start 実行者）のUUID
     private UUID cameraUuid;
+    // パトロール開始時の位置（終了時に戻るため）
+    private org.bukkit.Location startLocation;
 
     /**
      * コンストラクタ。
@@ -96,6 +98,8 @@ public class PatrolManager {
         stopPatrol(); // 既存タスクがあれば停止
 
         this.cameraUuid = camera.getUniqueId();
+        this.startLocation = camera.getLocation(); // 開始地点を保存
+
         PatrolSpectatorPlugin.TourConf tourConf = plugin.getTourConf();
 
         // カメラ役をスペクテイターモードに変更（観光中の事故防止）
@@ -149,7 +153,14 @@ public class PatrolManager {
             gameModeEnforcer.ensurePlayerIsSurvival(pl);
         }
 
+        // カメラ役を開始地点に戻す
+        Player camera = getCamera();
+        if (camera != null && startLocation != null) {
+            camera.teleport(startLocation);
+        }
+
         cameraUuid = null;
+        startLocation = null;
         plugin.getLogger().info("パトロールを停止しました。");
     }
 
