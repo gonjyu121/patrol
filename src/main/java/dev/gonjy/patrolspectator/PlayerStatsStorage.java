@@ -116,4 +116,98 @@ public class PlayerStatsStorage {
         yaml.set(base + ".lastEventReason", reason);
         saveSync();
     }
+
+    /**
+     * プレイヤーキル数を追加します。
+     * 
+     * @param playerId プレイヤーのUUID
+     */
+    public void addPlayerKill(UUID playerId) {
+        if (playerId == null)
+            return;
+        String base = basePath(playerId);
+        int current = yaml.getInt(base + ".playerKills", 0);
+        yaml.set(base + ".playerKills", current + 1);
+        saveSync();
+    }
+
+    /**
+     * エンダードラゴン討伐数を追加します。
+     * 
+     * @param playerId プレイヤーのUUID
+     */
+    public void addEnderDragonKill(UUID playerId) {
+        if (playerId == null)
+            return;
+        String base = basePath(playerId);
+        int current = yaml.getInt(base + ".enderDragonKills", 0);
+        yaml.set(base + ".enderDragonKills", current + 1);
+        saveSync();
+    }
+
+    /**
+     * プレイヤーキル数を取得します。
+     * 
+     * @param playerId プレイヤーのUUID
+     * @return プレイヤーキル数
+     */
+    public int getPlayerKills(UUID playerId) {
+        if (playerId == null)
+            return 0;
+        return yaml.getInt(basePath(playerId) + ".playerKills", 0);
+    }
+
+    /**
+     * エンダードラゴン討伐数を取得します。
+     * 
+     * @param playerId プレイヤーのUUID
+     * @return エンダードラゴン討伐数
+     */
+    public int getEnderDragonKills(UUID playerId) {
+        if (playerId == null)
+            return 0;
+        return yaml.getInt(basePath(playerId) + ".enderDragonKills", 0);
+    }
+
+    /**
+     * イベントポイントを取得します。
+     * 
+     * @param playerId プレイヤーのUUID
+     * @return イベントポイント
+     */
+    public int getEventPoints(UUID playerId) {
+        if (playerId == null)
+            return 0;
+        return yaml.getInt(basePath(playerId) + ".eventPoints", 0);
+    }
+
+    /**
+     * プレイヤー名を取得します。
+     * 
+     * @param playerId プレイヤーのUUID
+     * @return プレイヤー名（存在しない場合は "Unknown"）
+     */
+    public String getPlayerName(UUID playerId) {
+        if (playerId == null)
+            return "Unknown";
+        return yaml.getString(basePath(playerId) + ".name", "Unknown");
+    }
+
+    /**
+     * 全プレイヤーのUUIDリストを取得します。
+     * 
+     * @return プレイヤーUUIDのリスト
+     */
+    public java.util.List<UUID> getAllPlayerIds() {
+        java.util.List<UUID> ids = new java.util.ArrayList<>();
+        if (yaml.getConfigurationSection("players") == null)
+            return ids;
+        for (String key : yaml.getConfigurationSection("players").getKeys(false)) {
+            try {
+                ids.add(UUID.fromString(key));
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+        return ids;
+    }
 }

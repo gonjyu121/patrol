@@ -29,6 +29,7 @@ public class PatrolManager {
     private final EngagementSystem engagementSystem;
     private final ParticipationManager participationManager;
     private final GameModeEnforcer gameModeEnforcer;
+    private final RankingDisplaySystem rankingDisplaySystem;
 
     // 観光地リスト
     private final List<TouristLocation> touristLocations = new ArrayList<>();
@@ -54,15 +55,18 @@ public class PatrolManager {
      * @param engagementSystem     エンゲージメントシステム（観戦対象の選定に使用）
      * @param participationManager 参加管理マネージャー（観戦されたプレイヤーの記録に使用）
      * @param gameModeEnforcer     ゲームモード強制クラス（パトロール終了時のサバイバル復帰に使用）
+     * @param rankingDisplaySystem ランキング表示システム（パトロール中のランキング表示に使用）
      */
     public PatrolManager(PatrolSpectatorPlugin plugin,
             EngagementSystem engagementSystem,
             ParticipationManager participationManager,
-            GameModeEnforcer gameModeEnforcer) {
+            GameModeEnforcer gameModeEnforcer,
+            RankingDisplaySystem rankingDisplaySystem) {
         this.plugin = plugin;
         this.engagementSystem = engagementSystem;
         this.participationManager = participationManager;
         this.gameModeEnforcer = gameModeEnforcer;
+        this.rankingDisplaySystem = rankingDisplaySystem;
     }
 
     /**
@@ -108,6 +112,9 @@ public class PatrolManager {
         // GameModeEnforcerの設定と開始
         gameModeEnforcer.setCameraOperator(cameraUuid);
         gameModeEnforcer.start();
+
+        // ランキング表示の開始
+        rankingDisplaySystem.startRankingDisplay();
 
         PatrolSpectatorPlugin.TourConf tourConf = plugin.getTourConf();
 
@@ -160,6 +167,9 @@ public class PatrolManager {
         // GameModeEnforcerの停止
         gameModeEnforcer.clearCameraOperator();
         gameModeEnforcer.stop();
+
+        // ランキング表示の停止
+        rankingDisplaySystem.stopRankingDisplay();
 
         // 安全策: 全プレイヤーをSurvivalに戻す（カメラ役含む）
         for (Player pl : Bukkit.getOnlinePlayers()) {

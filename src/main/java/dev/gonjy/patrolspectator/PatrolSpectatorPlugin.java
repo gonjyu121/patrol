@@ -19,6 +19,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     private GameModeEnforcer gameModeEnforcer;
     private ParticipationManager participationManager;
     private PatrolManager patrolManager;
+    private RankingDisplaySystem rankingDisplaySystem;
 
     // タイトル/音の設定
     public static class TitleConf {
@@ -76,9 +77,14 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         gameModeEnforcer = new GameModeEnforcer(this);
         autoEventSystem = new AutoEventSystem(this);
         participationManager = new ParticipationManager(this, statsStorage);
+        rankingDisplaySystem = new RankingDisplaySystem(this, statsStorage);
+
+        // イベントリスナーの登録
+        getServer().getPluginManager().registerEvents(new RankingEventListener(statsStorage), this);
 
         // PatrolManagerの初期化（依存関係を注入）
-        patrolManager = new PatrolManager(this, engagementSystem, participationManager, gameModeEnforcer);
+        patrolManager = new PatrolManager(this, engagementSystem, participationManager, gameModeEnforcer,
+                rankingDisplaySystem);
 
         // ルール適用（Bedrock系 gamerule は失敗するので握りつぶす）
         applyServerRulesSafely();
