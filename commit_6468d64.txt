@@ -1,0 +1,13 @@
+commit 6468d642d1f4bd69ebdff7b92dfc073866a54946
+Author: Akira Miyatake <gonjyu121@gmail.com>
+Date:   Thu Nov 20 08:43:39 2025 +0900
+
+    feat: TouristLocationクラスにヘルパーメソッドを追加
+    
+    - loadFromYaml: YAMLファイルから観光地リストを読み込むメソッド
+    - fromMapList: MapリストからTouristLocationリストを生成するメソッド
+    - autoGenerate: ランダムな観光地を自動生成するメソッド
+    - フィールドをpublic finalに変更してPatrolManagerから直接アクセス可能に
+    - 詳細な日本語Javadocコメントを追加
+
+M	src/main/java/dev/gonjy/patrolspectator/TouristLocation.java

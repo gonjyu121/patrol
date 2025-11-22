@@ -256,17 +256,6 @@ public class PatrolManager {
         // テレポート実行
         // Ticksユーティリティがあればそれを使うが、ここでは直接テレポートでも可
         // 既存コードに合わせて Ticks クラスがある前提か、あるいは直接実装するか。
-        // ここでは Bukkit API 標準で実装しておく（Ticksクラスへの依存を減らすため、またはTicksクラスが未確認のため）
-        // 元のコード: Ticks.teleportWithYawPitch(camera, w, tl.x, tl.y, tl.z, tl.yaw,
-        // safePitch);
-        // 復元:
-        org.bukkit.Location loc = new org.bukkit.Location(w, tl.x, tl.y, tl.z, tl.yaw, safePitch);
-        camera.teleport(loc);
-
-        // タイトル表示：観光地名を大きく、下段に説明（あれば）または「観光地」
-        String subtitle = (tl.description != null && !tl.description.isEmpty()) ? tl.description : "§7観光地";
-        // showTourTitle は現状 subtitle を "§7観光地" 固定にしているようなので、オーバーロードが必要かも。
-        // いったん既存の showTourTitle を呼ぶ（内部で subtitle を変えられるように後で修正推奨）
         plugin.showTourTitle(camera, tl.name);
     }
 

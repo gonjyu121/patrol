@@ -1,7 +1,7 @@
 # src/main/resources/plugin.yml
 name: PatrolSpectatorPlugin
 main: dev.gonjy.patrolspectator.PatrolSpectatorPlugin
-version: 1.8.2
+version: 1.8.3
 api-version: '1.21'
 authors: [ 'gonjy' ]
 commands:

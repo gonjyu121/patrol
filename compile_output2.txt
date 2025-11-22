@@ -1,0 +1,52 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------< dev.gonjy:patrol-spectator-plugin >------------------
+[INFO] Building PatrolSpectatorPlugin 1.8.1
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ patrol-spectator-plugin ---
+[INFO] Deleting C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ patrol-spectator-plugin ---
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ patrol-spectator-plugin ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 10 source files with javac [debug release 21] to target\classes
+[INFO] 繧ｯ繝ｩ繧ｹ繝ｻ繝代せ縺ｫ1縺､莉･荳翫・繝励Ο繧ｻ繝・し縺瑚ｦ九▽縺九▲縺溘◆繧√∵ｳｨ驥亥・逅・′譛牙柑蛹悶＆繧後※
+  縺・∪縺吶ょｰ代↑縺上→繧・縺､縺ｮ繝励Ο繧ｻ繝・し縺悟錐蜑・-processor)縺ｧ謖・ｮ壹＆繧後ｋ縺九∵､懃ｴ｢繝代せ
+  (--processor-path縲・-processor-module-path)縺梧欠螳壹＆繧後ｋ縺九∵ｳｨ驥亥・逅・′譏守､ｺ逧・↓
+  譛牙柑蛹・-proc:only縲・proc:full)縺輔ｌ縺ｦ縺・ｋ蝣ｴ蜷医ｒ髯､縺阪∝ｰ・擂縺ｮ繝ｪ繝ｪ繝ｼ繧ｹ縺ｮjavac縺ｧ縺ｯ
+  豕ｨ驥亥・逅・′辟｡蜉ｹ蛹悶＆繧後ｋ蜿ｯ閭ｽ諤ｧ縺後≠繧翫∪縺吶・  -Xlint:繧ｪ繝励す繝ｧ繝ｳ繧剃ｽｿ逕ｨ縺吶ｋ縺ｨ縲√％縺ｮ繝｡繝・そ繝ｼ繧ｸ繧帝撼陦ｨ遉ｺ縺ｫ縺ｧ縺阪∪縺吶・  -proc:none繧剃ｽｿ逕ｨ縺吶ｋ縺ｨ縲∵ｳｨ驥亥・逅・ｒ辟｡蜉ｹ蛹悶〒縺阪∪縺吶・
+[INFO] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java: 荳驛ｨ縺ｮ蜈･蜉帙ヵ繧｡繧､繝ｫ縺ｯ謗ｨ螂ｨ縺輔ｌ縺ｪ縺БPI繧剃ｽｿ逕ｨ縺ｾ縺溘・繧ｪ繝ｼ繝舌・繝ｩ繧､繝峨＠縺ｦ縺・∪縺吶・
+[INFO] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java: 隧ｳ邏ｰ縺ｯ縲・Xlint:deprecation繧ｪ繝励す繝ｧ繝ｳ繧呈欠螳壹＠縺ｦ蜀阪さ繝ｳ繝代う繝ｫ縺励※縺上□縺輔＞縲・
+[INFO] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/TouristLocation.java: C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\src\main\java\dev\gonjy\patrolspectator\TouristLocation.java縺ｮ謫堺ｽ懊・縲∵悴繝√ぉ繝・け縺ｾ縺溘・螳牙・縺ｧ縺ｯ縺ゅｊ縺ｾ縺帙ｓ縲・
+[INFO] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/TouristLocation.java: 隧ｳ邏ｰ縺ｯ縲・Xlint:unchecked繧ｪ繝励す繝ｧ繝ｳ繧呈欠螳壹＠縺ｦ蜀阪さ繝ｳ繝代う繝ｫ縺励※縺上□縺輔＞縲・
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java:[59,51] 繧ｯ繝ｩ繧ｹ dev.gonjy.patrolspectator.ProtectionData縺ｮ繧ｳ繝ｳ繧ｹ繝医Λ繧ｯ繧ｿ ProtectionData縺ｯ謖・ｮ壹＆繧後◆蝙九↓驕ｩ逕ｨ縺ｧ縺阪∪縺帙ｓ縲・  譛溷ｾ・､: org.bukkit.plugin.java.JavaPlugin
+  讀懷・蛟､:    蠑墓焚縺後≠繧翫∪縺帙ｓ
+  逅・罰: 螳溷ｼ墓焚繝ｪ繧ｹ繝医→莉ｮ蠑墓焚繝ｪ繧ｹ繝医・髟ｷ縺輔′逡ｰ縺ｪ繧翫∪縺・
+[INFO] 1 error
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.961 s
+[INFO] Finished at: 2025-11-20T07:48:06+09:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project patrol-spectator-plugin: Compilation failure
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java:[59,51] 繧ｯ繝ｩ繧ｹ dev.gonjy.patrolspectator.ProtectionData縺ｮ繧ｳ繝ｳ繧ｹ繝医Λ繧ｯ繧ｿ ProtectionData縺ｯ謖・ｮ壹＆繧後◆蝙九↓驕ｩ逕ｨ縺ｧ縺阪∪縺帙ｓ縲・
+[ERROR]   譛溷ｾ・､: org.bukkit.plugin.java.JavaPlugin
+[ERROR]   讀懷・蛟､:    蠑墓焚縺後≠繧翫∪縺帙ｓ
+[ERROR]   逅・罰: 螳溷ｼ墓焚繝ｪ繧ｹ繝医→莉ｮ蠑墓焚繝ｪ繧ｹ繝医・髟ｷ縺輔′逡ｰ縺ｪ繧翫∪縺・
+[ERROR] 
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

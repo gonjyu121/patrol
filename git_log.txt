@@ -1,0 +1,10 @@
+63d8858 2025-11-20 feat: ParticipationManagerに観戦記録機能を追加
+a8c0276 2025-11-20 feat: GameModeEnforcerにサバイバル強制とシャットダウン機能を追加
+bcd9501 2025-11-20 feat: EngagementSystemにプレイヤー検索と音再生機能を追加
+6468d64 2025-11-20 feat: TouristLocationクラスにヘルパーメソッドを追加
+503f215 2025-11-20 build: MockBukkitのバージョン更新とテストのインポート修正
+1759818 2025-11-19 Add backup analysis files from 2025-08-27 version for regression investigation
+64c771c 2025-11-19 Add tests for GameModeEnforcer and ParticipationManager
+bb41bda 2025-11-19 Merge pull request #1 from gonjyu121/feature/add-tests
+8e2db15 2025-11-19 Add Maven Surefire plugin for JUnit 5 test execution
+4ef7872 2025-11-19 chore: setup project with tests and clean history

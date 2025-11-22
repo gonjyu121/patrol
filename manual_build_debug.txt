@@ -1,0 +1,35 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------< dev.gonjy:patrol-spectator-plugin >------------------
+[INFO] Building PatrolSpectatorPlugin 1.8.3
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ patrol-spectator-plugin ---
+[INFO] Deleting C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ patrol-spectator-plugin ---
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ patrol-spectator-plugin ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 10 source files with javac [forked debug release 21] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ patrol-spectator-plugin ---
+[INFO] skip non existing resourceDirectory C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ patrol-spectator-plugin ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 4 source files with javac [forked debug release 21] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.2.2:test (default-test) @ patrol-spectator-plugin ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- jar:3.3.0:jar (default-jar) @ patrol-spectator-plugin ---
+[INFO] Building jar: C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\target\PatrolSpectatorPlugin-1.8.3.jar
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  5.521 s
+[INFO] Finished at: 2025-11-22T07:36:15+09:00
+[INFO] ------------------------------------------------------------------------

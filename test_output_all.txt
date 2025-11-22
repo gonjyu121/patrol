@@ -1,0 +1,489 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------< dev.gonjy:patrol-spectator-plugin >------------------
+[INFO] Building PatrolSpectatorPlugin 1.8.1
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ patrol-spectator-plugin ---
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ patrol-spectator-plugin ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ patrol-spectator-plugin ---
+[INFO] skip non existing resourceDirectory C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ patrol-spectator-plugin ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- surefire:3.2.2:test (default-test) @ patrol-spectator-plugin ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running dev.gonjy.patrolspectator.AutoEventSystemTest
+[ERROR] Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.008 s <<< FAILURE! -- in dev.gonjy.patrolspectator.AutoEventSystemTest
+[ERROR] dev.gonjy.patrolspectator.AutoEventSystemTest -- Time elapsed: 0.008 s <<< ERROR!
+java.lang.NoClassDefFoundError: ServerMock
+	at java.base/java.lang.Class.getDeclaredFields0(Native Method)
+	at java.base/java.lang.Class.privateGetDeclaredFields(Class.java:3473)
+	at java.base/java.lang.Class.getDeclaredFields(Class.java:2542)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+Caused by: java.lang.ClassNotFoundException: ServerMock
+	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)
+	at java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:526)
+	... 4 more
+
+[INFO] Running dev.gonjy.patrolspectator.GameModeEnforcerTest
+[ERROR] Tests run: 6, Failures: 0, Errors: 6, Skipped: 0, Time elapsed: 1.419 s <<< FAILURE! -- in dev.gonjy.patrolspectator.GameModeEnforcerTest
+[ERROR] dev.gonjy.patrolspectator.GameModeEnforcerTest.testCameraOperatorExemption -- Time elapsed: 1.290 s <<< ERROR!
+org.mockbukkit.mockbukkit.exception.PluginLoadException: Failed to instantiate plugin
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:426)
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:473)
+	at org.mockbukkit.mockbukkit.MockBukkit.load(MockBukkit.java:190)
+	at org.mockbukkit.mockbukkit.MockBukkit.load(MockBukkit.java:175)
+	at dev.gonjy.patrolspectator.GameModeEnforcerTest.setUp(GameModeEnforcerTest.java:22)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+Caused by: java.lang.reflect.InvocationTargetException
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:74)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:420)
+	... 7 more
+Caused by: java.lang.Error: Unresolved compilation problems: 
+	The constructor ProtectionData() is undefined
+	The constructor ParticipationManager(PatrolSpectatorPlugin, PlayerStatsStorage) is undefined
+	The method shutdown() is undefined for the type AutoEventSystem
+	The method shutdown() is undefined for the type GameModeEnforcer
+	The method flush() is undefined for the type PlayerStatsStorage
+	The method loadFromYaml(File) is undefined for the type TouristLocation
+	The method fromMapList(List<Map<?,?>>) is undefined for the type TouristLocation
+	The method addEventPoint(UUID, int, String) is undefined for the type PlayerStatsStorage
+	The method extend(UUID, long) is undefined for the type ProtectionData
+	The method playNamedSound(Player, String, float, float) is undefined for the type EngagementSystem
+	The method autoGenerate((Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0)), int, int, double) is undefined for the type TouristLocation
+	The method ensurePlayerIsSurvival(Player) is undefined for the type GameModeEnforcer
+	The method findGoodTargetNear(Player, double) is undefined for the type EngagementSystem
+	The method noteParticipation(UUID, String) is undefined for the type ParticipationManager
+	world cannot be resolved or is not a field
+	pitch cannot be resolved or is not a field
+	x cannot be resolved or is not a field
+	y cannot be resolved or is not a field
+	z cannot be resolved or is not a field
+	yaw cannot be resolved or is not a field
+	The field TouristLocation.name is not visible
+
+	at dev.gonjy.patrolspectator.PatrolSpectatorPlugin.<init>(PatrolSpectatorPlugin.java:68)
+	at PatrolSpectatorPluginProxy.<init>(Unknown Source)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	... 10 more
+
+[ERROR] dev.gonjy.patrolspectator.GameModeEnforcerTest.testEnforcerCreation -- Time elapsed: 0.023 s <<< ERROR!
+org.mockbukkit.mockbukkit.exception.PluginLoadException: Failed to instantiate plugin
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:426)
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:473)
+	at org.mockbukkit.mockbukkit.MockBukkit.load(MockBukkit.java:190)
+	at org.mockbukkit.mockbukkit.MockBukkit.load(MockBukkit.java:175)
+	at dev.gonjy.patrolspectator.GameModeEnforcerTest.setUp(GameModeEnforcerTest.java:22)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+Caused by: java.lang.reflect.InvocationTargetException
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:74)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:420)
+	... 7 more
+Caused by: java.lang.Error: Unresolved compilation problems: 
+	The constructor ProtectionData() is undefined
+	The constructor ParticipationManager(PatrolSpectatorPlugin, PlayerStatsStorage) is undefined
+	The method shutdown() is undefined for the type AutoEventSystem
+	The method shutdown() is undefined for the type GameModeEnforcer
+	The method flush() is undefined for the type PlayerStatsStorage
+	The method loadFromYaml(File) is undefined for the type TouristLocation
+	The method fromMapList(List<Map<?,?>>) is undefined for the type TouristLocation
+	The method addEventPoint(UUID, int, String) is undefined for the type PlayerStatsStorage
+	The method extend(UUID, long) is undefined for the type ProtectionData
+	The method playNamedSound(Player, String, float, float) is undefined for the type EngagementSystem
+	The method autoGenerate((Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0)), int, int, double) is undefined for the type TouristLocation
+	The method ensurePlayerIsSurvival(Player) is undefined for the type GameModeEnforcer
+	The method findGoodTargetNear(Player, double) is undefined for the type EngagementSystem
+	The method noteParticipation(UUID, String) is undefined for the type ParticipationManager
+	world cannot be resolved or is not a field
+	pitch cannot be resolved or is not a field
+	x cannot be resolved or is not a field
+	y cannot be resolved or is not a field
+	z cannot be resolved or is not a field
+	yaw cannot be resolved or is not a field
+	The field TouristLocation.name is not visible
+
+	at dev.gonjy.patrolspectator.PatrolSpectatorPlugin.<init>(PatrolSpectatorPlugin.java:68)
+	at PatrolSpectatorPluginProxy.<init>(Unknown Source)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	... 10 more
+
+[ERROR] dev.gonjy.patrolspectator.GameModeEnforcerTest.testClearCameraOperator -- Time elapsed: 0.020 s <<< ERROR!
+org.mockbukkit.mockbukkit.exception.PluginLoadException: Failed to instantiate plugin
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:426)
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:473)
+	at org.mockbukkit.mockbukkit.MockBukkit.load(MockBukkit.java:190)
+	at org.mockbukkit.mockbukkit.MockBukkit.load(MockBukkit.java:175)
+	at dev.gonjy.patrolspectator.GameModeEnforcerTest.setUp(GameModeEnforcerTest.java:22)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+Caused by: java.lang.reflect.InvocationTargetException
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:74)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:420)
+	... 7 more
+Caused by: java.lang.Error: Unresolved compilation problems: 
+	The constructor ProtectionData() is undefined
+	The constructor ParticipationManager(PatrolSpectatorPlugin, PlayerStatsStorage) is undefined
+	The method shutdown() is undefined for the type AutoEventSystem
+	The method shutdown() is undefined for the type GameModeEnforcer
+	The method flush() is undefined for the type PlayerStatsStorage
+	The method loadFromYaml(File) is undefined for the type TouristLocation
+	The method fromMapList(List<Map<?,?>>) is undefined for the type TouristLocation
+	The method addEventPoint(UUID, int, String) is undefined for the type PlayerStatsStorage
+	The method extend(UUID, long) is undefined for the type ProtectionData
+	The method playNamedSound(Player, String, float, float) is undefined for the type EngagementSystem
+	The method autoGenerate((Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0)), int, int, double) is undefined for the type TouristLocation
+	The method ensurePlayerIsSurvival(Player) is undefined for the type GameModeEnforcer
+	The method findGoodTargetNear(Player, double) is undefined for the type EngagementSystem
+	The method noteParticipation(UUID, String) is undefined for the type ParticipationManager
+	world cannot be resolved or is not a field
+	pitch cannot be resolved or is not a field
+	x cannot be resolved or is not a field
+	y cannot be resolved or is not a field
+	z cannot be resolved or is not a field
+	yaw cannot be resolved or is not a field
+	The field TouristLocation.name is not visible
+
+	at dev.gonjy.patrolspectator.PatrolSpectatorPlugin.<init>(PatrolSpectatorPlugin.java:68)
+	at PatrolSpectatorPluginProxy.<init>(Unknown Source)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	... 10 more
+
+[ERROR] dev.gonjy.patrolspectator.GameModeEnforcerTest.testSetCameraOperator -- Time elapsed: 0.017 s <<< ERROR!
+org.mockbukkit.mockbukkit.exception.PluginLoadException: Failed to instantiate plugin
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:426)
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:473)
+	at org.mockbukkit.mockbukkit.MockBukkit.load(MockBukkit.java:190)
+	at org.mockbukkit.mockbukkit.MockBukkit.load(MockBukkit.java:175)
+	at dev.gonjy.patrolspectator.GameModeEnforcerTest.setUp(GameModeEnforcerTest.java:22)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+Caused by: java.lang.reflect.InvocationTargetException
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:74)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:420)
+	... 7 more
+Caused by: java.lang.Error: Unresolved compilation problems: 
+	The constructor ProtectionData() is undefined
+	The constructor ParticipationManager(PatrolSpectatorPlugin, PlayerStatsStorage) is undefined
+	The method shutdown() is undefined for the type AutoEventSystem
+	The method shutdown() is undefined for the type GameModeEnforcer
+	The method flush() is undefined for the type PlayerStatsStorage
+	The method loadFromYaml(File) is undefined for the type TouristLocation
+	The method fromMapList(List<Map<?,?>>) is undefined for the type TouristLocation
+	The method addEventPoint(UUID, int, String) is undefined for the type PlayerStatsStorage
+	The method extend(UUID, long) is undefined for the type ProtectionData
+	The method playNamedSound(Player, String, float, float) is undefined for the type EngagementSystem
+	The method autoGenerate((Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0)), int, int, double) is undefined for the type TouristLocation
+	The method ensurePlayerIsSurvival(Player) is undefined for the type GameModeEnforcer
+	The method findGoodTargetNear(Player, double) is undefined for the type EngagementSystem
+	The method noteParticipation(UUID, String) is undefined for the type ParticipationManager
+	world cannot be resolved or is not a field
+	pitch cannot be resolved or is not a field
+	x cannot be resolved or is not a field
+	y cannot be resolved or is not a field
+	z cannot be resolved or is not a field
+	yaw cannot be resolved or is not a field
+	The field TouristLocation.name is not visible
+
+	at dev.gonjy.patrolspectator.PatrolSpectatorPlugin.<init>(PatrolSpectatorPlugin.java:68)
+	at PatrolSpectatorPluginProxy.<init>(Unknown Source)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	... 10 more
+
+[ERROR] dev.gonjy.patrolspectator.GameModeEnforcerTest.testGameModeEnforcement -- Time elapsed: 0.017 s <<< ERROR!
+org.mockbukkit.mockbukkit.exception.PluginLoadException: Failed to instantiate plugin
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:426)
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:473)
+	at org.mockbukkit.mockbukkit.MockBukkit.load(MockBukkit.java:190)
+	at org.mockbukkit.mockbukkit.MockBukkit.load(MockBukkit.java:175)
+	at dev.gonjy.patrolspectator.GameModeEnforcerTest.setUp(GameModeEnforcerTest.java:22)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+Caused by: java.lang.reflect.InvocationTargetException
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:74)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:420)
+	... 7 more
+Caused by: java.lang.Error: Unresolved compilation problems: 
+	The constructor ProtectionData() is undefined
+	The constructor ParticipationManager(PatrolSpectatorPlugin, PlayerStatsStorage) is undefined
+	The method shutdown() is undefined for the type AutoEventSystem
+	The method shutdown() is undefined for the type GameModeEnforcer
+	The method flush() is undefined for the type PlayerStatsStorage
+	The method loadFromYaml(File) is undefined for the type TouristLocation
+	The method fromMapList(List<Map<?,?>>) is undefined for the type TouristLocation
+	The method addEventPoint(UUID, int, String) is undefined for the type PlayerStatsStorage
+	The method extend(UUID, long) is undefined for the type ProtectionData
+	The method playNamedSound(Player, String, float, float) is undefined for the type EngagementSystem
+	The method autoGenerate((Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0)), int, int, double) is undefined for the type TouristLocation
+	The method ensurePlayerIsSurvival(Player) is undefined for the type GameModeEnforcer
+	The method findGoodTargetNear(Player, double) is undefined for the type EngagementSystem
+	The method noteParticipation(UUID, String) is undefined for the type ParticipationManager
+	world cannot be resolved or is not a field
+	pitch cannot be resolved or is not a field
+	x cannot be resolved or is not a field
+	y cannot be resolved or is not a field
+	z cannot be resolved or is not a field
+	yaw cannot be resolved or is not a field
+	The field TouristLocation.name is not visible
+
+	at dev.gonjy.patrolspectator.PatrolSpectatorPlugin.<init>(PatrolSpectatorPlugin.java:68)
+	at PatrolSpectatorPluginProxy.<init>(Unknown Source)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	... 10 more
+
+[ERROR] dev.gonjy.patrolspectator.GameModeEnforcerTest.testStartAndStop -- Time elapsed: 0.019 s <<< ERROR!
+org.mockbukkit.mockbukkit.exception.PluginLoadException: Failed to instantiate plugin
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:426)
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:473)
+	at org.mockbukkit.mockbukkit.MockBukkit.load(MockBukkit.java:190)
+	at org.mockbukkit.mockbukkit.MockBukkit.load(MockBukkit.java:175)
+	at dev.gonjy.patrolspectator.GameModeEnforcerTest.setUp(GameModeEnforcerTest.java:22)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+Caused by: java.lang.reflect.InvocationTargetException
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:74)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:420)
+	... 7 more
+Caused by: java.lang.Error: Unresolved compilation problems: 
+	The constructor ProtectionData() is undefined
+	The constructor ParticipationManager(PatrolSpectatorPlugin, PlayerStatsStorage) is undefined
+	The method shutdown() is undefined for the type AutoEventSystem
+	The method shutdown() is undefined for the type GameModeEnforcer
+	The method flush() is undefined for the type PlayerStatsStorage
+	The method loadFromYaml(File) is undefined for the type TouristLocation
+	The method fromMapList(List<Map<?,?>>) is undefined for the type TouristLocation
+	The method addEventPoint(UUID, int, String) is undefined for the type PlayerStatsStorage
+	The method extend(UUID, long) is undefined for the type ProtectionData
+	The method playNamedSound(Player, String, float, float) is undefined for the type EngagementSystem
+	The method autoGenerate((Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0)), int, int, double) is undefined for the type TouristLocation
+	The method ensurePlayerIsSurvival(Player) is undefined for the type GameModeEnforcer
+	The method findGoodTargetNear(Player, double) is undefined for the type EngagementSystem
+	The method noteParticipation(UUID, String) is undefined for the type ParticipationManager
+	world cannot be resolved or is not a field
+	pitch cannot be resolved or is not a field
+	x cannot be resolved or is not a field
+	y cannot be resolved or is not a field
+	z cannot be resolved or is not a field
+	yaw cannot be resolved or is not a field
+	The field TouristLocation.name is not visible
+
+	at dev.gonjy.patrolspectator.PatrolSpectatorPlugin.<init>(PatrolSpectatorPlugin.java:68)
+	at PatrolSpectatorPluginProxy.<init>(Unknown Source)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	... 10 more
+
+[INFO] Running dev.gonjy.patrolspectator.ParticipationManagerTest
+[ERROR] Tests run: 8, Failures: 0, Errors: 8, Skipped: 0, Time elapsed: 0.085 s <<< FAILURE! -- in dev.gonjy.patrolspectator.ParticipationManagerTest
+[ERROR] dev.gonjy.patrolspectator.ParticipationManagerTest.testMultipleJoinsIncrementCount -- Time elapsed: 0.024 s <<< ERROR!
+org.mockbukkit.mockbukkit.exception.PluginLoadException: Failed to instantiate plugin
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:426)
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:473)
+	at org.mockbukkit.mockbukkit.MockBukkit.load(MockBukkit.java:190)
+	at org.mockbukkit.mockbukkit.MockBukkit.load(MockBukkit.java:175)
+	at dev.gonjy.patrolspectator.ParticipationManagerTest.setUp(ParticipationManagerTest.java:25)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	Suppressed: java.lang.NullPointerException: Cannot invoke "dev.gonjy.patrolspectator.PatrolSpectatorPlugin.getDataFolder()" because "this.plugin" is null
+		at dev.gonjy.patrolspectator.ParticipationManagerTest.tearDown(ParticipationManagerTest.java:32)
+		... 3 more
+Caused by: java.lang.reflect.InvocationTargetException
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:74)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at org.mockbukkit.mockbukkit.plugin.PluginManagerMock.loadPlugin(PluginManagerMock.java:420)
+	... 7 more
+Caused by: java.lang.Error: Unresolved compilation problems: 
+	The constructor ProtectionData() is undefined
+	The constructor ParticipationManager(PatrolSpectatorPlugin, PlayerStatsStorage) is undefined
+	The method shutdown() is undefined for the type AutoEventSystem
+	The method shutdown() is undefined for the type GameModeEnforcer
+	The method flush() is undefined for the type PlayerStatsStorage
+	The method loadFromYaml(File) is undefined for the type TouristLocation
+	The method fromMapList(List<Map<?,?>>) is undefined for the type TouristLocation
+	The method addEventPoint(UUID, int, String) is undefined for the type PlayerStatsStorage
+	The method extend(UUID, long) is undefined for the type ProtectionData
+	The method playNamedSound(Player, String, float, float) is undefined for the type EngagementSystem
+	The method autoGenerate((Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0)), int, int, double) is undefined for the type TouristLocation
+	The method ensurePlayerIsSurvival(Player) is undefined for the type GameModeEnforcer
+	The method findGoodTargetNear(Player, double) is undefined for the type EngagementSystem
+	The method noteParticipation(UUID, String) is undefined for the type ParticipationManager
+	world cannot be resolved or is not a field
+	pitch cannot be resolved or is not a field
+	x cannot be resolved or is not a field
+	y cannot be resolved or is not a field
+	z cannot be resolved or is not a field
+	yaw cannot be resolved or is not a field
+	The field TouristLocation.name is not visible
+
+	at dev.gonjy.patrolspectator.PatrolSpectatorPlugin.<init>(PatrolSpectatorPlugin.java:68)
+	at PatrolSpectatorPluginProxy.<init>(Unknown Source)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	... 10 more
+
+[ERROR] dev.gonjy.patrolspectator.ParticipationManagerTest.testIncrementJoinCount -- Time elapsed: 0.008 s <<< ERROR!
+java.lang.IllegalStateException: Already mocking
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:84)
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:69)
+	at dev.gonjy.patrolspectator.ParticipationManagerTest.setUp(ParticipationManagerTest.java:24)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	Suppressed: java.lang.NullPointerException: Cannot invoke "dev.gonjy.patrolspectator.PatrolSpectatorPlugin.getDataFolder()" because "this.plugin" is null
+		at dev.gonjy.patrolspectator.ParticipationManagerTest.tearDown(ParticipationManagerTest.java:32)
+		... 3 more
+
+[ERROR] dev.gonjy.patrolspectator.ParticipationManagerTest.testManagerCreation -- Time elapsed: 0.007 s <<< ERROR!
+java.lang.IllegalStateException: Already mocking
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:84)
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:69)
+	at dev.gonjy.patrolspectator.ParticipationManagerTest.setUp(ParticipationManagerTest.java:24)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	Suppressed: java.lang.NullPointerException: Cannot invoke "dev.gonjy.patrolspectator.PatrolSpectatorPlugin.getDataFolder()" because "this.plugin" is null
+		at dev.gonjy.patrolspectator.ParticipationManagerTest.tearDown(ParticipationManagerTest.java:32)
+		... 3 more
+
+[ERROR] dev.gonjy.patrolspectator.ParticipationManagerTest.testThankOnJoin -- Time elapsed: 0.007 s <<< ERROR!
+java.lang.IllegalStateException: Already mocking
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:84)
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:69)
+	at dev.gonjy.patrolspectator.ParticipationManagerTest.setUp(ParticipationManagerTest.java:24)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	Suppressed: java.lang.NullPointerException: Cannot invoke "dev.gonjy.patrolspectator.PatrolSpectatorPlugin.getDataFolder()" because "this.plugin" is null
+		at dev.gonjy.patrolspectator.ParticipationManagerTest.tearDown(ParticipationManagerTest.java:32)
+		... 3 more
+
+[ERROR] dev.gonjy.patrolspectator.ParticipationManagerTest.testAddZeroPoints -- Time elapsed: 0.006 s <<< ERROR!
+java.lang.IllegalStateException: Already mocking
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:84)
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:69)
+	at dev.gonjy.patrolspectator.ParticipationManagerTest.setUp(ParticipationManagerTest.java:24)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	Suppressed: java.lang.NullPointerException: Cannot invoke "dev.gonjy.patrolspectator.PatrolSpectatorPlugin.getDataFolder()" because "this.plugin" is null
+		at dev.gonjy.patrolspectator.ParticipationManagerTest.tearDown(ParticipationManagerTest.java:32)
+		... 3 more
+
+[ERROR] dev.gonjy.patrolspectator.ParticipationManagerTest.testTopNWithData -- Time elapsed: 0.007 s <<< ERROR!
+java.lang.IllegalStateException: Already mocking
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:84)
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:69)
+	at dev.gonjy.patrolspectator.ParticipationManagerTest.setUp(ParticipationManagerTest.java:24)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	Suppressed: java.lang.NullPointerException: Cannot invoke "dev.gonjy.patrolspectator.PatrolSpectatorPlugin.getDataFolder()" because "this.plugin" is null
+		at dev.gonjy.patrolspectator.ParticipationManagerTest.tearDown(ParticipationManagerTest.java:32)
+		... 3 more
+
+[ERROR] dev.gonjy.patrolspectator.ParticipationManagerTest.testAddPoints -- Time elapsed: 0.007 s <<< ERROR!
+java.lang.IllegalStateException: Already mocking
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:84)
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:69)
+	at dev.gonjy.patrolspectator.ParticipationManagerTest.setUp(ParticipationManagerTest.java:24)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	Suppressed: java.lang.NullPointerException: Cannot invoke "dev.gonjy.patrolspectator.PatrolSpectatorPlugin.getDataFolder()" because "this.plugin" is null
+		at dev.gonjy.patrolspectator.ParticipationManagerTest.tearDown(ParticipationManagerTest.java:32)
+		... 3 more
+
+[ERROR] dev.gonjy.patrolspectator.ParticipationManagerTest.testTopNWithNoData -- Time elapsed: 0.009 s <<< ERROR!
+java.lang.IllegalStateException: Already mocking
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:84)
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:69)
+	at dev.gonjy.patrolspectator.ParticipationManagerTest.setUp(ParticipationManagerTest.java:24)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	Suppressed: java.lang.NullPointerException: Cannot invoke "dev.gonjy.patrolspectator.PatrolSpectatorPlugin.getDataFolder()" because "this.plugin" is null
+		at dev.gonjy.patrolspectator.ParticipationManagerTest.tearDown(ParticipationManagerTest.java:32)
+		... 3 more
+
+[INFO] Running dev.gonjy.patrolspectator.TouristLocationTest
+[ERROR] Tests run: 2, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.511 s <<< FAILURE! -- in dev.gonjy.patrolspectator.TouristLocationTest
+[ERROR] dev.gonjy.patrolspectator.TouristLocationTest.testToString -- Time elapsed: 0.014 s <<< ERROR!
+java.lang.IllegalStateException: Already mocking
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:84)
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:69)
+	at dev.gonjy.patrolspectator.TouristLocationTest.setUp(TouristLocationTest.java:20)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+[INFO] 
+[INFO] Results:
+[INFO] 
+[ERROR] Errors: 
+[ERROR]   AutoEventSystemTest ﾂｻ NoClassDefFound ServerMock
+[ERROR]   GameModeEnforcerTest.setUp:22 ﾂｻ PluginLoad Failed to instantiate plugin
+[ERROR]   GameModeEnforcerTest.setUp:22 ﾂｻ PluginLoad Failed to instantiate plugin
+[ERROR]   GameModeEnforcerTest.setUp:22 ﾂｻ PluginLoad Failed to instantiate plugin
+[ERROR]   GameModeEnforcerTest.setUp:22 ﾂｻ PluginLoad Failed to instantiate plugin
+[ERROR]   GameModeEnforcerTest.setUp:22 ﾂｻ PluginLoad Failed to instantiate plugin
+[ERROR]   GameModeEnforcerTest.setUp:22 ﾂｻ PluginLoad Failed to instantiate plugin
+[ERROR]   ParticipationManagerTest.setUp:24 ﾂｻ IllegalState Already mocking
+[ERROR]   ParticipationManagerTest.setUp:24 ﾂｻ IllegalState Already mocking
+[ERROR]   ParticipationManagerTest.setUp:24 ﾂｻ IllegalState Already mocking
+[ERROR]   ParticipationManagerTest.setUp:24 ﾂｻ IllegalState Already mocking
+[ERROR]   ParticipationManagerTest.setUp:25 ﾂｻ PluginLoad Failed to instantiate plugin
+[ERROR]   ParticipationManagerTest.setUp:24 ﾂｻ IllegalState Already mocking
+[ERROR]   ParticipationManagerTest.setUp:24 ﾂｻ IllegalState Already mocking
+[ERROR]   ParticipationManagerTest.setUp:24 ﾂｻ IllegalState Already mocking
+[ERROR]   TouristLocationTest.setUp:20 ﾂｻ IllegalState Already mocking
+[INFO] 
+[ERROR] Tests run: 17, Failures: 0, Errors: 16, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  4.630 s
+[INFO] Finished at: 2025-11-20T07:14:03+09:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.2.2:test (default-test) on project patrol-spectator-plugin: 
+[ERROR] 
+[ERROR] Please refer to C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\target\surefire-reports for the individual test results.
+[ERROR] Please refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
