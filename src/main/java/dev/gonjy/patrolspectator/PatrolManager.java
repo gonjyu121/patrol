@@ -264,8 +264,9 @@ public class PatrolManager {
         float safePitch = Math.max(-85f, Math.min(85f, tl.pitch));
 
         // テレポート実行
-        // Ticksユーティリティがあればそれを使うが、ここでは直接テレポートでも可
-        // 既存コードに合わせて Ticks クラスがある前提か、あるいは直接実装するか。
+        org.bukkit.Location loc = new org.bukkit.Location(w, tl.x, tl.y, tl.z, tl.yaw, safePitch);
+        camera.teleport(loc);
+
         plugin.showTourTitle(camera, tl.name);
     }
 
