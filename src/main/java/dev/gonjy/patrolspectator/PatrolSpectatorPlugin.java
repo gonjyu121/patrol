@@ -308,6 +308,15 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
                 sender.sendMessage("§b[Patrol] status=" + running + ", locations=" + patrolManager.getLocationCount());
                 break;
             }
+            case "rank": {
+                if (patrolManager.isRunning()) {
+                    rankingDisplaySystem.displayRankings();
+                    sender.sendMessage("§a[Patrol] Ranking display triggered manually.");
+                } else {
+                    sender.sendMessage("§c[Patrol] Patrol is not running. Start patrol first.");
+                }
+                break;
+            }
             default:
                 sender.sendMessage("Unknown subcommand. /patrol help");
         }

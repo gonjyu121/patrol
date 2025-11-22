@@ -60,7 +60,7 @@ public class RankingDisplaySystem {
     /**
      * 4種類のランキングを順番に表示します。
      */
-    private void displayRankings() {
+    public void displayRankings() {
         // Title表示でランキング開始を通知
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.sendTitle(
