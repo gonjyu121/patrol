@@ -1,0 +1,13 @@
+commit 63d8858678442f1322cf4e3055c547f0e05bc378
+Author: Akira Miyatake <gonjyu121@gmail.com>
+Date:   Thu Nov 20 08:50:22 2025 +0900
+
+    feat: ParticipationManagerに観戦記録機能を追加
+    
+    - noteParticipation: プレイヤーが観戦されたことを記録
+      - 参加回数のインクリメント
+      - ポイント付与（設定で有効な場合）
+    - コンストラクタオーバーロード（PlayerStatsStorage対応）
+    - 詳細な日本語Javadocコメントを追加
+
+M	src/main/java/dev/gonjy/patrolspectator/ParticipationManager.java

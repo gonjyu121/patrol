@@ -1,0 +1,37 @@
+# PatrolSpectatorPlugin configuration
+
+# Interval between auto-patrol steps (seconds)
+intervalSeconds: 10
+
+# Use spectator camera instead of teleport when patrolling
+useSpectatorCamera: true
+
+# Keep patroller in spectator when idle (no targets / nobody online)
+idleSpectator: true
+
+# Periodic small action to avoid AFK kick
+keepAliveEnabled: true
+keepAliveSeconds: 30
+
+# Worlds allowed for targets (empty = all worlds)
+allowedWorlds: []
+
+# Players with this permission are excluded from being patrolled
+exemptPermission: patrolspectator.exempt
+
+# Explicit name excludes (case-insensitive)
+excludedPlayers:
+  - KayaObana
+  - Patrol
+  - patroller
+  - spectator
+  - camera
+
+# Announce when switching target (for streaming)
+announceToPlayers: true
+useTitle: true
+announceFormat: "&7[配信]&f 現在の視点: &a%target%"
+
+# Anti-jitter tuning
+combatLockSeconds: 8
+retargetBackoffSeconds: 2

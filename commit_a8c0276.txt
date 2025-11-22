@@ -1,0 +1,12 @@
+commit a8c0276bb1509c8cd4d8f3968bccf3283e9a7d2b
+Author: Akira Miyatake <gonjyu121@gmail.com>
+Date:   Thu Nov 20 08:49:25 2025 +0900
+
+    feat: GameModeEnforcerにサバイバル強制とシャットダウン機能を追加
+    
+    - ensurePlayerIsSurvival: カメラ役以外をサバイバルモードに強制
+      - 全員スペクテイター化事故の防止策
+    - shutdown: システムシャットダウンメソッド
+    - 詳細な日本語Javadocコメントを追加
+
+M	src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java

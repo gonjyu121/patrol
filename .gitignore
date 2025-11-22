@@ -5,7 +5,7 @@ build/
 target/
 *.jar
 *.log
-backup/
+
 .DS_Store
 *.iml
 .jdk/

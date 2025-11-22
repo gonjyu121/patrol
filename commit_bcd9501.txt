@@ -1,0 +1,13 @@
+commit bcd9501165d543fde3495a8a7444396779ace822
+Author: Akira Miyatake <gonjyu121@gmail.com>
+Date:   Thu Nov 20 08:48:37 2025 +0900
+
+    feat: EngagementSystemにプレイヤー検索と音再生機能を追加
+    
+    - findGoodTargetNear: カメラ役の近くにいる観戦対象プレイヤーを検索
+      - サバイバルモードのプレイヤーのみを対象
+      - 指定半径内で検索
+    - playNamedSound: 指定された音を再生するヘルパーメソッド
+    - 詳細な日本語Javadocコメントを追加
+
+M	src/main/java/dev/gonjy/patrolspectator/EngagementSystem.java

@@ -1,0 +1,18 @@
+name: PatrolSpectatorPlugin
+main: dev.gonjy.patrolspectator.PatrolSpectatorPlugin
+version: 1.1.5
+api-version: '1.20'
+author: gonjy
+description: Toggle spectator and simple patrol between online players
+commands:
+  patrol:
+    description: Teleport to next player in patrol order or rebuild
+    usage: /patrol [start|stop|end|next|rebuild|list|reload|addlocation|removelocation|listlocations|clearpatrollerdata] [seconds]
+    permission: patrolspectator.use
+  spectate:
+    description: Toggle spectator mode
+    usage: /spectate
+    permission: patrolspectator.use
+permissions:
+  patrolspectator.use:
+    default: op

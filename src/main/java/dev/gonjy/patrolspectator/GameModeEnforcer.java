@@ -8,13 +8,18 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.UUID;
 
-public final class GameModeEnforcer {
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+
+public final class GameModeEnforcer implements Listener {
     private final Plugin plugin;
     private BukkitTask task;
     private UUID cameraOperator;
 
     public GameModeEnforcer(Plugin plugin) {
         this.plugin = plugin;
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
     public void start() {
@@ -69,5 +74,13 @@ public final class GameModeEnforcer {
             } catch (Throwable ignored) {
             }
         }
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent e) {
+        // 参加時にカメラ役以外ならサバイバルを強制
+        // パトロール中(cameraOperator != null)でも、カメラ役以外はSurvivalであるべき
+        // パトロール停止中(cameraOperator == null)なら全員Survivalであるべき
+        ensurePlayerIsSurvival(e.getPlayer());
     }
 }

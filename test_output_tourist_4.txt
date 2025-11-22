@@ -1,0 +1,145 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------< dev.gonjy:patrol-spectator-plugin >------------------
+[INFO] Building PatrolSpectatorPlugin 1.8.1
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+Downloading from papermc: https://repo.papermc.io/repository/maven-public/org/junit/jupiter/junit-jupiter-api/5.11.3/junit-jupiter-api-5.11.3.pom
+Progress (1): 0.2/3.2 kB
+Progress (1): 1.6/3.2 kB
+Progress (1): 3.0/3.2 kB
+Progress (1): 3.2 kB    
+                    
+Downloaded from papermc: https://repo.papermc.io/repository/maven-public/org/junit/jupiter/junit-jupiter-api/5.11.3/junit-jupiter-api-5.11.3.pom (3.2 kB at 2.5 kB/s)
+Downloading from papermc: https://repo.papermc.io/repository/maven-public/org/junit/platform/junit-platform-commons/1.11.3/junit-platform-commons-1.11.3.pom
+Progress (1): 0.2/2.8 kB
+Progress (1): 1.6/2.8 kB
+Progress (1): 2.8 kB    
+                    
+Downloaded from papermc: https://repo.papermc.io/repository/maven-public/org/junit/platform/junit-platform-commons/1.11.3/junit-platform-commons-1.11.3.pom (2.8 kB at 8.0 kB/s)
+Downloading from papermc: https://repo.papermc.io/repository/maven-public/org/junit/jupiter/junit-jupiter-params/5.11.3/junit-jupiter-params-5.11.3.pom
+Progress (1): 1.4/3.0 kB
+Progress (1): 2.7/3.0 kB
+Progress (1): 3.0 kB    
+                    
+Downloaded from papermc: https://repo.papermc.io/repository/maven-public/org/junit/jupiter/junit-jupiter-params/5.11.3/junit-jupiter-params-5.11.3.pom (3.0 kB at 8.2 kB/s)
+Downloading from papermc: https://repo.papermc.io/repository/maven-public/org/junit/jupiter/junit-jupiter-engine/5.11.3/junit-jupiter-engine-5.11.3.pom
+Progress (1): 1.4/3.2 kB
+Progress (1): 2.7/3.2 kB
+Progress (1): 3.2 kB    
+                    
+Downloaded from papermc: https://repo.papermc.io/repository/maven-public/org/junit/jupiter/junit-jupiter-engine/5.11.3/junit-jupiter-engine-5.11.3.pom (3.2 kB at 9.2 kB/s)
+Downloading from papermc: https://repo.papermc.io/repository/maven-public/org/junit/platform/junit-platform-engine/1.11.3/junit-platform-engine-1.11.3.pom
+Progress (1): 1.4/3.2 kB
+Progress (1): 2.7/3.2 kB
+Progress (1): 3.2 kB    
+                    
+Downloaded from papermc: https://repo.papermc.io/repository/maven-public/org/junit/platform/junit-platform-engine/1.11.3/junit-platform-engine-1.11.3.pom (3.2 kB at 9.1 kB/s)
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ patrol-spectator-plugin ---
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ patrol-spectator-plugin ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ patrol-spectator-plugin ---
+[INFO] skip non existing resourceDirectory C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ patrol-spectator-plugin ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- surefire:3.2.2:test (default-test) @ patrol-spectator-plugin ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running dev.gonjy.patrolspectator.TouristLocationTest
+[ERROR] Tests run: 2, Failures: 0, Errors: 2, Skipped: 0, Time elapsed: 1.369 s <<< FAILURE! -- in dev.gonjy.patrolspectator.TouristLocationTest
+[ERROR] dev.gonjy.patrolspectator.TouristLocationTest.testToString -- Time elapsed: 1.324 s <<< ERROR!
+java.util.ServiceConfigurationError: io.papermc.paper.registry.RegistryAccess: Provider org.mockbukkit.mockbukkit.registry.RegistryAccessMock could not be instantiated
+	at java.base/java.util.ServiceLoader.fail(ServiceLoader.java:586)
+	at java.base/java.util.ServiceLoader$ProviderImpl.newInstance(ServiceLoader.java:813)
+	at java.base/java.util.ServiceLoader$ProviderImpl.get(ServiceLoader.java:729)
+	at java.base/java.util.ServiceLoader$3.next(ServiceLoader.java:1403)
+	at java.base/java.util.ServiceLoader.findFirst(ServiceLoader.java:1813)
+	at io.papermc.paper.registry.RegistryAccessHolder.<clinit>(RegistryAccessHolder.java:8)
+	at io.papermc.paper.registry.RegistryAccess.registryAccess(RegistryAccess.java:24)
+	at org.bukkit.Registry.<clinit>(Registry.java:92)
+	at org.bukkit.block.Biome.getBiome(Biome.java:105)
+	at org.bukkit.block.Biome.<clinit>(Biome.java:27)
+	at org.mockbukkit.mockbukkit.world.WorldMock.<init>(WorldMock.java:386)
+	at org.mockbukkit.mockbukkit.world.WorldMock.<init>(WorldMock.java:495)
+	at org.mockbukkit.mockbukkit.world.WorldMock.<init>(WorldMock.java:506)
+	at org.mockbukkit.mockbukkit.world.WorldMock.<init>(WorldMock.java:514)
+	at org.mockbukkit.mockbukkit.ServerMock.addSimpleWorld(ServerMock.java:470)
+	at dev.gonjy.patrolspectator.TouristLocationTest.setUp(TouristLocationTest.java:21)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+Caused by: java.lang.ExceptionInInitializerError
+	at java.base/jdk.internal.misc.Unsafe.ensureClassInitialized0(Native Method)
+	at java.base/jdk.internal.misc.Unsafe.ensureClassInitialized(Unsafe.java:1160)
+	at java.base/jdk.internal.reflect.MethodHandleAccessorFactory.ensureClassInitialized(MethodHandleAccessorFactory.java:300)
+	at java.base/jdk.internal.reflect.MethodHandleAccessorFactory.newConstructorAccessor(MethodHandleAccessorFactory.java:103)
+	at java.base/jdk.internal.reflect.ReflectionFactory.newConstructorAccessor(ReflectionFactory.java:200)
+	at java.base/java.lang.reflect.Constructor.acquireConstructorAccessor(Constructor.java:549)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:499)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at java.base/java.util.ServiceLoader$ProviderImpl.newInstance(ServiceLoader.java:789)
+	... 17 more
+Caused by: java.lang.NullPointerException: Cannot invoke "com.google.gson.JsonElement.getAsString()" because the return value of "com.google.gson.JsonObject.get(String)" is null
+	at org.mockbukkit.mockbukkit.registry.RegistryAccessMock.createClassToKeyConversions(RegistryAccessMock.java:135)
+	at org.mockbukkit.mockbukkit.registry.RegistryAccessMock.<clinit>(RegistryAccessMock.java:35)
+	... 26 more
+
+[ERROR] dev.gonjy.patrolspectator.TouristLocationTest.testConstructorAndGetters -- Time elapsed: 0.012 s <<< ERROR!
+java.lang.NoClassDefFoundError: Could not initialize class org.bukkit.block.Biome
+	at org.mockbukkit.mockbukkit.world.WorldMock.<init>(WorldMock.java:386)
+	at org.mockbukkit.mockbukkit.world.WorldMock.<init>(WorldMock.java:495)
+	at org.mockbukkit.mockbukkit.world.WorldMock.<init>(WorldMock.java:506)
+	at org.mockbukkit.mockbukkit.world.WorldMock.<init>(WorldMock.java:514)
+	at org.mockbukkit.mockbukkit.ServerMock.addSimpleWorld(ServerMock.java:470)
+	at dev.gonjy.patrolspectator.TouristLocationTest.setUp(TouristLocationTest.java:21)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+Caused by: java.lang.ExceptionInInitializerError: Exception java.util.ServiceConfigurationError: io.papermc.paper.registry.RegistryAccess: Provider org.mockbukkit.mockbukkit.registry.RegistryAccessMock could not be instantiated [in thread "main"]
+	at java.base/java.util.ServiceLoader.fail(ServiceLoader.java:586)
+	at java.base/java.util.ServiceLoader$ProviderImpl.newInstance(ServiceLoader.java:813)
+	at java.base/java.util.ServiceLoader$ProviderImpl.get(ServiceLoader.java:729)
+	at java.base/java.util.ServiceLoader$3.next(ServiceLoader.java:1403)
+	at java.base/java.util.ServiceLoader.findFirst(ServiceLoader.java:1813)
+	at io.papermc.paper.registry.RegistryAccessHolder.<clinit>(RegistryAccessHolder.java:8)
+	at io.papermc.paper.registry.RegistryAccess.registryAccess(RegistryAccess.java:24)
+	at org.bukkit.Registry.<clinit>(Registry.java:92)
+	at org.bukkit.block.Biome.getBiome(Biome.java:105)
+	at org.bukkit.block.Biome.<clinit>(Biome.java:27)
+	... 9 more
+
+[INFO] 
+[INFO] Results:
+[INFO] 
+[ERROR] Errors: 
+[ERROR]   TouristLocationTest.setUp:21 ﾂｻ NoClassDefFound Could not initialize class org.bukkit.block.Biome
+[ERROR]   TouristLocationTest.setUp:21 ﾂｻ ServiceConfiguration io.papermc.paper.registry.RegistryAccess: Provider org.mockbukkit.mockbukkit.registry.RegistryAccessMock could not be instantiated
+[INFO] 
+[ERROR] Tests run: 2, Failures: 0, Errors: 2, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  6.479 s
+[INFO] Finished at: 2025-11-20T07:09:41+09:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.2.2:test (default-test) on project patrol-spectator-plugin: 
+[ERROR] 
+[ERROR] Please refer to C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\target\surefire-reports for the individual test results.
+[ERROR] Please refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

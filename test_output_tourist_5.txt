@@ -1,0 +1,166 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------< dev.gonjy:patrol-spectator-plugin >------------------
+[INFO] Building PatrolSpectatorPlugin 1.8.1
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ patrol-spectator-plugin ---
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ patrol-spectator-plugin ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ patrol-spectator-plugin ---
+[INFO] skip non existing resourceDirectory C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ patrol-spectator-plugin ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- surefire:3.2.2:test (default-test) @ patrol-spectator-plugin ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running dev.gonjy.patrolspectator.TouristLocationTest
+SLF4J: No SLF4J providers were found.
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See https://www.slf4j.org/codes.html#noProviders for further details.
+[ERROR] Tests run: 2, Failures: 0, Errors: 2, Skipped: 0, Time elapsed: 0.866 s <<< FAILURE! -- in dev.gonjy.patrolspectator.TouristLocationTest
+[ERROR] dev.gonjy.patrolspectator.TouristLocationTest.testToString -- Time elapsed: 0.820 s <<< ERROR!
+org.mockbukkit.mockbukkit.exception.IncompatiblePaperVersionException: 
+Version Mismatch!
+
+################### MockBukkit Version Mismatch ###################
+
+This may indicate a version mismatch between your project's Paper API
+and the version supported by this MockBukkit build.
+
+剥 MockBukkit 4.98.0 (567) was built against Paper API version 1.21.10-R0.1-SNAPSHOT
+笨・Please ensure your plugin is compiled against the same version to maintain compatibility.
+
+###################################################################
+
+	at org.mockbukkit.mockbukkit.tags.MaterialTagMock.from(MaterialTagMock.java:43)
+	at org.mockbukkit.mockbukkit.tags.TagFactory.createTag(TagFactory.java:31)
+	at org.mockbukkit.mockbukkit.tags.TagFactory.createTag(TagFactory.java:24)
+	at org.mockbukkit.mockbukkit.tags.TagsMock.lambda$loadRegistry$1(TagsMock.java:108)
+	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:184)
+	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179)
+	at java.base/java.util.stream.SliceOps$1$1.accept(SliceOps.java:200)
+	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+	at java.base/java.util.Iterator.forEachRemaining(Iterator.java:133)
+	at java.base/java.util.Spliterators$IteratorSpliterator.forEachRemaining(Spliterators.java:1939)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+	at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:151)
+	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:174)
+	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)
+	at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596)
+	at org.mockbukkit.mockbukkit.tags.TagsMock.loadRegistry(TagsMock.java:102)
+	at org.mockbukkit.mockbukkit.tags.TagsMock.loadDefaultTags(TagsMock.java:52)
+	at org.mockbukkit.mockbukkit.ServerMock.<init>(ServerMock.java:248)
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:69)
+	at dev.gonjy.patrolspectator.TouristLocationTest.setUp(TouristLocationTest.java:20)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+Caused by: java.lang.IllegalArgumentException: No enum constant org.bukkit.Material.COPPER_BARS
+	at java.base/java.lang.Enum.valueOf(Enum.java:293)
+	at org.bukkit.Material.valueOf(Material.java:138)
+	at org.mockbukkit.mockbukkit.tags.MaterialTagMock.from(MaterialTagMock.java:40)
+	... 23 more
+
+[ERROR] dev.gonjy.patrolspectator.TouristLocationTest.testConstructorAndGetters -- Time elapsed: 0.009 s <<< ERROR!
+org.mockbukkit.mockbukkit.exception.IncompatiblePaperVersionException: 
+Version Mismatch!
+
+################### MockBukkit Version Mismatch ###################
+
+This may indicate a version mismatch between your project's Paper API
+and the version supported by this MockBukkit build.
+
+剥 MockBukkit 4.98.0 (567) was built against Paper API version 1.21.10-R0.1-SNAPSHOT
+笨・Please ensure your plugin is compiled against the same version to maintain compatibility.
+
+###################################################################
+
+	at org.mockbukkit.mockbukkit.tags.MaterialTagMock.from(MaterialTagMock.java:43)
+	at org.mockbukkit.mockbukkit.tags.TagFactory.createTag(TagFactory.java:31)
+	at org.mockbukkit.mockbukkit.tags.TagFactory.createTag(TagFactory.java:24)
+	at org.mockbukkit.mockbukkit.tags.TagsMock.lambda$loadRegistry$1(TagsMock.java:108)
+	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:184)
+	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179)
+	at java.base/java.util.stream.SliceOps$1$1.accept(SliceOps.java:200)
+	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+	at java.base/java.util.Iterator.forEachRemaining(Iterator.java:133)
+	at java.base/java.util.Spliterators$IteratorSpliterator.forEachRemaining(Spliterators.java:1939)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+	at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:151)
+	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:174)
+	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)
+	at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596)
+	at org.mockbukkit.mockbukkit.tags.TagsMock.loadRegistry(TagsMock.java:102)
+	at org.mockbukkit.mockbukkit.tags.TagsMock.loadDefaultTags(TagsMock.java:52)
+	at org.mockbukkit.mockbukkit.ServerMock.<init>(ServerMock.java:248)
+	at org.mockbukkit.mockbukkit.MockBukkit.mock(MockBukkit.java:69)
+	at dev.gonjy.patrolspectator.TouristLocationTest.setUp(TouristLocationTest.java:20)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+Caused by: java.lang.IllegalArgumentException: No enum constant org.bukkit.Material.COPPER_AXE
+	at java.base/java.lang.Enum.valueOf(Enum.java:293)
+	at org.bukkit.Material.valueOf(Material.java:138)
+	at org.mockbukkit.mockbukkit.tags.MaterialTagMock.from(MaterialTagMock.java:40)
+	... 23 more
+
+[INFO] 
+[INFO] Results:
+[INFO] 
+[ERROR] Errors: 
+[ERROR]   TouristLocationTest.setUp:20 ﾂｻ IncompatiblePaperVersion Version Mismatch!
+
+################### MockBukkit Version Mismatch ###################
+
+This may indicate a version mismatch between your project's Paper API
+and the version supported by this MockBukkit build.
+
+剥 MockBukkit 4.98.0 (567) was built against Paper API version 1.21.10-R0.1-SNAPSHOT
+笨・Please ensure your plugin is compiled against the same version to maintain compatibility.
+
+###################################################################
+
+[ERROR]   TouristLocationTest.setUp:20 ﾂｻ IncompatiblePaperVersion Version Mismatch!
+
+################### MockBukkit Version Mismatch ###################
+
+This may indicate a version mismatch between your project's Paper API
+and the version supported by this MockBukkit build.
+
+剥 MockBukkit 4.98.0 (567) was built against Paper API version 1.21.10-R0.1-SNAPSHOT
+笨・Please ensure your plugin is compiled against the same version to maintain compatibility.
+
+###################################################################
+
+[INFO] 
+[ERROR] Tests run: 2, Failures: 0, Errors: 2, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  3.721 s
+[INFO] Finished at: 2025-11-20T07:10:22+09:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.2.2:test (default-test) on project patrol-spectator-plugin: 
+[ERROR] 
+[ERROR] Please refer to C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\target\surefire-reports for the individual test results.
+[ERROR] Please refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
