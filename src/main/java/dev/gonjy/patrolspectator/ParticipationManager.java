@@ -3,6 +3,10 @@ package dev.gonjy.patrolspectator;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -10,7 +14,7 @@ import java.util.stream.Collectors;
 /**
  * 参加回数＋ランキング統合管理
  */
-public class ParticipationManager {
+public class ParticipationManager implements Listener {
     private final PatrolSpectatorPlugin plugin;
     private final File file;
     private final YamlConfiguration yaml;
@@ -19,6 +23,9 @@ public class ParticipationManager {
         this.plugin = plugin;
         this.file = new File(plugin.getDataFolder(), "participation.yml");
         this.yaml = file.exists() ? YamlConfiguration.loadConfiguration(file) : new YamlConfiguration();
+
+        // イベントリスナー登録
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
     /**
