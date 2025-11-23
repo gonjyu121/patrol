@@ -113,7 +113,8 @@ public class PatrolManager {
         gameModeEnforcer.setCameraOperator(cameraUuid);
         gameModeEnforcer.start();
 
-        // ランキング表示の開始
+        // ランキング表示の開始（カメラ役を除外対象に設定）
+        rankingDisplaySystem.setExcludedPlayer(cameraUuid);
         rankingDisplaySystem.startRankingDisplay();
 
         PatrolSpectatorPlugin.TourConf tourConf = plugin.getTourConf();
@@ -168,8 +169,9 @@ public class PatrolManager {
         gameModeEnforcer.clearCameraOperator();
         gameModeEnforcer.stop();
 
-        // ランキング表示の停止
+        // ランキング表示の停止（除外設定も解除）
         rankingDisplaySystem.stopRankingDisplay();
+        rankingDisplaySystem.setExcludedPlayer(null);
 
         // 安全策: 全プレイヤーをSurvivalに戻す（カメラ役含む）
         for (Player pl : Bukkit.getOnlinePlayers()) {
