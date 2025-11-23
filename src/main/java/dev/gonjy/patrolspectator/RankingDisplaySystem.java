@@ -60,6 +60,20 @@ public class RankingDisplaySystem {
     /**
      * 4種類のランキングを順番に表示します。
      */
+    private UUID excludedPlayerUuid;
+
+    /**
+     * ランキングから除外するプレイヤーを設定します。
+     * 
+     * @param uuid 除外するプレイヤーのUUID（nullの場合は除外なし）
+     */
+    public void setExcludedPlayer(UUID uuid) {
+        this.excludedPlayerUuid = uuid;
+    }
+
+    /**
+     * 4種類のランキングを順番に表示します。
+     */
     public void displayRankings() {
         // Title表示でランキング開始を通知
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -130,7 +144,7 @@ public class RankingDisplaySystem {
             }
         } else {
             Bukkit.getServer()
-                    .broadcastMessage(ChatColor.GRAY + "  📊 まだ記録がありません。参加して記録を作りましょう！");
+                    .broadcastMessage(ChatColor.GRAY + "  📊 まだ記録保持者がいません。あなたの挑戦を待っています！");
         }
     }
 
@@ -166,7 +180,7 @@ public class RankingDisplaySystem {
             }
         } else {
             Bukkit.getServer()
-                    .broadcastMessage(ChatColor.GRAY + "  ⚔️ まだPK記録がありません。戦闘で記録を作りましょう！");
+                    .broadcastMessage(ChatColor.GRAY + "  ⚔️ まだPK王はいません。最初の王者になるのは誰だ！？");
         }
     }
 
@@ -205,7 +219,7 @@ public class RankingDisplaySystem {
             }
         } else {
             Bukkit.getServer().broadcastMessage(
-                    ChatColor.GRAY + "  🐉 まだエンダードラゴン討伐記録がありません。エンダードラゴンに挑戦しましょう！");
+                    ChatColor.GRAY + "  🐉 まだドラゴンスレイヤーはいません。伝説を作るのはあなたです！");
         }
     }
 
@@ -242,7 +256,7 @@ public class RankingDisplaySystem {
             }
         } else {
             Bukkit.getServer()
-                    .broadcastMessage(ChatColor.GRAY + "  🎮 まだイベント記録がありません。イベントに参加しましょう！");
+                    .broadcastMessage(ChatColor.GRAY + "  🎮 まだイベント勝者はいません。次のイベントで勝利を掴め！");
         }
     }
 
@@ -255,6 +269,11 @@ public class RankingDisplaySystem {
         List<Map.Entry<UUID, Long>> ranking = new ArrayList<>();
 
         for (UUID playerId : statsStorage.getAllPlayerIds()) {
+            // 除外プレイヤーはスキップ
+            if (playerId.equals(excludedPlayerUuid)) {
+                continue;
+            }
+
             long totalTime = statsStorage.getTotalPlayTimeMillis(playerId);
 
             // 累計生存時間が1分以上ある場合のみ
@@ -277,6 +296,11 @@ public class RankingDisplaySystem {
         List<Map.Entry<UUID, Integer>> ranking = new ArrayList<>();
 
         for (UUID playerId : statsStorage.getAllPlayerIds()) {
+            // 除外プレイヤーはスキップ
+            if (playerId.equals(excludedPlayerUuid)) {
+                continue;
+            }
+
             int kills = statsStorage.getPlayerKills(playerId);
 
             // キル数が1以上ある場合のみ
@@ -299,6 +323,11 @@ public class RankingDisplaySystem {
         List<Map.Entry<UUID, Integer>> ranking = new ArrayList<>();
 
         for (UUID playerId : statsStorage.getAllPlayerIds()) {
+            // 除外プレイヤーはスキップ
+            if (playerId.equals(excludedPlayerUuid)) {
+                continue;
+            }
+
             int dragonKills = statsStorage.getEnderDragonKills(playerId);
 
             // エンダードラゴン討伐数が1以上ある場合のみ
@@ -321,6 +350,11 @@ public class RankingDisplaySystem {
         List<Map.Entry<UUID, Integer>> ranking = new ArrayList<>();
 
         for (UUID playerId : statsStorage.getAllPlayerIds()) {
+            // 除外プレイヤーはスキップ
+            if (playerId.equals(excludedPlayerUuid)) {
+                continue;
+            }
+
             int eventPoints = statsStorage.getEventPoints(playerId);
 
             // イベントポイントが1以上ある場合のみ
