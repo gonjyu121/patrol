@@ -92,6 +92,9 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         // 観光地ロード
         patrolManager.loadTouristLocations();
 
+        // 自動イベントシステムの開始
+        autoEventSystem.startAutoEvents();
+
         getLogger().info("PatrolSpectatorPlugin enabled.");
     }
 
