@@ -136,6 +136,25 @@ public class PatrolManager {
             }
         }
 
+        // エンドワールドが存在する場合、エンドラ観戦用のポイントを追加（リストに無ければ）
+        // 既存のリストにエンドが含まれているかチェック
+        boolean hasEnd = touristLocations.stream().anyMatch(l -> l.worldType.equalsIgnoreCase("end"));
+        if (!hasEnd) {
+            World endWorld = Bukkit.getWorld("world_the_end");
+            if (endWorld != null) {
+                plugin.getLogger().info("エンドワールドが見つかりました。観光地に追加します。");
+                // 0, 100, 0 から 0,0,0 を見る
+                touristLocations.add(new TouristLocation(
+                        "auto_end_01",
+                        "§5The End",
+                        endWorld.getName(),
+                        0.0, 100.0, 0.0,
+                        0f, 45f, // yaw=0 (South), pitch=45 (Looking down)
+                        "Ender Dragon Arena",
+                        "end"));
+            }
+        }
+
         currentTourIndex = -1;
 
         // タスクの実行間隔（tick）を計算。最低でも1秒（20ticks）は確保。
@@ -249,6 +268,16 @@ public class PatrolManager {
         }
 
         // 2. ターゲットがいなければ観光巡り：次のスポットへ
+        // 異世界（ネザー・エンド）にいる場合は、一度オーバーワールドに戻る（描画バグ防止）
+        if (camera.getWorld().getEnvironment() != World.Environment.NORMAL) {
+            World mainWorld = Bukkit.getWorlds().get(0);
+            if (mainWorld != null) {
+                camera.teleport(mainWorld.getSpawnLocation());
+                plugin.showTourTitle(camera, "§7帰還中...");
+                return; // 次のtickで観光地へ
+            }
+        }
+
         if (touristLocations.isEmpty())
             return;
 
@@ -260,6 +289,13 @@ public class PatrolManager {
         if (w == null) {
             // ワールドが見つからない場合はスキップ（ログを出してもいいかも）
             return;
+        }
+
+        // エンドリセット中はエンドワールドをスキップ
+        if (plugin.getEndResetManager() != null && plugin.getEndResetManager().isResetting()) {
+            if (w.getName().equals("world_the_end") || w.getEnvironment() == World.Environment.THE_END) {
+                return;
+            }
         }
 
         // pitch が極端（真下/真上）になりすぎないよう補正：±85度にクリップ
