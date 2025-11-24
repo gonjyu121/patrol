@@ -99,18 +99,15 @@ public class ParticipationManager implements Listener {
         if ("chat".equalsIgnoreCase(mode))
             p.sendMessage("ようこそ " + server + "！遊んでくれてありがとう " + msg);
         else
-            plugin.showTitleLargeSmall(p,
-                    plugin.textBold("#A5D6A7", server + " へようこそ！"),
-                    plugin.text("#FFFFFF", "遊んでくれてありがとう " + msg));
+            MessageUtils.showTitleLargeSmall(p,
+                    MessageUtils.textBold("#A5D6A7", server + " へようこそ！"),
+                    MessageUtils.text("#FFFFFF", "遊んでくれてありがとう " + msg));
     }
 
     /**
      * プレイヤーが観戦された（映った）ことを記録します。
      * <p>
      * 参加回数をインクリメントし、設定に応じてポイントを付与します。
-     * 
-     * @param uuid プレイヤーのUUID
-     * @param name プレイヤー名
      */
     public void noteParticipation(UUID uuid, String name) {
         if (uuid == null || name == null)

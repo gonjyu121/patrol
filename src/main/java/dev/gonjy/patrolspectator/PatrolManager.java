@@ -263,7 +263,7 @@ public class PatrolManager {
             participationManager.noteParticipation(target.getUniqueId(), target.getName());
 
             // タイトル表示：プレイヤー名を大きく強調
-            plugin.showTourTitle(camera, "§b" + target.getName() + " §7さんの視点");
+            MessageUtils.showTourTitle(camera, "§b" + target.getName() + " §7さんの視点");
             return;
         }
 
@@ -273,7 +273,7 @@ public class PatrolManager {
             World mainWorld = Bukkit.getWorlds().get(0);
             if (mainWorld != null) {
                 camera.teleport(mainWorld.getSpawnLocation());
-                plugin.showTourTitle(camera, "§7帰還中...");
+                MessageUtils.showTourTitle(camera, "§7帰還中...");
                 return; // 次のtickで観光地へ
             }
         }
@@ -305,7 +305,7 @@ public class PatrolManager {
         org.bukkit.Location loc = new org.bukkit.Location(w, tl.x, tl.y, tl.z, tl.yaw, safePitch);
         camera.teleport(loc);
 
-        plugin.showTourTitle(camera, tl.name);
+        MessageUtils.showTourTitle(camera, tl.name);
     }
 
     /**
