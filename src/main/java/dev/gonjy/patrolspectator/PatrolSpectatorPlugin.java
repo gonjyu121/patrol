@@ -94,6 +94,12 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         // 観光地ロード
         patrolManager.loadTouristLocations();
 
+        // MessageUtils初期化
+        MessageUtils.init(titleConf);
+
+        // コマンド登録
+        getCommand("patrol").setExecutor(new PatrolCommand(this, patrolManager, rankingDisplaySystem));
+
         // 自動イベントシステムの開始
         autoEventSystem.startAutoEvents();
 
@@ -223,112 +229,5 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     // 死亡保護の延長（存在しなかったので用意）
     public void extendProtectionDuration(UUID uuid, long extraMillis) {
         protectionData.extend(uuid, extraMillis);
-    }
-
-    // 観光タイトル表示（名称を大きく／「観光地」は小さく）
-    public void showTourTitle(Player p, String name) {
-        if (p == null || !titleConf.enabled)
-            return;
-        try {
-            // 上段を名称（大）、下段を「観光地」
-            p.sendTitle("§l" + name, "§7観光地", titleConf.fadeIn, titleConf.stay, titleConf.fadeOut);
-        } catch (Throwable ignored) {
-        }
-    }
-
-    /**
-     * タイトルを大きく（上段）と小さく（下段）で表示します。
-     * 
-     * @param p        プレイヤー
-     * @param title    上段のタイトル
-     * @param subtitle 下段のサブタイトル
-     */
-    public void showTitleLargeSmall(Player p, String title, String subtitle) {
-        if (p == null || !titleConf.enabled)
-            return;
-        try {
-            p.sendTitle(title, subtitle, titleConf.fadeIn, titleConf.stay, titleConf.fadeOut);
-        } catch (Throwable ignored) {
-        }
-    }
-
-    /**
-     * カラーコード付きの太字テキストを生成します。
-     * 
-     * @param hexColor 16進数カラーコード（例: "#A5D6A7"）
-     * @param text     テキスト内容
-     * @return フォーマット済みテキスト
-     */
-    public String textBold(String hexColor, String text) {
-        return "§l" + hexColor + text;
-    }
-
-    /**
-     * カラーコード付きのテキストを生成します。
-     * 
-     * @param hexColor 16進数カラーコード（例: "#FFFFFF"）
-     * @param text     テキスト内容
-     * @return フォーマット済みテキスト
-     */
-    public String text(String hexColor, String text) {
-        return hexColor + text;
-    }
-
-    // —— /patrol コマンド ——
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!"patrol".equalsIgnoreCase(command.getName()))
-            return false;
-
-        if (args.length == 0 || "help".equalsIgnoreCase(args[0])) {
-            sender.sendMessage("§a/patrol start [dwellSeconds] - 観光巡りをスタート");
-            sender.sendMessage("§a/patrol stop                 - 停止");
-            sender.sendMessage("§a/patrol status               - 状態表示");
-            return true;
-        }
-
-        switch (args[0].toLowerCase(Locale.ROOT)) {
-            case "start": {
-                if (!(sender instanceof Player)) {
-                    sender.sendMessage("Player only.");
-                    return true;
-                }
-                Player p = (Player) sender;
-
-                int dwell = tourConf.dwellSeconds;
-                if (args.length >= 2) {
-                    try {
-                        dwell = Math.max(3, Integer.parseInt(args[1]));
-                    } catch (NumberFormatException ignored) {
-                    }
-                }
-
-                patrolManager.startPatrol(p, dwell);
-                sender.sendMessage("§a[Patrol] start (dwell=" + dwell + "s)");
-                break;
-            }
-            case "stop": {
-                patrolManager.stopPatrol();
-                sender.sendMessage("§e[Patrol] stop");
-                break;
-            }
-            case "status": {
-                String running = patrolManager.isRunning() ? "RUNNING" : "IDLE";
-                sender.sendMessage("§b[Patrol] status=" + running + ", locations=" + patrolManager.getLocationCount());
-                break;
-            }
-            case "rank": {
-                if (patrolManager.isRunning()) {
-                    rankingDisplaySystem.displayRankings();
-                    sender.sendMessage("§a[Patrol] Ranking display triggered manually.");
-                } else {
-                    sender.sendMessage("§c[Patrol] Patrol is not running. Start patrol first.");
-                }
-                break;
-            }
-            default:
-                sender.sendMessage("Unknown subcommand. /patrol help");
-        }
-        return true;
     }
 }
