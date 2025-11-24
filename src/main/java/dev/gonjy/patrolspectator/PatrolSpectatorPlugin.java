@@ -20,6 +20,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     private ParticipationManager participationManager;
     private PatrolManager patrolManager;
     private RankingDisplaySystem rankingDisplaySystem;
+    private EndResetManager endResetManager;
 
     // タイトル/音の設定
     public static class TitleConf {
@@ -78,6 +79,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         autoEventSystem = new AutoEventSystem(this);
         participationManager = new ParticipationManager(this, statsStorage);
         rankingDisplaySystem = new RankingDisplaySystem(this, statsStorage);
+        endResetManager = new EndResetManager(this);
 
         // イベントリスナーの登録
         getServer().getPluginManager().registerEvents(new RankingEventListener(statsStorage), this);
@@ -194,6 +196,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
     public PatrolManager getPatrolManager() {
         return patrolManager;
+    }
+
+    public EndResetManager getEndResetManager() {
+        return endResetManager;
     }
 
     public int getPatrolIntervalSeconds() {
