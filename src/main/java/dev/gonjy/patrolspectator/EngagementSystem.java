@@ -1,15 +1,12 @@
 package dev.gonjy.patrolspectator;
 
 import org.bukkit.Bukkit;
-import org.bukkit.plugin.java.JavaPlugin;
 import java.util.logging.Logger;
 
 public final class EngagementSystem {
-    private final JavaPlugin plugin;
     private final Logger log;
 
-    public EngagementSystem(JavaPlugin plugin) {
-        this.plugin = plugin;
+    public EngagementSystem(PatrolSpectatorPlugin plugin) {
         this.log = plugin.getLogger();
     }
 
