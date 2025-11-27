@@ -359,22 +359,28 @@ public class PatrolManager {
     private void spectateTarget(Player camera, Player target) {
         if (camera == null || target == null)
             return;
-        try {
-            camera.setGameMode(GameMode.SPECTATOR);
-            // PaperAPI: SpectatorTarget を設定
-            camera.setSpectatorTarget(target);
-        } catch (Throwable t) {
-            // Paper API非対応環境などのためのフォールバック：テレポートで追従
-            camera.teleport(target.getLocation());
-        }
+        // 3. 少し待ってから視点を奪う（クライアントのロード待ち・レースコンディション回避）
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!camera.isOnline() || !target.isOnline())
+                return;
 
-        // 観戦開始時のサウンド再生（設定で有効な場合）
-        PatrolSpectatorPlugin.SoundConf soundConf = plugin.getSpectateSoundConf();
-        if (soundConf != null && soundConf.enabled) {
             try {
-                engagementSystem.playNamedSound(camera, soundConf.type, soundConf.volume, soundConf.pitch);
-            } catch (Throwable ignored) {
+                // PaperAPI: SpectatorTarget を設定
+                camera.setSpectatorTarget(target);
+            } catch (Throwable t) {
+                // Paper API非対応環境などのためのフォールバック：再度テレポートで追従
+                camera.teleport(target.getLocation());
             }
-        }
+
+            // 観戦開始時のサウンド再生（設定で有効な場合）
+            // タイミングを合わせるためここで再生
+            PatrolSpectatorPlugin.SoundConf soundConf = plugin.getSpectateSoundConf();
+            if (soundConf != null && soundConf.enabled) {
+                try {
+                    engagementSystem.playNamedSound(camera, soundConf.type, soundConf.volume, soundConf.pitch);
+                } catch (Throwable ignored) {
+                }
+            }
+        }, 5L); // 5 ticks delay (0.25s)
     }
 }
