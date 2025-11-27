@@ -149,7 +149,7 @@ public class PatrolManager {
                         "§5The End",
                         endWorld.getName(),
                         0.0, 100.0, 0.0,
-                        0f, 45f, // yaw=0 (South), pitch=45 (Looking down)
+                        0f, 0f, // yaw=0, pitch=0 (Looking straight)
                         "Ender Dragon Arena",
                         "end"));
             }
@@ -281,31 +281,57 @@ public class PatrolManager {
         if (touristLocations.isEmpty())
             return;
 
-        // インデックスを進める（ループする）
-        currentTourIndex = (currentTourIndex + 1) % touristLocations.size();
-        TouristLocation tl = touristLocations.get(currentTourIndex);
+        // 次の有効な観光地を探す（最大でリストサイズ分だけ試行）
+        TouristLocation nextLocation = null;
+        int attempts = 0;
+        int listSize = touristLocations.size();
 
-        World w = Bukkit.getWorld(tl.world);
-        if (w == null) {
-            // ワールドが見つからない場合はスキップ（ログを出してもいいかも）
+        while (attempts < listSize) {
+            // インデックスを進める（ループする）
+            currentTourIndex = (currentTourIndex + 1) % listSize;
+            TouristLocation candidate = touristLocations.get(currentTourIndex);
+
+            World w = Bukkit.getWorld(candidate.world);
+            if (w == null) {
+                // ワールドが見つからない場合はスキップ
+                attempts++;
+                continue;
+            }
+
+            // エンドリセット中、またはエンダードラゴンがいない場合はエンドワールドをスキップ
+            if (w.getName().equals("world_the_end") || w.getEnvironment() == World.Environment.THE_END) {
+                if (plugin.getEndResetManager() != null && plugin.getEndResetManager().isResetting()) {
+                    attempts++;
+                    continue;
+                }
+                // ドラゴン不在チェック
+                if (w.getEntitiesByClass(org.bukkit.entity.EnderDragon.class).isEmpty()) {
+                    attempts++;
+                    continue;
+                }
+            }
+
+            // 有効な場所が見つかった
+            nextLocation = candidate;
+            break;
+        }
+
+        if (nextLocation == null) {
+            // 有効な観光地が一つもない場合
             return;
         }
 
-        // エンドリセット中はエンドワールドをスキップ
-        if (plugin.getEndResetManager() != null && plugin.getEndResetManager().isResetting()) {
-            if (w.getName().equals("world_the_end") || w.getEnvironment() == World.Environment.THE_END) {
-                return;
-            }
-        }
-
+        World w = Bukkit.getWorld(nextLocation.world);
         // pitch が極端（真下/真上）になりすぎないよう補正：±85度にクリップ
-        float safePitch = Math.max(-85f, Math.min(85f, tl.pitch));
+        float safePitch = Math.max(-85f, Math.min(85f, nextLocation.pitch));
 
         // テレポート実行
-        org.bukkit.Location loc = new org.bukkit.Location(w, tl.x, tl.y, tl.z, tl.yaw, safePitch);
+        org.bukkit.Location loc = new org.bukkit.Location(w, nextLocation.x, nextLocation.y, nextLocation.z,
+                nextLocation.yaw, safePitch);
         camera.teleport(loc);
+        camera.setFlying(true); // スペクテイターモードでの重力落下（視点ズレ）防止
 
-        MessageUtils.showTourTitle(camera, tl.name);
+        MessageUtils.showTourTitle(camera, nextLocation.name);
     }
 
     /**
