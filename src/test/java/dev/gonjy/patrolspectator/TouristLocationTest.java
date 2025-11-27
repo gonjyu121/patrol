@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class TouristLocationTest {
 
     private ServerMock server;
+    @SuppressWarnings("unused") // Used by MockBukkit setup
     private World world;
 
     @BeforeEach

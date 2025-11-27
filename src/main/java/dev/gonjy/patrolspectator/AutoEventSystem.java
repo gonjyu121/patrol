@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Calendar;
 
+@SuppressWarnings("deprecation") // Using legacy ChatColor and broadcastMessage for compatibility
 public class AutoEventSystem implements Listener {
 
     private final JavaPlugin plugin;
@@ -154,6 +155,7 @@ public class AutoEventSystem implements Listener {
                 3 * 60 * 20L);
     }
 
+    @SuppressWarnings("unused") // Reserved for future use
     private String getEventMessage(String eventType) {
         switch (eventType) {
             case "mob_hunt":
@@ -169,6 +171,7 @@ public class AutoEventSystem implements Listener {
         }
     }
 
+    @SuppressWarnings("unused") // Reserved for future use
     private void giveEventReward(Player player, String eventType) {
         ItemStack[] rewards = getEventRewards(eventType);
         for (ItemStack item : rewards) {

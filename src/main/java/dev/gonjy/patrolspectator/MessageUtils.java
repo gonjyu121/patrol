@@ -5,6 +5,7 @@ import org.bukkit.entity.Player;
 /**
  * メッセージ表示やタイトル表示に関するユーティリティクラス。
  */
+@SuppressWarnings("deprecation") // Using legacy sendTitle for compatibility
 public class MessageUtils {
 
     private static PatrolSpectatorPlugin.TitleConf titleConf;

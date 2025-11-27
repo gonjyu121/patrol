@@ -20,6 +20,7 @@ import java.util.AbstractMap.SimpleEntry;
  * <li>イベントポイントランキング</li>
  * </ul>
  */
+@SuppressWarnings("deprecation") // Using legacy ChatColor, broadcastMessage, and sendTitle for compatibility
 public class RankingDisplaySystem {
 
     private final JavaPlugin plugin;

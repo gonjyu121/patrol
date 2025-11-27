@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class AutoEventSystemTest {
 
+    @SuppressWarnings("unused") // Used by MockBukkit setup
     private ServerMock server;
     private PatrolSpectatorPlugin plugin;
 
