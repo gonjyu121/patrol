@@ -255,6 +255,11 @@ public class PatrolManager {
         // 検索半径は 48.0 ブロック
         Player target = engagementSystem.findGoodTargetNear(camera, 48.0);
 
+        // 近くにいなければ全ワールドから探す
+        if (target == null) {
+            target = engagementSystem.findGoodTargetGlobal(camera);
+        }
+
         if (target != null) {
             // ターゲットが見つかった場合: プレイヤー観戦モード
             spectateTarget(camera, target);
@@ -304,8 +309,8 @@ public class PatrolManager {
                     attempts++;
                     continue;
                 }
-                // ドラゴン不在チェック
-                if (w.getEntitiesByClass(org.bukkit.entity.EnderDragon.class).isEmpty()) {
+                // ドラゴン不在チェック（ただしプレイヤーがいる場合はスキップしない）
+                if (w.getEntitiesByClass(org.bukkit.entity.EnderDragon.class).isEmpty() && w.getPlayers().isEmpty()) {
                     attempts++;
                     continue;
                 }

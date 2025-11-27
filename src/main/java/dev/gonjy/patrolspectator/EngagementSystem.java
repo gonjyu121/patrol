@@ -65,6 +65,34 @@ public final class EngagementSystem {
     }
 
     /**
+     * 全ワールドから「観戦対象として適切なプレイヤー」を探します。
+     * <p>
+     * 条件:
+     * - カメラ役本人は除外
+     * - サバイバルモードである
+     * 
+     * @param camera カメラ役プレイヤー
+     * @return 観戦対象プレイヤー、見つからない場合は null
+     */
+    public org.bukkit.entity.Player findGoodTargetGlobal(org.bukkit.entity.Player camera) {
+        if (camera == null || !camera.isOnline())
+            return null;
+
+        for (org.bukkit.entity.Player p : Bukkit.getOnlinePlayers()) {
+            // カメラ本人は除外
+            if (p.getUniqueId().equals(camera.getUniqueId()))
+                continue;
+
+            // サバイバルモードのみ対象
+            if (p.getGameMode() != org.bukkit.GameMode.SURVIVAL)
+                continue;
+
+            return p;
+        }
+        return null;
+    }
+
+    /**
      * 指定されたプレイヤーに音を再生します。
      * <p>
      * 音の種類は文字列で指定し、Bukkit の Sound enum に変換を試みます。
