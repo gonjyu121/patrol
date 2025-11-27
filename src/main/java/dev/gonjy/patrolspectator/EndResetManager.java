@@ -1,7 +1,8 @@
 package dev.gonjy.patrolspectator;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.EnderDragon;
@@ -17,7 +18,7 @@ import java.util.logging.Level;
 /**
  * エンドワールドの自動リセットを管理するクラス。
  * <p>
- * エンダードラゴン討伐後、一定時間経過後にエンドワールドを再生成します。
+ * エンダードラゴン討伐後、または不在検知後、一定時間経過後にエンドワールドを再生成します。
  */
 public class EndResetManager implements Listener {
 
@@ -25,14 +26,68 @@ public class EndResetManager implements Listener {
     private final String endWorldName;
     private int resetDelayMinutes;
     private BukkitTask resetTask;
-    private long resetTime; // リセット実行予定時刻 (ms)
     private boolean isResetting = false; // リセット処理中フラグ
+    private long scheduledResetTime = 0; // リセット予定時刻（ミリ秒）
 
     public EndResetManager(PatrolSpectatorPlugin plugin) {
         this.plugin = plugin;
         this.endWorldName = "world_the_end"; // デフォルトのエンドワールド名
         this.resetDelayMinutes = plugin.getConfig().getInt("end.resetDelayMinutes", 20);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
+
+        // 保存されたリセット時刻のロード
+        this.scheduledResetTime = plugin.getConfig().getLong("end.scheduledResetTime", 0);
+
+        // 起動時のチェック
+        checkOnStartup();
+
+        // 定期チェック（ドラゴン不在など）
+        startPeriodicCheck();
+    }
+
+    private void checkOnStartup() {
+        if (scheduledResetTime > 0) {
+            long now = System.currentTimeMillis();
+            if (now >= scheduledResetTime) {
+                // 時間が過ぎているので即リセット（少し遅延させる）
+                plugin.getLogger().info("Pending end reset found. Resetting shortly.");
+                Bukkit.getScheduler().runTaskLater(plugin, this::performReset, 100L);
+            } else {
+                // まだなのでタスク再スケジュール
+                long delayTicks = (scheduledResetTime - now) / 50;
+                plugin.getLogger().info("Pending end reset found. Rescheduling in " + (delayTicks / 20) + " seconds.");
+                scheduleResetTask(delayTicks);
+                scheduleAnnouncements();
+            }
+        } else {
+            // リセット予定がない場合、ドラゴンの不在をチェック
+            Bukkit.getScheduler().runTaskLater(plugin, this::checkDragonAbsence, 200L); // 10秒後
+        }
+    }
+
+    private void startPeriodicCheck() {
+        // 5分ごとにドラゴンの不在をチェック
+        Bukkit.getScheduler().runTaskTimer(plugin, this::checkDragonAbsence, 6000L, 6000L);
+    }
+
+    /**
+     * ドラゴンがいない場合、リセットを開始する
+     */
+    private void checkDragonAbsence() {
+        if (isResetting || scheduledResetTime > 0)
+            return;
+
+        World endWorld = Bukkit.getWorld(endWorldName);
+        if (endWorld == null)
+            return;
+
+        // ドラゴンを探す
+        boolean dragonExists = endWorld.getEntitiesByClass(EnderDragon.class).size() > 0;
+
+        if (!dragonExists) {
+            plugin.getLogger().info("Ender Dragon not found in " + endWorldName + ". Scheduling reset.");
+            startResetCountdown("エンダードラゴンの不在を確認しました。");
+        }
     }
 
     /**
@@ -43,7 +98,7 @@ public class EndResetManager implements Listener {
         if (event.getEntity() instanceof EnderDragon) {
             // エンドワールドでの討伐か確認
             if (event.getEntity().getWorld().getName().equals(endWorldName)) {
-                startResetCountdown();
+                startResetCountdown("エンダードラゴンが討伐されました！");
             }
         }
     }
@@ -51,49 +106,68 @@ public class EndResetManager implements Listener {
     /**
      * リセットカウントダウンを開始
      */
-    public void startResetCountdown() {
-        if (resetTask != null && !resetTask.isCancelled()) {
+    public void startResetCountdown(String reason) {
+        if (scheduledResetTime > 0) {
             return; // 既にスケジュール済み
         }
 
         long delayTicks = resetDelayMinutes * 60 * 20L;
-        resetTime = System.currentTimeMillis() + (resetDelayMinutes * 60 * 1000L);
+        this.scheduledResetTime = System.currentTimeMillis() + (resetDelayMinutes * 60 * 1000L);
+
+        // 設定保存
+        plugin.getConfig().set("end.scheduledResetTime", scheduledResetTime);
+        plugin.saveConfig();
 
         // リセットタスクのスケジュール
-        resetTask = Bukkit.getScheduler().runTaskLater(plugin, this::performReset, delayTicks);
+        scheduleResetTask(delayTicks);
 
         // アナウンス開始
-        Bukkit.broadcastMessage(ChatColor.RED + "========================================");
-        Bukkit.broadcastMessage(ChatColor.GOLD + "🐉 エンダードラゴンが討伐されました！");
-        Bukkit.broadcastMessage(ChatColor.YELLOW + "エンドワールドは " + resetDelayMinutes + "分後 にリセットされます。");
-        Bukkit.broadcastMessage(ChatColor.YELLOW + "エリトラなどのアイテム回収はお早めにお願いします！");
-        Bukkit.broadcastMessage(ChatColor.RED + "========================================");
+        Bukkit.broadcast(Component.text("========================================", NamedTextColor.RED));
+        Bukkit.broadcast(Component.text("🐉 " + reason, NamedTextColor.GOLD));
+        Bukkit.broadcast(Component.text("エンドワールドは " + resetDelayMinutes + "分後 にリセットされます。", NamedTextColor.YELLOW));
+        Bukkit.broadcast(Component.text("エリトラなどのアイテム回収はお早めにお願いします！", NamedTextColor.YELLOW));
+        Bukkit.broadcast(Component.text("========================================", NamedTextColor.RED));
 
         // 定期的なアナウンス（残り時間を通知）
         scheduleAnnouncements();
     }
 
+    private void scheduleResetTask(long delayTicks) {
+        if (resetTask != null)
+            resetTask.cancel();
+        resetTask = Bukkit.getScheduler().runTaskLater(plugin, this::performReset, delayTicks);
+    }
+
     private void scheduleAnnouncements() {
+        long now = System.currentTimeMillis();
+        long remainingMillis = scheduledResetTime - now;
+        if (remainingMillis <= 0)
+            return;
+
+        int remainingMinutes = (int) (remainingMillis / 1000 / 60);
+
         int[] announceAtMinutes = { 10, 5, 3, 1 };
         for (int min : announceAtMinutes) {
-            if (min < resetDelayMinutes) {
-                long delay = (resetDelayMinutes - min) * 60 * 20L;
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    if (resetTask != null && !resetTask.isCancelled()) {
-                        Bukkit.broadcastMessage(ChatColor.RED + "[EndReset] " + ChatColor.YELLOW + "エンドリセットまで残り " + min
-                                + "分 です！");
-                    }
-                }, delay);
+            if (min < remainingMinutes) {
+                long delay = (remainingMillis - (min * 60 * 1000L)) / 50;
+                if (delay > 0) {
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        if (scheduledResetTime > 0) {
+                            Bukkit.broadcast(Component.text("[EndReset] ", NamedTextColor.RED)
+                                    .append(Component.text("エンドリセットまで残り " + min + "分 です！", NamedTextColor.YELLOW)));
+                        }
+                    }, delay);
+                }
             }
         }
 
         // 30秒前
-        long delay30s = (resetDelayMinutes * 60 - 30) * 20L;
+        long delay30s = (remainingMillis - 30000L) / 50;
         if (delay30s > 0) {
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (resetTask != null && !resetTask.isCancelled()) {
-                    Bukkit.broadcastMessage(
-                            ChatColor.RED + "[EndReset] " + ChatColor.YELLOW + "エンドリセットまで残り 30秒 です！退避してください！");
+                if (scheduledResetTime > 0) {
+                    Bukkit.broadcast(Component.text("[EndReset] ", NamedTextColor.RED)
+                            .append(Component.text("エンドリセットまで残り 30秒 です！退避してください！", NamedTextColor.YELLOW)));
                 }
             }, delay30s);
         }
@@ -105,6 +179,12 @@ public class EndResetManager implements Listener {
     private void performReset() {
         resetTask = null;
         isResetting = true;
+
+        // 設定クリア
+        scheduledResetTime = 0;
+        plugin.getConfig().set("end.scheduledResetTime", 0);
+        plugin.saveConfig();
+
         World endWorld = Bukkit.getWorld(endWorldName);
 
         if (endWorld == null) {
@@ -113,67 +193,64 @@ public class EndResetManager implements Listener {
             return;
         }
 
-        Bukkit.broadcastMessage(ChatColor.RED + "[EndReset] エンドワールドのリセットを開始します...");
+        Bukkit.broadcast(Component.text("[EndReset] エンドワールドのリセットを開始します...", NamedTextColor.RED));
 
         // 1. プレイヤーを退避
         Location safeSpawn = Bukkit.getWorlds().get(0).getSpawnLocation();
         for (Player p : endWorld.getPlayers()) {
             p.teleport(safeSpawn);
-            p.sendMessage(ChatColor.YELLOW + "エンドワールドがリセットされるため、メインワールドに移動しました。");
+            p.sendMessage(Component.text("エンドワールドがリセットされるため、メインワールドに移動しました。", NamedTextColor.YELLOW));
         }
 
         // 2. ワールドのアンロード
         if (!Bukkit.unloadWorld(endWorld, false)) {
             plugin.getLogger().severe("Failed to unload End world! Reset aborted.");
-            Bukkit.broadcastMessage(ChatColor.DARK_RED + "[EndReset] エンドワールドのアンロードに失敗しました。リセットを中止します。");
+            Bukkit.broadcast(Component.text("[EndReset] エンドワールドのアンロードに失敗しました。リセットを中止します。", NamedTextColor.DARK_RED));
             isResetting = false;
             return;
         }
 
-        // 3. ファイル削除と再生成（非同期で行うと安全だが、BukkitAPI操作を含むため同期でやるか、慎重に）
-        // ファイル操作は重いので非同期でやりたいが、再ロードはメインスレッド必須。
-        // ここではシンプルにメインスレッドで実行する（ラグる可能性あり）。
+        // 3. ファイル削除と再生成
         try {
             File worldFolder = new File(Bukkit.getWorldContainer(), endWorldName);
-            File regionFolder = new File(worldFolder, "DIM1/region"); // Vanilla structure usually inside DIM1
-            // Spigot often puts region files directly in world_the_end/DIM1/region or
-            // world_the_end/region depending on
-            // config.
-            // Check standard Bukkit structure: root/world_name/region (for nether/end if
-            // separate folders)
-            // or root/world_name/DIM1/region (if using vanilla layout)
 
-            // Try to find region folder
+            // region (地形)
             File targetRegion = new File(worldFolder, "region");
-            if (!targetRegion.exists()) {
+            if (!targetRegion.exists())
                 targetRegion = new File(worldFolder, "DIM1/region");
-            }
-
             if (targetRegion.exists()) {
                 deleteDirectory(targetRegion);
                 plugin.getLogger().info("Deleted region folder: " + targetRegion.getAbsolutePath());
-            } else {
-                plugin.getLogger().warning("Region folder not found for deletion: " + targetRegion.getAbsolutePath());
             }
 
-            // level.dat を削除するとシード値などが変わる可能性があるが、今回は地形リセットが主目的なのでregion削除で十分か？
-            // エンドラ復活のためには level.dat 内の DragonFight データを消す必要があるかもしれない。
-            // 確実なのは DIM1 フォルダごと消すこと。
+            // DIM1 (エンティティ等)
             File dim1 = new File(worldFolder, "DIM1");
             if (dim1.exists()) {
                 deleteDirectory(dim1);
                 plugin.getLogger().info("Deleted DIM1 folder: " + dim1.getAbsolutePath());
             }
 
+            // level.dat (ドラゴン討伐状態など)
+            File levelDat = new File(worldFolder, "level.dat");
+            if (levelDat.exists()) {
+                if (levelDat.delete()) {
+                    plugin.getLogger().info("Deleted level.dat");
+                } else {
+                    plugin.getLogger().warning("Failed to delete level.dat");
+                }
+            }
+            File levelDatOld = new File(worldFolder, "level.dat_old");
+            if (levelDatOld.exists())
+                levelDatOld.delete();
+
         } catch (Exception e) {
             plugin.getLogger().log(Level.SEVERE, "Error deleting world files", e);
         }
 
         // 4. ワールドの再ロード（作成）
-        // 少し待ってからロード（ファイルロック回避のため）
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             Bukkit.createWorld(new org.bukkit.WorldCreator(endWorldName).environment(World.Environment.THE_END));
-            Bukkit.broadcastMessage(ChatColor.GREEN + "[EndReset] エンドワールドのリセットが完了しました！");
+            Bukkit.broadcast(Component.text("[EndReset] エンドワールドのリセットが完了しました！", NamedTextColor.GREEN));
             isResetting = false;
         }, 40L); // 2秒後
     }
@@ -201,6 +278,16 @@ public class EndResetManager implements Listener {
             resetTask.cancel();
             resetTask = null;
         }
+        scheduledResetTime = 0;
+        plugin.getConfig().set("end.scheduledResetTime", 0);
+        plugin.saveConfig();
         isResetting = false;
+    }
+
+    /**
+     * 手動でリセットカウントダウンを開始します。
+     */
+    public void forceReset() {
+        startResetCountdown("手動リセットが実行されました。");
     }
 }
