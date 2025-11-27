@@ -1,11 +1,7 @@
 package dev.gonjy.patrolspectator;
 
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
@@ -54,7 +50,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
     private TourConf tourConf;
     private int patrolIntervalSeconds;
-    private boolean announce; // 予約（未使用だが残す）
+    @SuppressWarnings("unused") // Reserved for future use, loaded from config
+    private boolean announce;
 
     // 保護情報
     private ProtectionData protectionData;
