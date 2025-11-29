@@ -77,9 +77,21 @@ public class EndResetManager implements Listener {
         if (isResetting || scheduledResetTime > 0)
             return;
 
+        // リセット直後（例えば5分以内）はチェックをスキップして、ドラゴンのスポーン待ち時間を確保する
+        long lastResetTime = plugin.getConfig().getLong("end.lastResetTime", 0);
+        if (System.currentTimeMillis() - lastResetTime < 5 * 60 * 1000L) {
+            return;
+        }
+
         World endWorld = Bukkit.getWorld(endWorldName);
         if (endWorld == null)
             return;
+
+        // 誰もいない場合はチャンクがロードされていない可能性が高いためチェックしない
+        // （誤検知による不要なリセットを防ぐ）
+        if (endWorld.getPlayers().isEmpty()) {
+            return;
+        }
 
         // ドラゴンを探す
         boolean dragonExists = endWorld.getEntitiesByClass(EnderDragon.class).size() > 0;
@@ -249,7 +261,24 @@ public class EndResetManager implements Listener {
 
         // 4. ワールドの再ロード（作成）
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            Bukkit.createWorld(new org.bukkit.WorldCreator(endWorldName).environment(World.Environment.THE_END));
+            World newEndWorld = Bukkit
+                    .createWorld(new org.bukkit.WorldCreator(endWorldName).environment(World.Environment.THE_END));
+
+            // エンダードラゴンを明示的にリスポーンさせる
+            if (newEndWorld != null) {
+                org.bukkit.boss.DragonBattle battle = newEndWorld.getEnderDragonBattle();
+                if (battle != null) {
+                    battle.initiateRespawn();
+                    plugin.getLogger().info("Initiated Ender Dragon respawn sequence.");
+                } else {
+                    plugin.getLogger().warning("Could not get DragonBattle instance.");
+                }
+            }
+
+            // リセット完了時刻を記録
+            plugin.getConfig().set("end.lastResetTime", System.currentTimeMillis());
+            plugin.saveConfig();
+
             Bukkit.broadcast(Component.text("[EndReset] エンドワールドのリセットが完了しました！", NamedTextColor.GREEN));
             isResetting = false;
         }, 40L); // 2秒後

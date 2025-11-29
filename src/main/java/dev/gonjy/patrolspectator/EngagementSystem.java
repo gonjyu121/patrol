@@ -52,8 +52,8 @@ public final class EngagementSystem {
             if (p.getUniqueId().equals(camera.getUniqueId()))
                 continue;
 
-            // サバイバルモードのみ対象
-            if (p.getGameMode() != org.bukkit.GameMode.SURVIVAL)
+            // サバイバルまたはアドベンチャーモードのみ対象
+            if (p.getGameMode() != org.bukkit.GameMode.SURVIVAL && p.getGameMode() != org.bukkit.GameMode.ADVENTURE)
                 continue;
 
             // 半径内チェック
@@ -83,8 +83,8 @@ public final class EngagementSystem {
             if (p.getUniqueId().equals(camera.getUniqueId()))
                 continue;
 
-            // サバイバルモードのみ対象
-            if (p.getGameMode() != org.bukkit.GameMode.SURVIVAL)
+            // サバイバルまたはアドベンチャーモードのみ対象
+            if (p.getGameMode() != org.bukkit.GameMode.SURVIVAL && p.getGameMode() != org.bukkit.GameMode.ADVENTURE)
                 continue;
 
             return p;

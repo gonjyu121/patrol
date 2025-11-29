@@ -48,6 +48,9 @@ public class PatrolManager {
     private org.bukkit.inventory.ItemStack[] savedInventory;
     private org.bukkit.inventory.ItemStack[] savedArmor;
 
+    // 直前に観戦していたプレイヤーのUUID（ローテーション用）
+    private UUID lastSpectatedUuid;
+
     /**
      * コンストラクタ。
      *
@@ -215,6 +218,7 @@ public class PatrolManager {
         startLocation = null;
         savedInventory = null;
         savedArmor = null;
+        lastSpectatedUuid = null;
         plugin.getLogger().info("パトロールを停止しました。");
     }
 
@@ -251,13 +255,45 @@ public class PatrolManager {
             return;
         }
 
-        // 1. 近くに「視点奪取対象」が居ればそっち優先
-        // 検索半径は 48.0 ブロック
-        Player target = engagementSystem.findGoodTargetNear(camera, 48.0);
+        // 1. 有効なターゲット一覧を取得
+        java.util.List<Player> validTargets = engagementSystem.getValidTargets(camera);
+        Player target = null;
 
-        // 近くにいなければ全ワールドから探す
-        if (target == null) {
-            target = engagementSystem.findGoodTargetGlobal(camera);
+        if (!validTargets.isEmpty()) {
+            // ターゲット候補が複数いる場合、直前に観戦していたプレイヤーを除外してローテーションさせる
+            if (validTargets.size() > 1 && lastSpectatedUuid != null) {
+                // リストをコピーして操作（元のリストは変更しない）
+                java.util.List<Player> candidates = new java.util.ArrayList<>(validTargets);
+                candidates.removeIf(p -> p.getUniqueId().equals(lastSpectatedUuid));
+
+                if (!candidates.isEmpty()) {
+                    // 候補からランダムに選択
+                    target = candidates.get(new java.util.Random().nextInt(candidates.size()));
+                }
+            }
+
+            // まだ決まっていない場合（候補が一人しかいない、または全員除外された場合など）
+            if (target == null) {
+                // 近くにいるプレイヤーを優先（観光モードからの切り替え時など）
+                target = engagementSystem.findGoodTargetNear(camera, 48.0);
+
+                // それでも決まらなければ、リストからランダムに選択
+                if (target == null) {
+                    target = validTargets.get(new java.util.Random().nextInt(validTargets.size()));
+                }
+            }
+
+            // ターゲットが見つかった場合、リストを表示（デバッグ兼情報）
+            StringBuilder sb = new StringBuilder("§a[Patrol] 現在、以下のプレイヤーがプレイ中です: ");
+            for (int i = 0; i < validTargets.size(); i++) {
+                if (i > 0)
+                    sb.append(", ");
+                sb.append(validTargets.get(i).getName());
+            }
+            camera.sendMessage(sb.toString());
+        } else {
+            // ターゲットが見つからなかった場合、デバッグログを出力
+            engagementSystem.findGoodTargetGlobal(camera);
         }
 
         if (target != null) {
@@ -359,7 +395,15 @@ public class PatrolManager {
     private void spectateTarget(Player camera, Player target) {
         if (camera == null || target == null)
             return;
-        // 3. 少し待ってから視点を奪う（クライアントのロード待ち・レースコンディション回避）
+
+        // 記録更新
+        lastSpectatedUuid = target.getUniqueId();
+
+        // 3. まず同じ場所にテレポートさせる（ワールド読み込み・チャンク同期のため）
+        camera.teleport(target.getLocation());
+
+        // 4. 少し待ってから視点を奪う（クライアントのロード待ち・レースコンディション回避）
+        // 5tickだと不安定な場合があるため 10tick (0.5秒) に延長
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (!camera.isOnline() || !target.isOnline())
                 return;
@@ -381,6 +425,6 @@ public class PatrolManager {
                 } catch (Throwable ignored) {
                 }
             }
-        }, 5L); // 5 ticks delay (0.25s)
+        }, 10L); // 10 ticks delay (0.5s)
     }
 }
