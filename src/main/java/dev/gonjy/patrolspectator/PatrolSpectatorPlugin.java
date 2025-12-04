@@ -197,11 +197,20 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     }
 
     private void applyServerRulesSafely() {
-        // Paper(Java)で通る範囲のみ実行。Bedrock専用は例外になるので握りつぶす
+        // 標準ルールはAPI経由で設定（チャットログが出ないようにするため）
+        for (org.bukkit.World world : Bukkit.getWorlds()) {
+            try {
+                world.setGameRule(org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, true);
+                world.setGameRule(org.bukkit.GameRule.KEEP_INVENTORY, false);
+                getLogger().info("[Rules] applied (API) for world: " + world.getName());
+            } catch (Throwable t) {
+                getLogger().warning("[Rules] failed (API) for world: " + world.getName() + " (" + t.getMessage() + ")");
+            }
+        }
+
+        // Bedrock環境の公平性維持（APIがないためコマンド実行）
         ConsoleCommandSender console = Bukkit.getServer().getConsoleSender();
         String[] cmds = new String[] {
-                "gamerule doDaylightCycle true",
-                "gamerule keepInventory false",
                 "gamerule locatorBar false", // Bedrock寄りAPIだが、実行できる環境もあるのでtry
                 "gamerule showCoordinates false" // ほぼ失敗するので try/catchで握る
         };
@@ -210,7 +219,9 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
                 Bukkit.dispatchCommand(console, c);
                 getLogger().info("[Rules] applied: " + c);
             } catch (Throwable t) {
-                getLogger().log(Level.WARNING, "[Rules] failed: " + c + " (" + t.getMessage() + ")");
+                // 失敗してもログに出しすぎないようにする（Bedrock専用コマンドなど）
+                // getLogger().log(Level.WARNING, "[Rules] failed: " + c + " (" + t.getMessage()
+                // + ")");
             }
         }
     }

@@ -57,4 +57,4 @@ discord:
 # End World Reset Settings
 end:
   # Minutes to wait before resetting the End after Dragon death or absence
-  resetDelayMinutes: 60
+  resetDelayMinutes: 120

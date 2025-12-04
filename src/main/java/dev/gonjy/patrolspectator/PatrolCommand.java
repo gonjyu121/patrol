@@ -3,14 +3,19 @@ package dev.gonjy.patrolspectator;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 /**
  * /patrol コマンドの処理を担当するクラス。
  */
-public class PatrolCommand implements CommandExecutor {
+public class PatrolCommand implements CommandExecutor, TabCompleter {
 
     private final PatrolSpectatorPlugin plugin;
     private final PatrolManager patrolManager;
@@ -32,6 +37,10 @@ public class PatrolCommand implements CommandExecutor {
             sender.sendMessage("§a/patrol start [dwellSeconds] - 観光巡りをスタート");
             sender.sendMessage("§a/patrol stop                 - 停止");
             sender.sendMessage("§a/patrol status               - 状態表示");
+            sender.sendMessage("§a/patrol rank                 - ランキング表示");
+            if (sender.isOp()) {
+                sender.sendMessage("§a/patrol reset_survival       - 連続生存時間リセット(OP)");
+            }
             return true;
         }
 
@@ -74,9 +83,35 @@ public class PatrolCommand implements CommandExecutor {
                 }
                 break;
             }
+            case "reset_survival": {
+                if (!sender.isOp()) {
+                    sender.sendMessage("§cPermission denied.");
+                    return true;
+                }
+                plugin.getStatsStorage().resetAllContinuousSurvivalTime();
+                sender.sendMessage("§a[Patrol] All continuous survival times have been reset.");
+                break;
+            }
             default:
                 sender.sendMessage("Unknown subcommand. /patrol help");
         }
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (args.length == 1) {
+            List<String> sub = new ArrayList<>(Arrays.asList("start", "stop", "status", "rank"));
+            if (sender.isOp()) {
+                sub.add("reset_survival");
+            }
+            List<String> ret = new ArrayList<>();
+            for (String s : sub) {
+                if (s.startsWith(args[0].toLowerCase()))
+                    ret.add(s);
+            }
+            return ret;
+        }
+        return Collections.emptyList();
     }
 }

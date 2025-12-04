@@ -12,11 +12,25 @@ public final class EngagementSystem {
 
     /** 起動時や必要時に呼ぶ：公平性維持のためHUDを抑制 */
     public void applyServerRules() {
-        run("gamerule doDaylightCycle true");
-        run("gamerule keepInventory false");
-        // Bedrock環境の公平性維持（いずれか片方のみ有効な環境あり）
+        // 標準ルールはAPI経由で設定（チャットログが出ないようにするため）
+        for (org.bukkit.World world : Bukkit.getWorlds()) {
+            setRule(world, org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, true);
+            setRule(world, org.bukkit.GameRule.KEEP_INVENTORY, false);
+        }
+
+        // Bedrock環境の公平性維持（APIがないためコマンド実行）
         run("gamerule locatorBar false");
         run("gamerule showCoordinates false");
+    }
+
+    private <T> void setRule(org.bukkit.World world, org.bukkit.GameRule<T> rule, T value) {
+        try {
+            if (world.setGameRule(rule, value)) {
+                log.info("[Rules] applied (API): " + rule.getName() + " = " + value + " in " + world.getName());
+            }
+        } catch (Throwable t) {
+            log.warning("[Rules] failed (API): " + rule.getName() + " (" + t.getMessage() + ")");
+        }
     }
 
     private void run(String cmd) {
@@ -42,11 +56,16 @@ public final class EngagementSystem {
         // Bedrock環境の公平性維持
         runQuietly("gamerule locatorBar false");
         runQuietly("gamerule showCoordinates false");
-        // 基本ルールの強制
-        runQuietly("gamerule doDaylightCycle true");
-        runQuietly("gamerule keepInventory false");
-        // 一人寝たら朝にする
-        runQuietly("gamerule playersSleepingPercentage 0");
+
+        // 基本ルールの強制（API経由）
+        for (org.bukkit.World world : Bukkit.getWorlds()) {
+            try {
+                world.setGameRule(org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, true);
+                world.setGameRule(org.bukkit.GameRule.KEEP_INVENTORY, false);
+                world.setGameRule(org.bukkit.GameRule.PLAYERS_SLEEPING_PERCENTAGE, 0);
+            } catch (Throwable ignored) {
+            }
+        }
     }
 
     /**
@@ -78,7 +97,7 @@ public final class EngagementSystem {
                 continue;
 
             // 半径内チェック
-            if (p.getLocation().distanceSquared(camLoc) <= radiusSq) {
+            if (p.getWorld().equals(camLoc.getWorld()) && p.getLocation().distanceSquared(camLoc) <= radiusSq) {
                 return p;
             }
         }

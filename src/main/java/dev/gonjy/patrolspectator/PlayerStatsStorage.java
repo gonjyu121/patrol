@@ -239,6 +239,23 @@ public class PlayerStatsStorage {
     }
 
     /**
+     * 全プレイヤーの連続生存時間をリセットします。
+     */
+    public void resetAllContinuousSurvivalTime() {
+        if (yaml.getConfigurationSection("players") == null)
+            return;
+
+        long now = System.currentTimeMillis();
+        for (String key : yaml.getConfigurationSection("players").getKeys(false)) {
+            String base = "players." + key;
+            yaml.set(base + ".continuousSurvivalMs", 0L);
+            // 現在のセッションもリセット（0から再スタート）
+            yaml.set(base + ".lastContinuousJoinAtMs", now);
+        }
+        saveSync();
+    }
+
+    /**
      * 全プレイヤーのUUIDリストを取得します。
      * 
      * @return プレイヤーUUIDのリスト

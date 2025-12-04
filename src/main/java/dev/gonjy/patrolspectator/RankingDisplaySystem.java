@@ -165,14 +165,14 @@ public class RankingDisplaySystem {
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.sendTitle(
                     ChatColor.RED + "🔥 連続生存時間ランキング 🔥",
-                    ChatColor.YELLOW + "死んだらリセット！現在の命の長さです",
+                    ChatColor.YELLOW + "死なずにプレイできているランキングです。",
                     10, 40, 10);
         }
 
         // チャット表示
         Bukkit.getServer().broadcastMessage(ChatColor.RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         Bukkit.getServer().broadcastMessage(ChatColor.RED + "🔥 連続生存時間ランキング 🔥");
-        Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "  死んだらリセット！現在の命の長さです");
+        Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "  死なずにプレイできているランキングです");
         Bukkit.getServer().broadcastMessage(ChatColor.RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         if (!ranking.isEmpty()) {

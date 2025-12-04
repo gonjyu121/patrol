@@ -32,7 +32,7 @@ public class EndResetManager implements Listener {
     public EndResetManager(PatrolSpectatorPlugin plugin) {
         this.plugin = plugin;
         this.endWorldName = "world_the_end"; // デフォルトのエンドワールド名
-        this.resetDelayMinutes = plugin.getConfig().getInt("end.resetDelayMinutes", 20);
+        this.resetDelayMinutes = plugin.getConfig().getInt("end.resetDelayMinutes", 120);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
 
         // 保存されたリセット時刻のロード
