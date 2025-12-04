@@ -144,6 +144,20 @@ public class AutoEventSystem implements Listener {
         Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "💎 参加者全員に報酬配布！");
         Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
+        // Discord通知
+        if (plugin instanceof PatrolSpectatorPlugin) {
+            PatrolSpectatorPlugin mainPlugin = (PatrolSpectatorPlugin) plugin;
+            if (plugin.getConfig().getBoolean("discord.notifications.events", true)) {
+                String ip = plugin.getConfig().getString("discord.server_ip", "your.server.ip");
+                int port = plugin.getServer().getPort();
+                String address = ip + ":" + port;
+
+                String discordMsg = String.format("⚔️ **Event Started!**\nGame: **%s**\nJoin now: `%s`", eventName,
+                        address);
+                mainPlugin.getDiscordWebhookClient().send(discordMsg);
+            }
+        }
+
         // イベント開始時の報酬配布
         giveEventStartRewards(eventType);
 
@@ -209,7 +223,7 @@ public class AutoEventSystem implements Listener {
                 };
             case "speed_contest":
                 return new ItemStack[] {
-                        new ItemStack(Material.POTION, 1),
+                        createPotion(org.bukkit.potion.PotionType.SWIFTNESS),
                         new ItemStack(Material.LEATHER_BOOTS, 1),
                         new ItemStack(Material.COOKED_BEEF, 8)
                 };
@@ -218,6 +232,16 @@ public class AutoEventSystem implements Listener {
                         new ItemStack(Material.BREAD, 8)
                 };
         }
+    }
+
+    private ItemStack createPotion(org.bukkit.potion.PotionType type) {
+        ItemStack potion = new ItemStack(Material.POTION);
+        org.bukkit.inventory.meta.PotionMeta meta = (org.bukkit.inventory.meta.PotionMeta) potion.getItemMeta();
+        if (meta != null) {
+            meta.setBasePotionType(type);
+            potion.setItemMeta(meta);
+        }
+        return potion;
     }
 
     private void giveEventStartRewards(String eventType) {
@@ -403,6 +427,32 @@ public class AutoEventSystem implements Listener {
                 String rank = getRankString(i + 1);
                 Bukkit.broadcastMessage(rank + " " + player.getName() + ": " + entry.getValue() + "ポイント (上限:"
                         + MAX_EVENT_POINTS_PER_PLAYER + ")");
+            }
+        }
+
+        // サーバーアドレスの表示
+        if (plugin instanceof PatrolSpectatorPlugin) {
+            PatrolSpectatorPlugin mainPlugin = (PatrolSpectatorPlugin) plugin;
+            String ip = plugin.getConfig().getString("discord.server_ip", "otougame.falixsrv.me");
+            int port = plugin.getServer().getPort();
+            String address = ip + ":" + port;
+            Bukkit.broadcastMessage(ChatColor.GRAY + "Server: " + address);
+
+            // Discord通知
+            if (plugin.getConfig().getBoolean("discord.notifications.events", true)) {
+                StringBuilder discordMsg = new StringBuilder();
+                discordMsg.append("📊 **Event Progress: ").append(getEventDisplayName(currentEvent)).append("**\n");
+                for (int i = 0; i < Math.min(5, sortedPlayers.size()); i++) {
+                    Map.Entry<UUID, Integer> entry = sortedPlayers.get(i);
+                    Player player = Bukkit.getPlayer(entry.getKey());
+                    if (player != null) {
+                        discordMsg.append(i + 1).append(". ").append(player.getName()).append(": ")
+                                .append(entry.getValue())
+                                .append("pts\n");
+                    }
+                }
+                discordMsg.append("Join now: `").append(address).append("`");
+                mainPlugin.getDiscordWebhookClient().send(discordMsg.toString());
             }
         }
     }
