@@ -2,6 +2,17 @@
 patrol:
   intervalSeconds: 10
   announce: true
+  titles:
+    enabled: true
+    fadeIn: 5
+    stay: 40
+    fadeOut: 10
+  sounds:
+    onPlayerSpectate:
+      enabled: false
+      type: UI_TOAST_CHALLENGE_COMPLETE
+      volume: 1.0
+      pitch: 1.2
   tour:
     enabled: true
     dwellSeconds: 10
@@ -9,6 +20,8 @@ patrol:
     file: tourist_locations.yml
     # 既存の内蔵リスト（外部ファイルが無い時のフォールバック）
     locations: []
+    useArmorStandPOIs: true
+    armorStandTag: patrol_poi
     # 自動生成（0〜1件しかない時に補完）
     autogen:
       enabled: true
