@@ -15,3 +15,33 @@ patrol:
       points: 6
       radius: 60
       yOffset: 0.0
+
+# YouTube Chat Integration (Safe Mode)
+youtube:
+  enabled: false # Disabled to avoid Google Cloud billing risks
+  client_id: ""
+  client_secret: ""
+  refresh_token: ""
+  # Optional: Fixed Video ID (If empty, auto-detects active stream)
+  video_id: ""
+  # Safety: Max messages per day (Default: 100)
+  max_daily_messages: 100
+
+# Discord Integration
+discord:
+  enabled: true
+  webhook_url: "https://discord.com/api/webhooks/1445307410536333373/BdWrRUXP9QYWnmlI8hysEIW0yCRkbWgkuBKseZ5n3vpYodClhvTrQRAkeQ2kGto8-FPU"
+  # Server IP (Host). Port is auto-detected.
+  server_ip: "otougame.falixsrv.me"
+  notifications:
+    # Notify when Auto Event starts
+    events: true
+    # Notify when player count reaches specific numbers (e.g. 3, 5, 10)
+    crowd_alert: true
+    # Forward in-game chat to Discord (Spam warning!)
+    chat: false
+
+# End World Reset Settings
+end:
+  # Minutes to wait before resetting the End after Dragon death or absence
+  resetDelayMinutes: 60

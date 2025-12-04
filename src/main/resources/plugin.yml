@@ -1,7 +1,7 @@
 # src/main/resources/plugin.yml
 name: PatrolSpectatorPlugin
 main: dev.gonjy.patrolspectator.PatrolSpectatorPlugin
-version: 1.9.14
+version: 1.9.17
 api-version: '1.21'
 authors: [ 'gonjy' ]
 commands:
@@ -11,8 +11,8 @@ commands:
     permission: patrolspectator.use
   bounty:
     description: Manage bounties
-    usage: /bounty <top|view|set>
-    permission: patrolspectator.use
+    usage: /bounty [list|add]
+    permission: patrol.bounty.use
 permissions:
   patrolspectator.use:
     default: op

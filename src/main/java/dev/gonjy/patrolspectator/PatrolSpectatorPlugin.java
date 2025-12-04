@@ -16,7 +16,11 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     private ParticipationManager participationManager;
     private PatrolManager patrolManager;
     private RankingDisplaySystem rankingDisplaySystem;
+
     private EndResetManager endResetManager;
+    private YouTubeManager youTubeManager;
+    private DiscordWebhookClient discordWebhookClient;
+    private BountyManager bountyManager;
 
     // タイトル/音の設定
     public static class TitleConf {
@@ -95,7 +99,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         MessageUtils.init(titleConf);
 
         // コマンド登録
-        getCommand("patrol").setExecutor(new PatrolCommand(this, patrolManager, rankingDisplaySystem));
+        // コマンド登録
+        PatrolCommand patrolCmd = new PatrolCommand(this, patrolManager, rankingDisplaySystem);
+        getCommand("patrol").setExecutor(patrolCmd);
+        getCommand("patrol").setTabCompleter(patrolCmd);
 
         // 自動イベントシステムの開始
         autoEventSystem.startAutoEvents();
@@ -105,7 +112,37 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
             engagementSystem.applyServerRulesQuietly();
         }, 1200L, 1200L);
 
+        // YouTube Integration
+        youTubeManager = new YouTubeManager(this);
+        if (getConfig().getBoolean("youtube.enabled", false)) {
+            String clientId = getConfig().getString("youtube.client_id");
+            String clientSecret = getConfig().getString("youtube.client_secret");
+            String refreshToken = getConfig().getString("youtube.refresh_token");
+            youTubeManager.initialize(clientId, clientSecret, refreshToken);
+            getServer().getPluginManager().registerEvents(new YouTubeChatListener(this, youTubeManager), this);
+        }
+
+        // Discord Integration
+        discordWebhookClient = new DiscordWebhookClient(this);
+        discordWebhookClient.reload();
+        if (getConfig().getBoolean("discord.enabled", false)) {
+            getServer().getPluginManager().registerEvents(new DiscordListener(this, discordWebhookClient), this);
+            getLogger().info("[Discord] Integration enabled.");
+        }
+
+        // Bounty System
+        bountyManager = new BountyManager(this);
+        getCommand("bounty").setExecutor(new BountyCommand(bountyManager));
+
         getLogger().info("PatrolSpectatorPlugin enabled.");
+    }
+
+    public DiscordWebhookClient getDiscordWebhookClient() {
+        return discordWebhookClient;
+    }
+
+    public BountyManager getBountyManager() {
+        return bountyManager;
     }
 
     @Override
@@ -127,6 +164,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
     private void loadConfigValues() {
         reloadConfig();
+        getConfig().options().copyDefaults(true);
+        saveConfig();
         patrolIntervalSeconds = getConfig().getInt("patrol.intervalSeconds", 10);
         announce = getConfig().getBoolean("patrol.announce", true); // 予約・今は未使用
 
