@@ -127,6 +127,7 @@ public class PatrolManager {
 
         // カメラ役をスペクテイターモードに変更（観光中の事故防止）
         camera.setGameMode(GameMode.SPECTATOR);
+        // camera.setReducedDebugInfo(true); // IDE error workaround
 
         // 観光地リストが空の場合の自動生成処理
         if (touristLocations.isEmpty()) {
@@ -206,6 +207,7 @@ public class PatrolManager {
         // カメラ役を開始地点とインベントリに戻す
         Player camera = getCamera();
         if (camera != null) {
+            // camera.setReducedDebugInfo(false); // IDE error workaround
             if (startLocation != null) {
                 camera.teleport(startLocation);
             }
@@ -307,7 +309,7 @@ public class PatrolManager {
             participationManager.noteParticipation(target.getUniqueId(), target.getName());
 
             // タイトル表示：プレイヤー名を大きく強調
-            MessageUtils.showTourTitle(camera, "§b" + target.getName() + " §7さんの視点");
+            MessageUtils.showTitleLargeSmall(camera, "§b" + target.getName() + " §7さんの視点", "§aNow On Air");
             return;
         }
 
