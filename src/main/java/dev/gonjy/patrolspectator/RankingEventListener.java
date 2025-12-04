@@ -35,6 +35,9 @@ public class RankingEventListener implements Listener {
             statsStorage.addPlayerKill(killer.getUniqueId());
             statsStorage.ensureName(killer.getUniqueId(), killer.getName());
         }
+
+        // 死亡したプレイヤーの連続生存時間をリセット
+        statsStorage.resetContinuousSurvivalTime(victim.getUniqueId());
     }
 
     /**

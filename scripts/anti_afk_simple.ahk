@@ -60,10 +60,11 @@ PerformAFKAction() {
     
     switch actionType {
         case 1:
-            ; マウス移動 (視点がずれるため無効化)
-            ; x := Random(100, 800)
-            ; y := Random(100, 600)
-            ; MouseMove(x, y, 10)
+            ; マウス移動 (相対移動に変更)
+            ; 視点をわずかに揺らす (ジッター)
+            DllCall("mouse_event", "UInt", 0x0001, "Int", 1, "Int", 0, "UInt", 0, "UInt", 0)
+            Sleep(50)
+            DllCall("mouse_event", "UInt", 0x0001, "Int", -1, "Int", 0, "UInt", 0, "UInt", 0)
             
         case 2:
             ; 左クリック

@@ -28,6 +28,27 @@ public final class EngagementSystem {
         }
     }
 
+    private void runQuietly(String cmd) {
+        try {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+            // ログ出力なし
+        } catch (Throwable ignored) {
+            // エラーも無視
+        }
+    }
+
+    /** 定期実行用：ログを出さずにルールを適用 */
+    public void applyServerRulesQuietly() {
+        // Bedrock環境の公平性維持
+        runQuietly("gamerule locatorBar false");
+        runQuietly("gamerule showCoordinates false");
+        // 基本ルールの強制
+        runQuietly("gamerule doDaylightCycle true");
+        runQuietly("gamerule keepInventory false");
+        // 一人寝たら朝にする
+        runQuietly("gamerule playersSleepingPercentage 0");
+    }
+
     /**
      * カメラ役の近くにいる「観戦対象として適切なプレイヤー」を探します。
      * <p>
@@ -89,7 +110,65 @@ public final class EngagementSystem {
 
             return p;
         }
+
+        // デバッグログ出力（ターゲットが見つからなかった場合のみ、1分に1回）
+        logDebugInfoIfNeeded(camera);
+
         return null;
+    }
+
+    /**
+     * 観戦対象として有効な全プレイヤーのリストを返します。
+     * 
+     * @param camera カメラ役プレイヤー
+     * @return 有効なプレイヤーのリスト
+     */
+    public java.util.List<org.bukkit.entity.Player> getValidTargets(org.bukkit.entity.Player camera) {
+        java.util.List<org.bukkit.entity.Player> targets = new java.util.ArrayList<>();
+        if (camera == null || !camera.isOnline())
+            return targets;
+
+        for (org.bukkit.entity.Player p : Bukkit.getOnlinePlayers()) {
+            // カメラ本人は除外
+            if (p.getUniqueId().equals(camera.getUniqueId()))
+                continue;
+
+            // サバイバルまたはアドベンチャーモードのみ対象
+            if (p.getGameMode() != org.bukkit.GameMode.SURVIVAL && p.getGameMode() != org.bukkit.GameMode.ADVENTURE)
+                continue;
+
+            targets.add(p);
+        }
+        return targets;
+    }
+
+    private long lastDebugLogTime = 0;
+
+    private void logDebugInfoIfNeeded(org.bukkit.entity.Player camera) {
+        long now = System.currentTimeMillis();
+        if (now - lastDebugLogTime < 60000) { // 1分間隔
+            return;
+        }
+        lastDebugLogTime = now;
+
+        log.info("[Debug] 観戦対象が見つかりませんでした。現在のプレイヤー状態:");
+        for (org.bukkit.entity.Player p : Bukkit.getOnlinePlayers()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("- ").append(p.getName()).append(": ");
+
+            if (p.getUniqueId().equals(camera.getUniqueId())) {
+                sb.append("SKIP(Camera)");
+            } else {
+                sb.append("GM=").append(p.getGameMode());
+                if (p.getGameMode() != org.bukkit.GameMode.SURVIVAL
+                        && p.getGameMode() != org.bukkit.GameMode.ADVENTURE) {
+                    sb.append("(対象外)");
+                } else {
+                    sb.append("(対象)");
+                }
+            }
+            log.info(sb.toString());
+        }
     }
 
     /**

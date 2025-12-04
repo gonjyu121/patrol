@@ -39,7 +39,14 @@ public class PlayerStatsStorage {
         int count = yaml.getInt(base + ".loginCount", 0) + 1;
         yaml.set(base + ".loginCount", count);
         yaml.set(base + ".name", playerName);
-        yaml.set(base + ".lastJoinAtMs", System.currentTimeMillis());
+        long now = System.currentTimeMillis();
+        yaml.set(base + ".lastJoinAtMs", now);
+        // 連続生存時間用の開始時刻も更新（前回の続きとして扱うため、リセットはしない）
+        // ただし、もし前回のログアウト処理が正常に行われていれば、lastContinuousJoinAtMs は 0 になっているはず？
+        // いや、セッションまたぎで継続させたいので、ログイン時に「現在の時刻」をセットして、
+        // 取得時に (stored + (now - lastContinuous)) で計算する。
+        yaml.set(base + ".lastContinuousJoinAtMs", now);
+
         saveSync();
         return count;
     }
@@ -49,14 +56,27 @@ public class PlayerStatsStorage {
         if (playerId == null)
             return;
         String base = basePath(playerId);
+        long now = System.currentTimeMillis();
+
+        // 累計プレイ時間の更新
         long lastJoin = yaml.getLong(base + ".lastJoinAtMs", 0L);
         if (lastJoin > 0) {
-            long session = Math.max(0, System.currentTimeMillis() - lastJoin);
+            long session = Math.max(0, now - lastJoin);
             long total = yaml.getLong(base + ".totalPlayMs", 0L) + session;
             yaml.set(base + ".totalPlayMs", total);
         }
-        yaml.set(base + ".lastQuitAtMs", System.currentTimeMillis());
+
+        // 連続生存時間の更新
+        long lastContinuousJoin = yaml.getLong(base + ".lastContinuousJoinAtMs", 0L);
+        if (lastContinuousJoin > 0) {
+            long session = Math.max(0, now - lastContinuousJoin);
+            long currentContinuous = yaml.getLong(base + ".continuousSurvivalMs", 0L) + session;
+            yaml.set(base + ".continuousSurvivalMs", currentContinuous);
+        }
+
+        yaml.set(base + ".lastQuitAtMs", now);
         yaml.set(base + ".lastJoinAtMs", 0L);
+        yaml.set(base + ".lastContinuousJoinAtMs", 0L);
         saveSync();
     }
 
@@ -72,6 +92,31 @@ public class PlayerStatsStorage {
     /** 総プレイ時間（ms）を取得 */
     public long getTotalPlayTimeMillis(UUID playerId) {
         return yaml.getLong(basePath(playerId) + ".totalPlayMs", 0L);
+    }
+
+    /** 連続生存時間（ms）を取得 */
+    public long getContinuousSurvivalTimeMillis(UUID playerId) {
+        String base = basePath(playerId);
+        long stored = yaml.getLong(base + ".continuousSurvivalMs", 0L);
+        long lastContinuousJoin = yaml.getLong(base + ".lastContinuousJoinAtMs", 0L);
+
+        // オンライン（lastContinuousJoinAtMs > 0）なら、現在のセッション時間を加算
+        if (lastContinuousJoin > 0) {
+            return stored + (System.currentTimeMillis() - lastContinuousJoin);
+        }
+        return stored;
+    }
+
+    /** 連続生存時間をリセット（死亡時など） */
+    public void resetContinuousSurvivalTime(UUID playerId) {
+        if (playerId == null)
+            return;
+        String base = basePath(playerId);
+        yaml.set(base + ".continuousSurvivalMs", 0L);
+        // 現在のセッション開始時刻を「今」にリセットすることで、
+        // 次回の計算時に (now - now) = 0 から再スタートさせる
+        yaml.set(base + ".lastContinuousJoinAtMs", System.currentTimeMillis());
+        saveSync();
     }
 
     /** ログイン回数を取得 */

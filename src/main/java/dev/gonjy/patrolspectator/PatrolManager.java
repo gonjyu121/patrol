@@ -116,6 +116,9 @@ public class PatrolManager {
         gameModeEnforcer.setCameraOperator(cameraUuid);
         gameModeEnforcer.start();
 
+        // ルール適用（開始時はログを出しても良い）
+        engagementSystem.applyServerRules();
+
         // ランキング表示の開始（カメラ役を除外対象に設定）
         rankingDisplaySystem.setExcludedPlayer(cameraUuid);
         rankingDisplaySystem.startRankingDisplay();

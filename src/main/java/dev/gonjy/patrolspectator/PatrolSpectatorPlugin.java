@@ -100,6 +100,11 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         // 自動イベントシステムの開始
         autoEventSystem.startAutoEvents();
 
+        // ルール定期適用タスク（1分間隔）
+        getServer().getScheduler().runTaskTimer(this, () -> {
+            engagementSystem.applyServerRulesQuietly();
+        }, 1200L, 1200L);
+
         getLogger().info("PatrolSpectatorPlugin enabled.");
     }
 

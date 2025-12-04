@@ -73,7 +73,7 @@ public class RankingDisplaySystem {
     }
 
     /**
-     * 4種類のランキングを順番に表示します。
+     * 5種類のランキングを順番に表示します。
      */
     public void displayRankings() {
         // Title表示でランキング開始を通知
@@ -86,19 +86,24 @@ public class RankingDisplaySystem {
 
         // 5秒後に詳細ランキングを表示
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            displaySurvivalTimeRanking();
+            displayTotalPlayTimeRanking(); // 1. 累計プレイ時間
 
-            // 2秒後にPK数ランキング
+            // 2秒後に連続生存時間ランキング
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                displayKillCountRanking();
+                displayContinuousSurvivalTimeRanking(); // 2. 連続生存時間
 
-                // 2秒後にエンダードラゴン討伐数ランキング
+                // 2秒後にPK数ランキング
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    displayEnderDragonKillRanking();
+                    displayKillCountRanking(); // 3. PK数
 
-                    // 2秒後にイベントポイントランキング
+                    // 2秒後にエンダードラゴン討伐数ランキング
                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                        displayEventPointsRanking();
+                        displayEnderDragonKillRanking(); // 4. エンドラ討伐数
+
+                        // 2秒後にイベントポイントランキング
+                        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                            displayEventPointsRanking(); // 5. イベントポイント
+                        }, 40L);
                     }, 40L);
                 }, 40L);
             }, 40L);
@@ -106,22 +111,23 @@ public class RankingDisplaySystem {
     }
 
     /**
-     * 累計生存時間ランキングを表示します。
+     * 累計プレイ時間ランキングを表示します。
      */
-    private void displaySurvivalTimeRanking() {
+    private void displayTotalPlayTimeRanking() {
         List<Map.Entry<UUID, Long>> ranking = getTotalSurvivalTimeRanking();
 
         // Title表示
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.sendTitle(
-                    ChatColor.GOLD + "🏆 累計生存時間ランキング",
-                    "",
+                    ChatColor.GOLD + "🏆 累計プレイ時間ランキング",
+                    ChatColor.YELLOW + "サーバーで遊んでくれた時間の合計です",
                     10, 40, 10);
         }
 
         // チャット表示
         Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "🏆 累計生存時間ランキング 🏆");
+        Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "🏆 累計プレイ時間ランキング 🏆");
+        Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "  サーバーで遊んでくれた時間の合計です");
         Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         if (!ranking.isEmpty()) {
@@ -146,6 +152,51 @@ public class RankingDisplaySystem {
         } else {
             Bukkit.getServer()
                     .broadcastMessage(ChatColor.GRAY + "  📊 まだ記録保持者がいません。あなたの挑戦を待っています！");
+        }
+    }
+
+    /**
+     * 連続生存時間ランキングを表示します。
+     */
+    private void displayContinuousSurvivalTimeRanking() {
+        List<Map.Entry<UUID, Long>> ranking = getContinuousSurvivalTimeRanking();
+
+        // Title表示
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.sendTitle(
+                    ChatColor.RED + "🔥 連続生存時間ランキング 🔥",
+                    ChatColor.YELLOW + "死んだらリセット！現在の命の長さです",
+                    10, 40, 10);
+        }
+
+        // チャット表示
+        Bukkit.getServer().broadcastMessage(ChatColor.RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        Bukkit.getServer().broadcastMessage(ChatColor.RED + "🔥 連続生存時間ランキング 🔥");
+        Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "  死んだらリセット！現在の命の長さです");
+        Bukkit.getServer().broadcastMessage(ChatColor.RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+        if (!ranking.isEmpty()) {
+            for (int i = 0; i < Math.min(3, ranking.size()); i++) {
+                Map.Entry<UUID, Long> entry = ranking.get(i);
+                String playerName = statsStorage.getPlayerName(entry.getKey());
+                long totalMinutes = entry.getValue() / (1000 * 60);
+                long totalHours = totalMinutes / 60;
+                String medal = i == 0 ? "🥇" : i == 1 ? "🥈" : "🥉";
+                String status = Bukkit.getPlayer(entry.getKey()) != null ? "🟢" : "⚫";
+
+                String timeDisplay;
+                if (totalHours > 0) {
+                    timeDisplay = totalHours + "時間" + (totalMinutes % 60) + "分";
+                } else {
+                    timeDisplay = totalMinutes + "分";
+                }
+
+                Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "  " + medal + " " + status + " "
+                        + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": " + ChatColor.RED + timeDisplay);
+            }
+        } else {
+            Bukkit.getServer()
+                    .broadcastMessage(ChatColor.GRAY + "  🔥 まだ生存者はいません。生き残れ！");
         }
     }
 
@@ -284,6 +335,33 @@ public class RankingDisplaySystem {
         }
 
         // 累計生存時間の長い順にソート
+        ranking.sort((a, b) -> Long.compare(b.getValue(), a.getValue()));
+        return ranking;
+    }
+
+    /**
+     * 連続生存時間ランキングを取得します。
+     * 
+     * @return 連続生存時間ランキング（上位から順）
+     */
+    private List<Map.Entry<UUID, Long>> getContinuousSurvivalTimeRanking() {
+        List<Map.Entry<UUID, Long>> ranking = new ArrayList<>();
+
+        for (UUID playerId : statsStorage.getAllPlayerIds()) {
+            // 除外プレイヤーはスキップ
+            if (playerId.equals(excludedPlayerUuid)) {
+                continue;
+            }
+
+            long continuousTime = statsStorage.getContinuousSurvivalTimeMillis(playerId);
+
+            // 連続生存時間が1分以上ある場合のみ
+            if (continuousTime > 60000) {
+                ranking.add(new SimpleEntry<>(playerId, continuousTime));
+            }
+        }
+
+        // 連続生存時間の長い順にソート
         ranking.sort((a, b) -> Long.compare(b.getValue(), a.getValue()));
         return ranking;
     }
