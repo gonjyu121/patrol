@@ -344,16 +344,17 @@ public class PatrolManager {
                 continue;
             }
 
-            // エンドリセット中、またはエンダードラゴンがいない場合はエンドワールドをスキップ
+            // エンドリセット中、またはエンダードラゴンがいない場合の処理
             if (w.getName().equals("world_the_end") || w.getEnvironment() == World.Environment.THE_END) {
-                if (plugin.getEndResetManager() != null && plugin.getEndResetManager().isResetting()) {
-                    attempts++;
-                    continue;
-                }
-                // ドラゴン不在チェック（ただしプレイヤーがいる場合はスキップしない）
-                if (w.getEntitiesByClass(org.bukkit.entity.EnderDragon.class).isEmpty() && w.getPlayers().isEmpty()) {
-                    attempts++;
-                    continue;
+                if (plugin.getEndResetManager() != null) {
+                    // リセット処理中(ワールド削除中など)はスキップ
+                    if (plugin.getEndResetManager().isResetting()) {
+                        attempts++;
+                        continue;
+                    }
+
+                    // リセット待機中（カウントダウン中）なら、タイトルに追加情報を出すためスキップしない
+                    // また、ドラゴンがいなくても「不在確認」のためにスキップしない
                 }
             }
 
@@ -377,7 +378,22 @@ public class PatrolManager {
         camera.teleport(loc);
         camera.setFlying(true); // スペクテイターモードでの重力落下（視点ズレ）防止
 
-        MessageUtils.showTourTitle(camera, nextLocation.name);
+        // タイトル表示（エンドリセット待機中なら残り時間を追記）
+        String subTitle = "";
+        if (w.getEnvironment() == World.Environment.THE_END && plugin.getEndResetManager() != null) {
+            long remaining = plugin.getEndResetManager().getRemainingResetTimeMillis();
+            if (remaining > 0) {
+                long mins = remaining / 60000;
+                long secs = (remaining % 60000) / 1000;
+                subTitle = "§c再生成まで: " + mins + "分" + secs + "秒";
+            }
+        }
+
+        if (!subTitle.isEmpty()) {
+            MessageUtils.showTitleLargeSmall(camera, nextLocation.name, subTitle);
+        } else {
+            MessageUtils.showTourTitle(camera, nextLocation.name);
+        }
     }
 
     /**
@@ -385,10 +401,19 @@ public class PatrolManager {
      * 
      * @return カメラ役プレイヤー、設定されていない場合は null
      */
-    private Player getCamera() {
+    /**
+     * カメラ役のプレイヤーを取得します。
+     * 
+     * @return カメラ役プレイヤー、設定されていない場合は null
+     */
+    public Player getCameraPlayer() {
         if (cameraUuid == null)
             return null;
         return Bukkit.getPlayer(cameraUuid);
+    }
+
+    private Player getCamera() {
+        return getCameraPlayer();
     }
 
     /**

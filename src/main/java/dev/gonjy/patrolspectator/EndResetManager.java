@@ -275,11 +275,22 @@ public class EndResetManager implements Listener {
                 }
             }
 
+            // 難易度をランダムに決定 (50%の確率でハードモード)
+            boolean isHardMode = new java.util.Random().nextBoolean();
+            plugin.getConfig().set("end.difficulty", isHardMode ? "HARD" : "NORMAL");
+
             // リセット完了時刻を記録
             plugin.getConfig().set("end.lastResetTime", System.currentTimeMillis());
             plugin.saveConfig();
 
             Bukkit.broadcast(Component.text("[EndReset] エンドワールドのリセットが完了しました！", NamedTextColor.GREEN));
+
+            if (isHardMode) {
+                Bukkit.broadcast(Component.text("⚠ エンドワールドから強大なエネルギー反応を検知しました... (HARD MODE)", NamedTextColor.RED));
+            } else {
+                Bukkit.broadcast(Component.text("エンドワールドのエネルギー反応は正常です。(NORMAL MODE)", NamedTextColor.GREEN));
+            }
+
             isResetting = false;
         }, 40L); // 2秒後
     }
@@ -311,6 +322,16 @@ public class EndResetManager implements Listener {
         plugin.getConfig().set("end.scheduledResetTime", 0);
         plugin.saveConfig();
         isResetting = false;
+    }
+
+    /**
+     * リセットまでの残り時間を取得します（ミリ秒）。
+     * 予定がない場合は -1 を返します。
+     */
+    public long getRemainingResetTimeMillis() {
+        if (scheduledResetTime <= 0)
+            return -1;
+        return Math.max(0, scheduledResetTime - System.currentTimeMillis());
     }
 
     /**
