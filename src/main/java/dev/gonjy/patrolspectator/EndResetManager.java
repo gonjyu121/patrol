@@ -97,7 +97,10 @@ public class EndResetManager implements Listener {
         boolean dragonExists = endWorld.getEntitiesByClass(EnderDragon.class).size() > 0;
 
         if (!dragonExists) {
-            plugin.getLogger().info("Ender Dragon not found in " + endWorldName + ". Scheduling reset.");
+            plugin.getLogger().info("[Debug] Ender Dragon NOT found in " + endWorldName + ". (Entities checked: "
+                    + endWorld.getEntities().size() + ")");
+            plugin.getLogger().info("[Debug] Players in world: " + endWorld.getPlayers().size());
+            plugin.getLogger().info("Scheduling reset due to dragon absence.");
             startResetCountdown("エンダードラゴンの不在を確認しました。");
         }
     }
@@ -287,8 +290,15 @@ public class EndResetManager implements Listener {
 
             if (isHardMode) {
                 Bukkit.broadcast(Component.text("⚠ エンドワールドから強大なエネルギー反応を検知しました... (HARD MODE)", NamedTextColor.RED));
+                if (plugin.getDiscordWebhookClient() != null) {
+                    plugin.getDiscordWebhookClient()
+                            .send("🐉 **The Void Dragon** has appeared! (Difficulty: **HARD**)");
+                }
             } else {
                 Bukkit.broadcast(Component.text("エンドワールドのエネルギー反応は正常です。(NORMAL MODE)", NamedTextColor.GREEN));
+                if (plugin.getDiscordWebhookClient() != null) {
+                    plugin.getDiscordWebhookClient().send("🐉 **The Void Dragon** has appeared! (Difficulty: Normal)");
+                }
             }
 
             isResetting = false;
