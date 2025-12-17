@@ -349,12 +349,11 @@ public class PatrolManager {
                 if (plugin.getEndResetManager() != null) {
                     // リセット処理中(ワールド削除中など)はスキップ
                     if (plugin.getEndResetManager().isResetting()) {
+                        // plugin.getLogger().info("[Debug] Skipping End world because it is
+                        // resetting.");
                         attempts++;
                         continue;
                     }
-
-                    // リセット待機中（カウントダウン中）なら、タイトルに追加情報を出すためスキップしない
-                    // また、ドラゴンがいなくても「不在確認」のためにスキップしない
                 }
             }
 
@@ -369,6 +368,37 @@ public class PatrolManager {
         }
 
         World w = Bukkit.getWorld(nextLocation.world);
+        if (w == null) {
+            // ワールドがロードされていない場合、ロードを試みる
+            // System.out.println("[Debug] World " + nextLocation.world + " is not loaded.
+            // Attempting to create/load...");
+            try {
+                w = Bukkit.createWorld(new org.bukkit.WorldCreator(nextLocation.world));
+            } catch (Exception e) {
+                plugin.getLogger().warning("Failed to load world: " + nextLocation.world);
+            }
+        }
+
+        if (w == null) {
+            plugin.getLogger().warning("[Debug] Skipped patrol location " + nextLocation.name + " because world "
+                    + nextLocation.world + " could not be loaded.");
+            return;
+        }
+
+        // *** 特殊ロジック: エンドならドラゴンを探す ***
+        if (w.getEnvironment() == World.Environment.THE_END) {
+            org.bukkit.entity.EnderDragon dragon = w.getEntitiesByClass(org.bukkit.entity.EnderDragon.class).stream()
+                    .findFirst().orElse(null);
+
+            if (dragon != null && dragon.isValid()) {
+                spectateEntity(camera, dragon);
+
+                // タイトル表示
+                MessageUtils.showTitleLargeSmall(camera, "§5The Void Dragon", "§7Spectating Enemy");
+                return;
+            }
+        }
+
         // pitch が極端（真下/真上）になりすぎないよう補正：±85度にクリップ
         float safePitch = Math.max(-85f, Math.min(85f, nextLocation.pitch));
 
@@ -423,19 +453,30 @@ public class PatrolManager {
      * @param target 観戦対象プレイヤー
      */
     private void spectateTarget(Player camera, Player target) {
+        spectateEntity(camera, target);
+    }
+
+    /**
+     * 指定したエンティティを観戦（スペクテイター）します。
+     *
+     * @param camera カメラ役プレイヤー
+     * @param target 観戦対象エンティティ
+     */
+    private void spectateEntity(Player camera, org.bukkit.entity.Entity target) {
         if (camera == null || target == null)
             return;
 
-        // 記録更新
-        lastSpectatedUuid = target.getUniqueId();
+        // プレイヤーの場合は記録更新（ローテーション用）
+        if (target instanceof Player) {
+            lastSpectatedUuid = target.getUniqueId();
+        }
 
         // 3. まず同じ場所にテレポートさせる（ワールド読み込み・チャンク同期のため）
         camera.teleport(target.getLocation());
 
         // 4. 少し待ってから視点を奪う（クライアントのロード待ち・レースコンディション回避）
-        // 5tickだと不安定な場合があるため 10tick (0.5秒) に延長
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (!camera.isOnline() || !target.isOnline())
+            if (!camera.isOnline() || !target.isValid())
                 return;
 
             try {
@@ -446,13 +487,14 @@ public class PatrolManager {
                 camera.teleport(target.getLocation());
             }
 
-            // 観戦開始時のサウンド再生（設定で有効な場合）
-            // タイミングを合わせるためここで再生
-            PatrolSpectatorPlugin.SoundConf soundConf = plugin.getSpectateSoundConf();
-            if (soundConf != null && soundConf.enabled) {
-                try {
-                    engagementSystem.playNamedSound(camera, soundConf.type, soundConf.volume, soundConf.pitch);
-                } catch (Throwable ignored) {
+            // プレイヤーの場合のみサウンド再生
+            if (target instanceof Player) {
+                PatrolSpectatorPlugin.SoundConf soundConf = plugin.getSpectateSoundConf();
+                if (soundConf != null && soundConf.enabled) {
+                    try {
+                        engagementSystem.playNamedSound(camera, soundConf.type, soundConf.volume, soundConf.pitch);
+                    } catch (Throwable ignored) {
+                    }
                 }
             }
         }, 10L); // 10 ticks delay (0.5s)
