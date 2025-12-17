@@ -44,7 +44,7 @@ public class DiscordListener implements Listener {
             int port = plugin.getServer().getPort();
             String address = ip + ":" + port;
 
-            String msg = String.format("🎉 **Crowd Alert!**\nCurrently **%d** players are online!\nJoin now: `%s`",
+            String msg = String.format("🎉 **人数通知！**\n現在 **%d人** がオンラインです！\n参加はこちら: `%s`",
                     onlineCount, address);
             webhookClient.send(msg);
         }
@@ -52,13 +52,14 @@ public class DiscordListener implements Listener {
 
     @EventHandler
     public void onPlayerChat(AsyncPlayerChatEvent event) {
-        if (!plugin.getConfig().getBoolean("discord.notifications.chat", false)) {
-            return;
-        }
+        // Chat notification enabled by default or specific config
+        // if (!plugin.getConfig().getBoolean("discord.notifications.chat", true)) {
+        // return;
+        // }
 
         String playerName = event.getPlayer().getName();
         String message = event.getMessage();
-        // Simple format: **Player**: Message
-        webhookClient.send("**" + playerName + "**: " + message);
+        // Format: [Minecraft] Player: Message
+        webhookClient.send("[Minecraft] **" + playerName + "**: " + message);
     }
 }

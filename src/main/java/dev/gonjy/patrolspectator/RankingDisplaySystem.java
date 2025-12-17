@@ -103,6 +103,12 @@ public class RankingDisplaySystem {
                         // 2秒後にイベントポイントランキング
                         Bukkit.getScheduler().runTaskLater(plugin, () -> {
                             displayEventPointsRanking(); // 5. イベントポイント
+
+                            // 称号の説明を追加
+                            Bukkit.getServer().broadcastMessage("");
+                            Bukkit.getServer()
+                                    .broadcastMessage(ChatColor.GRAY + "※ " + ChatColor.GOLD + "[★]" + ChatColor.GRAY
+                                            + " は " + ChatColor.RED + "ヴォイド・ドラゴン" + ChatColor.GRAY + " 討伐の証です");
                         }, 40L);
                     }, 40L);
                 }, 40L);
@@ -110,11 +116,27 @@ public class RankingDisplaySystem {
         }, 100L);
     }
 
+    private void broadcastToDiscord(String title, List<String> lines) {
+        if (plugin instanceof PatrolSpectatorPlugin) {
+            DiscordWebhookClient client = ((PatrolSpectatorPlugin) plugin).getDiscordWebhookClient();
+            if (client != null) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("**").append(title).append("**\n");
+                for (String line : lines) {
+                    sb.append(line).append("\n");
+                }
+                client.send(sb.toString());
+            }
+        }
+    }
+
     /**
      * 累計プレイ時間ランキングを表示します。
      */
     private void displayTotalPlayTimeRanking() {
         List<Map.Entry<UUID, Long>> ranking = getTotalSurvivalTimeRanking();
+
+        List<String> discordLines = new ArrayList<>();
 
         // Title表示
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -133,7 +155,7 @@ public class RankingDisplaySystem {
         if (!ranking.isEmpty()) {
             for (int i = 0; i < Math.min(3, ranking.size()); i++) {
                 Map.Entry<UUID, Long> entry = ranking.get(i);
-                String playerName = statsStorage.getPlayerName(entry.getKey());
+                String playerName = getDisplayName(entry.getKey());
                 long totalMinutes = entry.getValue() / (1000 * 60);
                 long totalHours = totalMinutes / 60;
                 String medal = i == 0 ? "🥇" : i == 1 ? "🥈" : "🥉";
@@ -146,13 +168,20 @@ public class RankingDisplaySystem {
                     timeDisplay = totalMinutes + "分";
                 }
 
-                Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "  " + medal + " " + status + " "
-                        + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": " + ChatColor.GOLD + timeDisplay);
+                String line = "  " + medal + " " + status + " " + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": "
+                        + ChatColor.GOLD + timeDisplay;
+                Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + line);
+
+                // Remove color codes for Discord
+                discordLines.add(ChatColor.stripColor(medal + " " + playerName + ": " + timeDisplay));
             }
         } else {
             Bukkit.getServer()
                     .broadcastMessage(ChatColor.GRAY + "  📊 まだ記録保持者がいません。あなたの挑戦を待っています！");
+            discordLines.add("記録保持者なし");
         }
+
+        broadcastToDiscord("🏆 累計プレイ時間ランキング", discordLines);
     }
 
     /**
@@ -178,7 +207,7 @@ public class RankingDisplaySystem {
         if (!ranking.isEmpty()) {
             for (int i = 0; i < Math.min(3, ranking.size()); i++) {
                 Map.Entry<UUID, Long> entry = ranking.get(i);
-                String playerName = statsStorage.getPlayerName(entry.getKey());
+                String playerName = getDisplayName(entry.getKey());
                 long totalMinutes = entry.getValue() / (1000 * 60);
                 long totalHours = totalMinutes / 60;
                 String medal = i == 0 ? "🥇" : i == 1 ? "🥈" : "🥉";
@@ -222,7 +251,7 @@ public class RankingDisplaySystem {
         if (!ranking.isEmpty()) {
             for (int i = 0; i < Math.min(3, ranking.size()); i++) {
                 Map.Entry<UUID, Integer> entry = ranking.get(i);
-                String playerName = statsStorage.getPlayerName(entry.getKey());
+                String playerName = getDisplayName(entry.getKey());
                 int kills = entry.getValue();
                 String medal = i == 0 ? "🥇" : i == 1 ? "🥈" : "🥉";
                 String status = Bukkit.getPlayer(entry.getKey()) != null ? "🟢" : "⚫";
@@ -241,6 +270,7 @@ public class RankingDisplaySystem {
      */
     private void displayEnderDragonKillRanking() {
         List<Map.Entry<UUID, Integer>> ranking = getEnderDragonKillRanking();
+        List<String> discordLines = new ArrayList<>();
 
         // Title表示
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -260,7 +290,7 @@ public class RankingDisplaySystem {
         if (!ranking.isEmpty()) {
             for (int i = 0; i < Math.min(3, ranking.size()); i++) {
                 Map.Entry<UUID, Integer> entry = ranking.get(i);
-                String playerName = statsStorage.getPlayerName(entry.getKey());
+                String playerName = getDisplayName(entry.getKey());
                 int dragonKills = entry.getValue();
                 String medal = i == 0 ? "🥇" : i == 1 ? "🥈" : "🥉";
                 String status = Bukkit.getPlayer(entry.getKey()) != null ? "🟢" : "⚫";
@@ -268,11 +298,16 @@ public class RankingDisplaySystem {
                 Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "  " + medal + " " + status + " "
                         + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": " + ChatColor.LIGHT_PURPLE
                         + dragonKills + "討伐");
+
+                discordLines.add(ChatColor.stripColor(medal + " " + playerName + ": " + dragonKills + "討伐"));
             }
         } else {
             Bukkit.getServer().broadcastMessage(
                     ChatColor.GRAY + "  🐉 まだドラゴンスレイヤーはいません。伝説を作るのはあなたです！");
+            discordLines.add("記録保持者なし");
         }
+
+        broadcastToDiscord("🐉 エンダードラゴン討伐数ランキング", discordLines);
     }
 
     /**
@@ -297,7 +332,7 @@ public class RankingDisplaySystem {
         if (!ranking.isEmpty()) {
             for (int i = 0; i < Math.min(3, ranking.size()); i++) {
                 Map.Entry<UUID, Integer> entry = ranking.get(i);
-                String playerName = statsStorage.getPlayerName(entry.getKey());
+                String playerName = getDisplayName(entry.getKey());
                 int eventPoints = entry.getValue();
                 String medal = i == 0 ? "🥇" : i == 1 ? "🥈" : "🥉";
                 String status = Bukkit.getPlayer(entry.getKey()) != null ? "🟢" : "⚫";
@@ -445,5 +480,19 @@ public class RankingDisplaySystem {
         // イベントポイントの多い順にソート
         ranking.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
         return ranking;
+    }
+
+    /**
+     * プレイヤー名を取得し、称号があれば付与します。
+     * 
+     * @param uuid プレイヤーのUUID
+     * @return 表示名
+     */
+    private String getDisplayName(UUID uuid) {
+        String name = statsStorage.getPlayerName(uuid);
+        if (statsStorage.isHardDragonSlayer(uuid)) {
+            return name + ChatColor.GOLD + " [★]" + ChatColor.RESET;
+        }
+        return name;
     }
 }
