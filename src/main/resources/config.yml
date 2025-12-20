@@ -58,3 +58,12 @@ discord:
 end:
   # Minutes to wait before resetting the End after Dragon death or absence
   resetDelayMinutes: 120
+
+# Performance / Low-Spec Optimization
+performance:
+  lowSpecMode: true
+  minIntervalSeconds: 60
+  maxCameraMovesPerMinute: 3
+  disableWorldScan: true
+  disableAutoEventWhilePatrol: true
+  debugLog: false

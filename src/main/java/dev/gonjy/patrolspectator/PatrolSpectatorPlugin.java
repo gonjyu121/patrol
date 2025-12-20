@@ -5,7 +5,6 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
-import java.util.logging.Level;
 
 public class PatrolSpectatorPlugin extends JavaPlugin {
 
@@ -21,6 +20,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     private YouTubeManager youTubeManager;
     private DiscordWebhookClient discordWebhookClient;
     private BountyManager bountyManager;
+    private EndGameManager endGameManager;
 
     // タイトル/音の設定
     public static class TitleConf {
@@ -52,7 +52,17 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         public double autogenYOffset;
     }
 
+    public static class PerformanceConf {
+        public boolean lowSpecMode;
+        public int minIntervalSeconds;
+        public int maxCameraMovesPerMinute;
+        public boolean disableWorldScan;
+        public boolean disableAutoEventWhilePatrol;
+        public boolean debugLog;
+    }
+
     private TourConf tourConf;
+    private PerformanceConf performanceConf;
     private int patrolIntervalSeconds;
     @SuppressWarnings("unused") // Reserved for future use, loaded from config
     private boolean announce;
@@ -75,12 +85,17 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         statsStorage = new PlayerStatsStorage(this);
 
         // サブシステム初期化
+        // Discord Integration (Early init for dependency injection)
+        discordWebhookClient = new DiscordWebhookClient(this);
+        discordWebhookClient.reload();
+
         engagementSystem = new EngagementSystem(this);
         gameModeEnforcer = new GameModeEnforcer(this);
         autoEventSystem = new AutoEventSystem(this);
         participationManager = new ParticipationManager(this, statsStorage);
         rankingDisplaySystem = new RankingDisplaySystem(this, statsStorage);
         endResetManager = new EndResetManager(this);
+        endGameManager = new EndGameManager(this, statsStorage, discordWebhookClient);
 
         // イベントリスナーの登録
         getServer().getPluginManager().registerEvents(new RankingEventListener(statsStorage), this);
@@ -89,8 +104,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         patrolManager = new PatrolManager(this, engagementSystem, participationManager, gameModeEnforcer,
                 rankingDisplaySystem);
 
-        // ルール適用（Bedrock系 gamerule は失敗するので握りつぶす）
-        applyServerRulesSafely();
+        // ルール適用（Bedrock/Java 1.21.11+ 対応）
+        engagementSystem.applyServerRules();
 
         // 観光地ロード
         patrolManager.loadTouristLocations();
@@ -112,6 +127,11 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
             engagementSystem.applyServerRulesQuietly();
         }, 1200L, 1200L);
 
+        if (getConfig().getBoolean("discord.enabled", false)) {
+            getServer().getPluginManager().registerEvents(new DiscordListener(this, discordWebhookClient), this);
+            getLogger().info("[Discord] Integration enabled.");
+        }
+
         // YouTube Integration
         youTubeManager = new YouTubeManager(this);
         if (getConfig().getBoolean("youtube.enabled", false)) {
@@ -120,14 +140,6 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
             String refreshToken = getConfig().getString("youtube.refresh_token");
             youTubeManager.initialize(clientId, clientSecret, refreshToken);
             getServer().getPluginManager().registerEvents(new YouTubeChatListener(this, youTubeManager), this);
-        }
-
-        // Discord Integration
-        discordWebhookClient = new DiscordWebhookClient(this);
-        discordWebhookClient.reload();
-        if (getConfig().getBoolean("discord.enabled", false)) {
-            getServer().getPluginManager().registerEvents(new DiscordListener(this, discordWebhookClient), this);
-            getLogger().info("[Discord] Integration enabled.");
         }
 
         // Bounty System
@@ -154,6 +166,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
             autoEventSystem.shutdown();
         if (gameModeEnforcer != null)
             gameModeEnforcer.shutdown();
+        if (endGameManager != null)
+            endGameManager.shutdown();
 
         // 最後にストレージ保存
         if (statsStorage != null) {
@@ -194,36 +208,16 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         tourConf.autogenPoints = getConfig().getInt("patrol.tour.autogen.points", 6);
         tourConf.autogenRadius = getConfig().getInt("patrol.tour.autogen.radius", 60);
         tourConf.autogenYOffset = getConfig().getDouble("patrol.tour.autogen.yOffset", 0.0);
-    }
 
-    private void applyServerRulesSafely() {
-        // 標準ルールはAPI経由で設定（チャットログが出ないようにするため）
-        for (org.bukkit.World world : Bukkit.getWorlds()) {
-            try {
-                world.setGameRule(org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, true);
-                world.setGameRule(org.bukkit.GameRule.KEEP_INVENTORY, false);
-                getLogger().info("[Rules] applied (API) for world: " + world.getName());
-            } catch (Throwable t) {
-                getLogger().warning("[Rules] failed (API) for world: " + world.getName() + " (" + t.getMessage() + ")");
-            }
-        }
-
-        // Bedrock環境の公平性維持（APIがないためコマンド実行）
-        ConsoleCommandSender console = Bukkit.getServer().getConsoleSender();
-        String[] cmds = new String[] {
-                "gamerule locatorBar false", // Bedrock寄りAPIだが、実行できる環境もあるのでtry
-                "gamerule showCoordinates false" // ほぼ失敗するので try/catchで握る
-        };
-        for (String c : cmds) {
-            try {
-                Bukkit.dispatchCommand(console, c);
-                getLogger().info("[Rules] applied: " + c);
-            } catch (Throwable t) {
-                // 失敗してもログに出しすぎないようにする（Bedrock専用コマンドなど）
-                // getLogger().log(Level.WARNING, "[Rules] failed: " + c + " (" + t.getMessage()
-                // + ")");
-            }
-        }
+        // performance
+        performanceConf = new PerformanceConf();
+        performanceConf.lowSpecMode = getConfig().getBoolean("performance.lowSpecMode", false);
+        performanceConf.minIntervalSeconds = getConfig().getInt("performance.minIntervalSeconds", 60);
+        performanceConf.maxCameraMovesPerMinute = getConfig().getInt("performance.maxCameraMovesPerMinute", 3);
+        performanceConf.disableWorldScan = getConfig().getBoolean("performance.disableWorldScan", false);
+        performanceConf.disableAutoEventWhilePatrol = getConfig().getBoolean("performance.disableAutoEventWhilePatrol",
+                false);
+        performanceConf.debugLog = getConfig().getBoolean("performance.debugLog", false);
     }
 
     // —— ここから公共API（他クラスから呼ばれる） ——
@@ -238,6 +232,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
     public TourConf getTourConf() {
         return tourConf;
+    }
+
+    public PerformanceConf getPerformanceConf() {
+        return performanceConf;
     }
 
     public ProtectionData getProtectionData() {
@@ -258,6 +256,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
     public EndResetManager getEndResetManager() {
         return endResetManager;
+    }
+
+    public EndGameManager getEndGameManager() {
+        return endGameManager;
     }
 
     public int getPatrolIntervalSeconds() {
