@@ -389,7 +389,8 @@ public class PatrolManager {
         World w = Bukkit.getWorld(nextLocation.world);
         if (w == null) {
             // 低スペックモード時は強制ロードを行わない(フリーズ防止)
-            if (plugin.getPerformanceConf().lowSpecMode) {
+            // ただし、エンドワールド(world_the_end)だけは特別に許可する
+            if (plugin.getPerformanceConf().lowSpecMode && !nextLocation.world.equalsIgnoreCase("world_the_end")) {
                 return;
             }
             try {
@@ -406,7 +407,8 @@ public class PatrolManager {
         }
 
         // *** 特殊ロジック: エンドならドラゴンを探す ***
-        if (w.getEnvironment() == World.Environment.THE_END && !plugin.getPerformanceConf().disableWorldScan) {
+        // v1.9.53: disableWorldScanがtrueでも、エンドに入った時だけは特別にドラゴンを探す
+        if (w.getEnvironment() == World.Environment.THE_END) {
             org.bukkit.entity.EnderDragon dragon = w.getEntitiesByClass(org.bukkit.entity.EnderDragon.class).stream()
                     .findFirst().orElse(null);
 
