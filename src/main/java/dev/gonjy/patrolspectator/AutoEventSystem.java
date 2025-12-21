@@ -84,6 +84,15 @@ public class AutoEventSystem implements Listener {
             }
 
             if (currentTime - lastEventTime >= eventInterval) {
+                // 低スペックモード：巡回中はイベントを開始しない
+                if (plugin instanceof PatrolSpectatorPlugin) {
+                    PatrolSpectatorPlugin mainPlugin = (PatrolSpectatorPlugin) plugin;
+                    if (mainPlugin.getPerformanceConf().disableAutoEventWhilePatrol
+                            && mainPlugin.getPatrolManager().isRunning()) {
+                        // 次のチェックまでスキップ
+                        return;
+                    }
+                }
                 startRandomEvent();
                 lastEventTime = currentTime;
             }
@@ -105,6 +114,15 @@ public class AutoEventSystem implements Listener {
     private void startEvent(String eventType) {
         if (!autoEventsEnabled || !currentEvent.isEmpty())
             return;
+
+        // 低スペックモード：巡回中はイベントを開始しない（強制チェック）
+        if (plugin instanceof PatrolSpectatorPlugin) {
+            PatrolSpectatorPlugin mainPlugin = (PatrolSpectatorPlugin) plugin;
+            if (mainPlugin.getPerformanceConf().disableAutoEventWhilePatrol
+                    && mainPlugin.getPatrolManager().isRunning()) {
+                return;
+            }
+        }
 
         currentEvent = eventType;
         playerPoints.clear();
