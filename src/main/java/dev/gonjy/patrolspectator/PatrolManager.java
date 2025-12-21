@@ -268,6 +268,15 @@ public class PatrolManager {
             return;
         }
 
+        // 定期的なサマリログ（5分おき）
+        long now = System.currentTimeMillis();
+        if (now - lastSummaryLogTime > 5 * 60 * 1000L) {
+            lastSummaryLogTime = now;
+            int onlineTotal = Bukkit.getOnlinePlayers().size();
+            plugin.getLogger()
+                    .info("[Patrol Summary] Running. Camera: " + camera.getName() + ", Online: " + onlineTotal);
+        }
+
         // 1. 有効なターゲット一覧を取得
         java.util.List<Player> validTargets = engagementSystem.getValidTargets(camera);
         Player target = null;
