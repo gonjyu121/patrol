@@ -40,22 +40,9 @@ public class RankingEventListener implements Listener {
         statsStorage.resetContinuousSurvivalTime(victim.getUniqueId());
     }
 
-    /**
-     * エンティティ死亡時のイベント処理。
-     * エンダードラゴンが倒された場合、キラーのエンドラ討伐数を記録します。
-     */
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
-        Entity entity = event.getEntity();
-
-        // エンダードラゴンが倒された場合
-        if (entity instanceof EnderDragon) {
-            EnderDragon dragon = (EnderDragon) entity;
-            Player killer = dragon.getKiller();
-            if (killer != null) {
-                statsStorage.addEnderDragonKill(killer.getUniqueId());
-                statsStorage.ensureName(killer.getUniqueId(), killer.getName());
-            }
-        }
+        // エンダードラゴンの討伐記録は EndGameManager で集約して行うため、ここでは何もしない
+        // (将来的に他のMob討伐ランキングを追加する場合はここに記述)
     }
 }

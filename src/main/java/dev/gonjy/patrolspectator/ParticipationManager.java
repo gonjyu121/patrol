@@ -95,7 +95,7 @@ public class ParticipationManager {
         // ポイント付与（設定で有効な場合）
         int pts = plugin.getConfig().getInt("patrol.participation.points", 1);
         if (pts > 0) {
-            addPoints(uuid, name, pts, "観戦された");
+            addPoints(uuid, name, pts, "Now On Air");
         }
     }
 }

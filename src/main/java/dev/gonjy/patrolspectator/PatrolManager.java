@@ -97,6 +97,46 @@ public class PatrolManager {
         touristLocations.addAll(TouristLocation.fromMapList(fallback));
 
         plugin.getLogger().info("観光地データをロードしました: " + touristLocations.size() + " 件");
+        prepareTour();
+    }
+
+    /**
+     * ツアーの準備（自動生成や初期データの補完）を行います。
+     * startup時に1回だけ実行される。
+     */
+    public void prepareTour() {
+        PatrolSpectatorPlugin.TourConf tourConf = plugin.getTourConf();
+
+        // 観光地リストが空の場合の自動生成処理
+        if (touristLocations.isEmpty()) {
+            World world = Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0);
+            if (world != null) {
+                plugin.getLogger().info("観光地リストが空のため、自動生成を試みます。");
+                touristLocations.addAll(TouristLocation.autoGenerate(
+                        world,
+                        tourConf.autogenPoints,
+                        tourConf.autogenRadius,
+                        tourConf.autogenYOffset));
+            }
+        }
+
+        // エンド追加
+        boolean hasEnd = touristLocations.stream()
+                .anyMatch(l -> l.worldType != null && l.worldType.equalsIgnoreCase("end"));
+        if (!hasEnd) {
+            World endWorld = Bukkit.getWorld("world_the_end");
+            if (endWorld != null) {
+                plugin.getLogger().info("エンドワールドが見つかりました。観光地に追加します。");
+                touristLocations.add(new TouristLocation(
+                        "auto_end_01",
+                        "§5The End",
+                        endWorld.getName(),
+                        0.0, 100.0, 0.0,
+                        0f, 0f,
+                        "Ender Dragon Arena",
+                        "end"));
+            }
+        }
     }
 
     /**
@@ -120,51 +160,14 @@ public class PatrolManager {
         gameModeEnforcer.setCameraOperator(cameraUuid);
         gameModeEnforcer.start();
 
-        // ルール適用（開始時はログを出しても良い）
-        engagementSystem.applyServerRules();
+        // 注: 重い初期化（applyServerRulesやprepareTour）はonEnableで行うよう変更
 
-        // ランキング表示の開始（カメラ役を除外対象に設定）
+        // ランキング表示の開始
         rankingDisplaySystem.setExcludedPlayer(cameraUuid);
         rankingDisplaySystem.startRankingDisplay();
 
-        PatrolSpectatorPlugin.TourConf tourConf = plugin.getTourConf();
-
-        // カメラ役をスペクテイターモードに変更（観光中の事故防止）
+        // カメラ役をスペクテイターモードに変更
         camera.setGameMode(GameMode.SPECTATOR);
-        // camera.setReducedDebugInfo(true); // IDE error workaround
-
-        // 観光地リストが空の場合の自動生成処理
-        if (touristLocations.isEmpty()) {
-            // ワールドが存在する場合のみ自動生成
-            World world = Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0);
-            if (world != null) {
-                plugin.getLogger().info("観光地リストが空のため、自動生成を試みます。");
-                touristLocations.addAll(TouristLocation.autoGenerate(
-                        world,
-                        tourConf.autogenPoints,
-                        tourConf.autogenRadius,
-                        tourConf.autogenYOffset));
-            }
-        }
-
-        // エンドワールドが存在する場合、エンドラ観戦用のポイントを追加（リストに無ければ）
-        // 既存のリストにエンドが含まれているかチェック
-        boolean hasEnd = touristLocations.stream().anyMatch(l -> l.worldType.equalsIgnoreCase("end"));
-        if (!hasEnd) {
-            World endWorld = Bukkit.getWorld("world_the_end");
-            if (endWorld != null) {
-                plugin.getLogger().info("エンドワールドが見つかりました。観光地に追加します。");
-                // 0, 100, 0 から 0,0,0 を見る
-                touristLocations.add(new TouristLocation(
-                        "auto_end_01",
-                        "§5The End",
-                        endWorld.getName(),
-                        0.0, 100.0, 0.0,
-                        0f, 0f, // yaw=0, pitch=0 (Looking straight)
-                        "Ender Dragon Arena",
-                        "end"));
-            }
-        }
 
         // 低スペックモード：最小間隔を強制
         PatrolSpectatorPlugin.PerformanceConf perf = plugin.getPerformanceConf();
@@ -385,9 +388,10 @@ public class PatrolManager {
 
         World w = Bukkit.getWorld(nextLocation.world);
         if (w == null) {
-            // ワールドがロードされていない場合、ロードを試みる
-            // System.out.println("[Debug] World " + nextLocation.world + " is not loaded.
-            // Attempting to create/load...");
+            // 低スペックモード時は強制ロードを行わない(フリーズ防止)
+            if (plugin.getPerformanceConf().lowSpecMode) {
+                return;
+            }
             try {
                 w = Bukkit.createWorld(new org.bukkit.WorldCreator(nextLocation.world));
             } catch (Exception e) {
@@ -402,7 +406,7 @@ public class PatrolManager {
         }
 
         // *** 特殊ロジック: エンドならドラゴンを探す ***
-        if (w.getEnvironment() == World.Environment.THE_END) {
+        if (w.getEnvironment() == World.Environment.THE_END && !plugin.getPerformanceConf().disableWorldScan) {
             org.bukkit.entity.EnderDragon dragon = w.getEntitiesByClass(org.bukkit.entity.EnderDragon.class).stream()
                     .findFirst().orElse(null);
 

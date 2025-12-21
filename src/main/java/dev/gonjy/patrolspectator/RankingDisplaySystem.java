@@ -73,47 +73,64 @@ public class RankingDisplaySystem {
     }
 
     /**
-     * 5種類のランキングを順番に表示します。
+     * ランキング集計データを保持する内部クラス
      */
+    private static class RankingData {
+        List<Map.Entry<UUID, Long>> totalPlayTime;
+        List<Map.Entry<UUID, Long>> continuousSurvival;
+        List<Map.Entry<UUID, Integer>> kills;
+        List<Map.Entry<UUID, Integer>> dragonKills;
+        List<Map.Entry<UUID, Integer>> eventPoints;
+    }
+
     public void displayRankings() {
-        // Title表示でランキング開始を通知
+        // 通知
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.sendTitle(
                     ChatColor.GOLD + "🏆 ランキング発表 🏆",
-                    ChatColor.YELLOW + "5秒後に詳細を表示します",
-                    10, 60, 20);
+                    ChatColor.YELLOW + "集計中...",
+                    10, 40, 10);
         }
 
-        // 5秒後に詳細ランキングを表示
+        // 非同期でランキングを集計（重い処理をメインスレッドから逃がす）
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            RankingData data = new RankingData();
+            data.totalPlayTime = getTotalSurvivalTimeRanking();
+            data.continuousSurvival = getContinuousSurvivalTimeRanking();
+            data.kills = getKillCountRanking();
+            data.dragonKills = getEnderDragonKillRanking();
+            data.eventPoints = getEventPointsRanking();
+
+            // メインスレッドに戻して順次表示
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                displayAllRankingsSequentially(data);
+            });
+        });
+    }
+
+    private void displayAllRankingsSequentially(RankingData data) {
+        displayTotalPlayTimeRanking(data.totalPlayTime);
+
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            displayTotalPlayTimeRanking(); // 1. 累計プレイ時間
+            displayContinuousSurvivalTimeRanking(data.continuousSurvival);
 
-            // 2秒後に連続生存時間ランキング
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                displayContinuousSurvivalTimeRanking(); // 2. 連続生存時間
+                displayKillCountRanking(data.kills);
 
-                // 2秒後にPK数ランキング
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    displayKillCountRanking(); // 3. PK数
+                    displayEnderDragonKillRanking(data.dragonKills);
 
-                    // 2秒後にエンダードラゴン討伐数ランキング
                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                        displayEnderDragonKillRanking(); // 4. エンドラ討伐数
+                        displayEventPointsRanking(data.eventPoints);
 
-                        // 2秒後にイベントポイントランキング
-                        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                            displayEventPointsRanking(); // 5. イベントポイント
-
-                            // 称号の説明を追加
-                            Bukkit.getServer().broadcastMessage("");
-                            Bukkit.getServer()
-                                    .broadcastMessage(ChatColor.GRAY + "※ " + ChatColor.GOLD + "[★]" + ChatColor.GRAY
-                                            + " は " + ChatColor.RED + "ヴォイド・ドラゴン" + ChatColor.GRAY + " 討伐の証です");
-                        }, 40L);
+                        Bukkit.getServer().broadcastMessage("");
+                        Bukkit.getServer()
+                                .broadcastMessage(ChatColor.GRAY + "※ " + ChatColor.GOLD + "[★]" + ChatColor.GRAY
+                                        + " は " + ChatColor.RED + "ヴォイド・ドラゴン" + ChatColor.GRAY + " 討伐の証です");
                     }, 40L);
                 }, 40L);
             }, 40L);
-        }, 100L);
+        }, 40L);
     }
 
     private void broadcastToDiscord(String title, List<String> lines) {
@@ -133,8 +150,7 @@ public class RankingDisplaySystem {
     /**
      * 累計プレイ時間ランキングを表示します。
      */
-    private void displayTotalPlayTimeRanking() {
-        List<Map.Entry<UUID, Long>> ranking = getTotalSurvivalTimeRanking();
+    private void displayTotalPlayTimeRanking(List<Map.Entry<UUID, Long>> ranking) {
 
         List<String> discordLines = new ArrayList<>();
 
@@ -187,8 +203,7 @@ public class RankingDisplaySystem {
     /**
      * 連続生存時間ランキングを表示します。
      */
-    private void displayContinuousSurvivalTimeRanking() {
-        List<Map.Entry<UUID, Long>> ranking = getContinuousSurvivalTimeRanking();
+    private void displayContinuousSurvivalTimeRanking(List<Map.Entry<UUID, Long>> ranking) {
 
         // Title表示
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -232,8 +247,7 @@ public class RankingDisplaySystem {
     /**
      * PK数ランキングを表示します。
      */
-    private void displayKillCountRanking() {
-        List<Map.Entry<UUID, Integer>> ranking = getKillCountRanking();
+    private void displayKillCountRanking(List<Map.Entry<UUID, Integer>> ranking) {
 
         // Title表示
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -268,8 +282,7 @@ public class RankingDisplaySystem {
     /**
      * エンダードラゴン討伐数ランキングを表示します。
      */
-    private void displayEnderDragonKillRanking() {
-        List<Map.Entry<UUID, Integer>> ranking = getEnderDragonKillRanking();
+    private void displayEnderDragonKillRanking(List<Map.Entry<UUID, Integer>> ranking) {
         List<String> discordLines = new ArrayList<>();
 
         // Title表示
@@ -313,8 +326,7 @@ public class RankingDisplaySystem {
     /**
      * イベントポイントランキングを表示します。
      */
-    private void displayEventPointsRanking() {
-        List<Map.Entry<UUID, Integer>> ranking = getEventPointsRanking();
+    private void displayEventPointsRanking(List<Map.Entry<UUID, Integer>> ranking) {
 
         // Title表示
         for (Player player : Bukkit.getOnlinePlayers()) {

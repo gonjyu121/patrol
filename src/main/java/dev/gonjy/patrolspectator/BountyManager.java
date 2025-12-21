@@ -114,7 +114,7 @@ public class BountyManager implements Listener {
         if (plugin.getDiscordWebhookClient() == null)
             return;
 
-        String msg = String.format("☠ **WANTED** ☠\nTarget: **%s**\nReward: **%d Diamonds**\nIssuer: %s",
+        String msg = String.format("☠ **賞金首指名** ☠\nターゲット: **%s**\n賞金: **ダイヤ%d個**\n依頼者: %s",
                 target, amount, issuer);
         plugin.getDiscordWebhookClient().send(msg);
     }
@@ -124,7 +124,7 @@ public class BountyManager implements Listener {
             return;
 
         String msg = String.format(
-                "⚔ **BOUNTY CLAIMED** ⚔\nTarget: **%s** was eliminated by **%s**!\nReward: **%d Diamonds**",
+                "⚔ **賞金獲得** ⚔\nターゲット: **%s** が **%s** に討伐されました！\n賞金: **ダイヤ%d個**",
                 target, killer, amount);
         plugin.getDiscordWebhookClient().send(msg);
     }

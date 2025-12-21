@@ -15,6 +15,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.Comparator;
 import java.util.Random;
 
 @SuppressWarnings("deprecation")
@@ -183,14 +184,27 @@ public class EndGameManager implements Listener {
         }
 
         // 共通処理: 討伐数をカウント
-        if (event.getEntity().getKiller() != null) {
-            statsStorage.addEnderDragonKill(event.getEntity().getKiller().getUniqueId());
+        Player killer = event.getEntity().getKiller();
+        if (killer == null) {
+            // トドメがプレイヤーでない場合（ベッド爆発、落下ダメージ等）、周囲128ブロック以内の最も近いプレイヤーを探す
+            killer = event.getEntity().getWorld().getPlayers().stream()
+                    .filter(p -> p.getLocation().distanceSquared(event.getEntity().getLocation()) < 128 * 128)
+                    .min(Comparator
+                            .comparingDouble(p -> p.getLocation().distanceSquared(event.getEntity().getLocation())))
+                    .orElse(null);
         }
 
-        // ハードモードの場合のみ報酬処理
-        if (isHardMode() && event.getEntity().getKiller() != null) {
-            Player killer = event.getEntity().getKiller();
+        if (killer != null) {
+            statsStorage.addEnderDragonKill(killer.getUniqueId());
+            statsStorage.ensureName(killer.getUniqueId(), killer.getName());
+            plugin.getLogger().info("[Debug] Dragon kill recorded for: " + killer.getName() + " (Killer: "
+                    + (event.getEntity().getKiller() != null ? "Direct" : "Nearby") + ")");
+        } else {
+            plugin.getLogger().warning("[Debug] Ender Dragon death detected, but no player found nearby to credit.");
+        }
 
+        // ハードモードの場合のみ報酬処理 (killerが特定できている場合)
+        if (isHardMode() && killer != null) {
             // 称号付与
             statsStorage.setHardDragonSlayer(killer.getUniqueId(), true);
 

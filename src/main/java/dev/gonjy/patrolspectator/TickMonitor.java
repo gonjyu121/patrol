@@ -14,7 +14,7 @@ public class TickMonitor {
     private BukkitTask task;
     private int highLoadCount = 0;
     private static final int THRESHOLD_MS = 50;
-    private static final int MAX_HIGH_LOAD_CHECKS = 10; // 50ms超えが10回連続（約10秒）で停止
+    private static final int MAX_HIGH_LOAD_CHECKS = 5; // 50ms超えが5回連続（約5秒）で停止
 
     public TickMonitor(PatrolSpectatorPlugin plugin) {
         this.plugin = plugin;
@@ -46,7 +46,7 @@ public class TickMonitor {
             } else {
                 highLoadCount = 0;
             }
-        }, 20L, 20L); // 1秒ごとにチェック
+        }, 40L, 40L); // 2秒ごとにチェック (CPU負荷削減)
     }
 
     public void stop() {

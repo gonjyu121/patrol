@@ -91,7 +91,17 @@ public class PlayerStatsStorage {
 
     /** 総プレイ時間（ms）を取得 */
     public long getTotalPlayTimeMillis(UUID playerId) {
-        return yaml.getLong(basePath(playerId) + ".totalPlayMs", 0L);
+        String base = basePath(playerId);
+        long total = yaml.getLong(base + ".totalPlayMs", 0L);
+        long survival = getContinuousSurvivalTimeMillis(playerId);
+
+        // データの整合性補正: 連続生存時間が総プレイ時間を超えている場合、総プレイ時間を同期させる
+        if (survival > total) {
+            total = survival;
+            yaml.set(base + ".totalPlayMs", total);
+            saveSync();
+        }
+        return total;
     }
 
     /** 連続生存時間（ms）を取得 */
@@ -212,6 +222,32 @@ public class PlayerStatsStorage {
         if (playerId == null)
             return 0;
         return yaml.getInt(basePath(playerId) + ".enderDragonKills", 0);
+    }
+
+    /**
+     * ハードモードのエンダードラゴン討伐者として記録します。
+     * 
+     * @param playerId プレイヤーのUUID
+     * @param isSlayer 討伐者かどうか
+     */
+    public void setHardDragonSlayer(UUID playerId, boolean isSlayer) {
+        if (playerId == null)
+            return;
+        String base = basePath(playerId);
+        yaml.set(base + ".hasKilledHardDragon", isSlayer);
+        saveSync();
+    }
+
+    /**
+     * ハードモードのエンダードラゴン討伐者かどうかを確認します。
+     * 
+     * @param playerId プレイヤーのUUID
+     * @return 討伐者ならtrue
+     */
+    public boolean isHardDragonSlayer(UUID playerId) {
+        if (playerId == null)
+            return false;
+        return yaml.getBoolean(basePath(playerId) + ".hasKilledHardDragon", false);
     }
 
     /**

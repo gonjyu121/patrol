@@ -16,20 +16,47 @@ public final class EngagementSystem {
         for (org.bukkit.World world : Bukkit.getWorlds()) {
             setRule(world, org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, true);
             setRule(world, org.bukkit.GameRule.KEEP_INVENTORY, false);
-        }
 
-        // Bedrock環境の公平性維持（APIがないためコマンド実行）
-        run("gamerule locatorBar false");
-        run("gamerule showCoordinates false");
+            // Bedrock/Java 1.21.11+ 用のルールをAPIで安全に適用
+            // 1.21.11からはスネークケース（locator_bar）に変更された可能性があるため、複数候補を試す
+            setDynamicRule(world, new String[] { "locator_bar", "minecraft:locator_bar", "locatorBar" }, false);
+            setDynamicRule(world, new String[] { "show_coordinates", "minecraft:show_coordinates", "showCoordinates" },
+                    false);
+        }
     }
 
     private <T> void setRule(org.bukkit.World world, org.bukkit.GameRule<T> rule, T value) {
         try {
+            T current = world.getGameRuleValue(rule);
+            if (current != null && current.equals(value)) {
+                return; // すでに設定済みならスキップ
+            }
             if (world.setGameRule(rule, value)) {
                 log.info("[Rules] applied (API): " + rule.getName() + " = " + value + " in " + world.getName());
             }
         } catch (Throwable t) {
             log.warning("[Rules] failed (API): " + rule.getName() + " (" + t.getMessage() + ")");
+        }
+    }
+
+    /** サーバーバージョンによって名称が異なる可能性があるルールを、候補リストから安全に設定 */
+    private void setDynamicRule(org.bukkit.World world, String[] candidates, boolean value) {
+        for (String name : candidates) {
+            try {
+                org.bukkit.GameRule<?> rule = org.bukkit.GameRule.getByName(name);
+                if (rule != null) {
+                    // 型安全のためBooleanとして取得・比較
+                    Object current = world.getGameRuleValue(rule);
+                    if (Boolean.valueOf(value).equals(current)) {
+                        return; // すでに設定済みならスキップ
+                    }
+                    world.setGameRule((org.bukkit.GameRule<Boolean>) rule, value);
+                    log.info("[Rules] applied (Dynamic API): " + name + " = " + value + " in " + world.getName());
+                    return; // 適用できたら終了
+                }
+            } catch (Throwable ignored) {
+                // 次の候補へ
+            }
         }
     }
 
@@ -53,16 +80,32 @@ public final class EngagementSystem {
 
     /** 定期実行用：ログを出さずにルールを適用 */
     public void applyServerRulesQuietly() {
-        // Bedrock環境の公平性維持
-        runQuietly("gamerule locatorBar false");
-        runQuietly("gamerule showCoordinates false");
-
         // 基本ルールの強制（API経由）
         for (org.bukkit.World world : Bukkit.getWorlds()) {
             try {
                 world.setGameRule(org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, true);
                 world.setGameRule(org.bukkit.GameRule.KEEP_INVENTORY, false);
                 world.setGameRule(org.bukkit.GameRule.PLAYERS_SLEEPING_PERCENTAGE, 0);
+
+                // 動的な設定（ログなし）
+                setDynamicRuleQuietly(world, new String[] { "locator_bar", "minecraft:locator_bar", "locatorBar" },
+                        false);
+                setDynamicRuleQuietly(world,
+                        new String[] { "show_coordinates", "minecraft:show_coordinates", "showCoordinates" }, false);
+
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
+    private void setDynamicRuleQuietly(org.bukkit.World world, String[] candidates, boolean value) {
+        for (String name : candidates) {
+            try {
+                org.bukkit.GameRule<?> rule = org.bukkit.GameRule.getByName(name);
+                if (rule != null) {
+                    world.setGameRule((org.bukkit.GameRule<Boolean>) rule, value);
+                    return;
+                }
             } catch (Throwable ignored) {
             }
         }
@@ -170,7 +213,7 @@ public final class EngagementSystem {
         }
         lastDebugLogTime = now;
 
-        log.info("[Debug] 観戦対象が見つかりませんでした。現在のプレイヤー状態:");
+        log.info("[Debug] 参加者が見つかりませんでした。現在のプレイヤー状態:");
         for (org.bukkit.entity.Player p : Bukkit.getOnlinePlayers()) {
             StringBuilder sb = new StringBuilder();
             sb.append("- ").append(p.getName()).append(": ");
