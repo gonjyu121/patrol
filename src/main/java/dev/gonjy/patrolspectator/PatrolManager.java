@@ -162,6 +162,14 @@ public class PatrolManager {
             }
         }
 
+        // 低スペックモード：最小間隔を強制
+        PatrolSpectatorPlugin.PerformanceConf perf = plugin.getPerformanceConf();
+        if (perf.lowSpecMode && dwellSeconds < perf.minIntervalSeconds) {
+            dwellSeconds = perf.minIntervalSeconds;
+            plugin.getLogger().info("[Performance] 巡回間隔を最小制限の " + dwellSeconds + "秒に設定しました。");
+        }
+
+        // 次の巡回インデックスのリセット
         currentTourIndex = -1;
 
         // タスクの実行間隔（tick）を計算。最低でも1秒（20ticks）は確保。
@@ -288,17 +296,20 @@ public class PatrolManager {
                 }
             }
 
-            // ターゲットが見つかった場合、リストを表示（デバッグ兼情報）
-            StringBuilder sb = new StringBuilder("§a[Patrol] 現在、以下のプレイヤーがプレイ中です: ");
-            for (int i = 0; i < validTargets.size(); i++) {
-                if (i > 0)
-                    sb.append(", ");
-                sb.append(validTargets.get(i).getName());
+            if (plugin.getPerformanceConf().debugLog) {
+                StringBuilder sb = new StringBuilder("§a[Patrol] 現在、以下のプレイヤーがプレイ中です: ");
+                for (int i = 0; i < validTargets.size(); i++) {
+                    if (i > 0)
+                        sb.append(", ");
+                    sb.append(validTargets.get(i).getName());
+                }
+                camera.sendMessage(sb.toString());
             }
-            camera.sendMessage(sb.toString());
         } else {
-            // ターゲットが見つからなかった場合、デバッグログを出力
-            engagementSystem.findGoodTargetGlobal(camera);
+            // ターゲットが見つからなかった場合
+            if (plugin.getPerformanceConf().debugLog) {
+                engagementSystem.findGoodTargetGlobal(camera);
+            }
         }
 
         if (target != null) {
@@ -313,17 +324,15 @@ public class PatrolManager {
             return;
         }
 
-        // 2. ターゲットがいなければ観光巡り：次のスポットへ
-        // 異世界（ネザー・エンド）にいる場合は、一度オーバーワールドに戻る（描画バグ防止）
-        if (camera.getWorld().getEnvironment() != World.Environment.NORMAL) {
-            World mainWorld = Bukkit.getWorlds().get(0);
-            if (mainWorld != null) {
-                camera.teleport(mainWorld.getSpawnLocation());
-                MessageUtils.showTourTitle(camera, "§7帰還中...");
-                return; // 次のtickで観光地へ
+        // 低スペックモード：参加者ゼロ時は観光も停止して return
+        if (plugin.getPerformanceConf().lowSpecMode) {
+            if (plugin.getPerformanceConf().debugLog) {
+                plugin.getLogger().info("[Performance] 参加者がいないため、巡回処理をスキップしました。");
             }
+            return;
         }
 
+        // 2. ターゲットがいなければ観光巡り：次のスポットへ
         if (touristLocations.isEmpty())
             return;
 
@@ -394,7 +403,7 @@ public class PatrolManager {
                 spectateEntity(camera, dragon);
 
                 // タイトル表示
-                MessageUtils.showTitleLargeSmall(camera, "§5The Void Dragon", "§7Spectating Enemy");
+                MessageUtils.showTitleLargeSmall(camera, "§5The Void Dragon", "§7Now On Air");
                 return;
             }
         }
@@ -472,7 +481,18 @@ public class PatrolManager {
         }
 
         // 3. まず同じ場所にテレポートさせる（ワールド読み込み・チャンク同期のため）
-        camera.teleport(target.getLocation());
+        // 低スペックモード：移動が多すぎないよう最低限の遅延を入れる
+        Location targetLoc = target.getLocation();
+        if (camera.getWorld().equals(targetLoc.getWorld())) {
+            camera.teleport(targetLoc);
+        } else {
+            // ワールドが異なる場合は1tick遅延実行（Paper/Magma負荷対策）
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (camera.isOnline() && target.isValid()) {
+                    camera.teleport(target.getLocation());
+                }
+            }, 1L);
+        }
 
         // 4. 少し待ってから視点を奪う（クライアントのロード待ち・レースコンディション回避）
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -480,6 +500,10 @@ public class PatrolManager {
                 return;
 
             try {
+                // 低スペックモード：状態が変わった時のみ切替
+                if (camera.getGameMode() != GameMode.SPECTATOR) {
+                    camera.setGameMode(GameMode.SPECTATOR);
+                }
                 // PaperAPI: SpectatorTarget を設定
                 camera.setSpectatorTarget(target);
             } catch (Throwable t) {
