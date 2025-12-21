@@ -73,6 +73,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     // 参加回数・ランキング
     private PlayerStatsStorage statsStorage;
 
+    private TickMonitor tickMonitor;
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
@@ -146,7 +148,11 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         bountyManager = new BountyManager(this);
         getCommand("bounty").setExecutor(new BountyCommand(bountyManager));
 
-        getLogger().info("PatrolSpectatorPlugin enabled.");
+        // Create TickMonitor
+        this.tickMonitor = new TickMonitor(this);
+        this.tickMonitor.start();
+
+        getLogger().info("PatrolSpectatorPlugin has been enabled!");
     }
 
     public DiscordWebhookClient getDiscordWebhookClient() {
@@ -173,7 +179,11 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         if (statsStorage != null) {
             statsStorage.flush();
         }
-        getLogger().info("PatrolSpectatorPlugin disabled.");
+        if (this.tickMonitor != null) {
+            this.tickMonitor.stop();
+        }
+
+        getLogger().info("PatrolSpectatorPlugin has been disabled!");
     }
 
     private void loadConfigValues() {
