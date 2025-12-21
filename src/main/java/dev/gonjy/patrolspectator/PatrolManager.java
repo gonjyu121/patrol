@@ -323,13 +323,7 @@ public class PatrolManager {
                 }
                 camera.sendMessage(sb.toString());
             }
-        } else {
-            // ターゲットが見つからなかった場合
-            if (plugin.getPerformanceConf().debugLog) {
-                engagementSystem.findGoodTargetGlobal(camera);
-            }
         }
-
         if (target != null) {
             // ターゲットが見つかった場合: プレイヤー観戦モード
             spectateTarget(camera, target);
@@ -342,13 +336,8 @@ public class PatrolManager {
             return;
         }
 
-        // 低スペックモード：参加者ゼロ時は観光も停止して return
-        if (plugin.getPerformanceConf().lowSpecMode) {
-            if (plugin.getPerformanceConf().debugLog) {
-                plugin.getLogger().info("[Performance] 参加者がいないため、巡回処理をスキップしました。");
-            }
-            return;
-        }
+        // ターゲットが見つからなかった場合、観光巡り（Tour）セクションへ進む
+        // 低スペックモードでも、誰もいないときは観光地を映すように修正
 
         // 2. ターゲットがいなければ観光巡り：次のスポットへ
         if (touristLocations.isEmpty())
@@ -453,11 +442,6 @@ public class PatrolManager {
         }
     }
 
-    /**
-     * カメラ役のプレイヤーを取得します。
-     * 
-     * @return カメラ役プレイヤー、設定されていない場合は null
-     */
     /**
      * カメラ役のプレイヤーを取得します。
      * 
