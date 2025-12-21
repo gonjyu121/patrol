@@ -4,10 +4,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class DiscordWebhookClient {
     private final JavaPlugin plugin;
-    private final java.util.concurrent.BlockingQueue<String> messageQueue = new java.util.concurrent.LinkedBlockingQueue<>();
+    private final java.util.concurrent.BlockingQueue<String> messageQueue = new java.util.concurrent.LinkedBlockingQueue<>(
+            1);
     private volatile boolean running = true;
     private final Thread workerThread;
     private String webhookUrl;
+    private boolean enabled = true;
 
     public DiscordWebhookClient(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -17,16 +19,21 @@ public class DiscordWebhookClient {
     }
 
     public void reload() {
+        this.enabled = plugin.getConfig().getBoolean("discord.enabled", true);
         this.webhookUrl = plugin.getConfig().getString("discord.webhook_url");
-        if (this.webhookUrl == null || this.webhookUrl.isEmpty()) {
+        if (this.enabled && (this.webhookUrl == null || this.webhookUrl.isEmpty())) {
             plugin.getLogger().warning("Discord Webhook URL is not configured in config.yml");
         }
     }
 
     public void send(String content) {
-        if (this.webhookUrl == null || this.webhookUrl.isEmpty())
+        if (!enabled || this.webhookUrl == null || this.webhookUrl.isEmpty())
             return;
-        messageQueue.offer(content);
+
+        // キューが一杯の場合は新しいメッセージを破棄（低負荷設定）
+        if (!messageQueue.offer(content)) {
+            // オプション：ログに出しても良いが、低スペック用なので静かに破棄
+        }
     }
 
     public void shutdown() {
