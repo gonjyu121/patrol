@@ -5,11 +5,11 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>dev.gonjy</groupId>
   <artifactId>patrol-spectator-plugin</artifactId>
-  <version>1.9.31</version>
+  <version>1.9.50</version>
   <name>PatrolSpectatorPlugin</name>
 
   <properties>
-    <maven.compiler.release>17</maven.compiler.release>
+    <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <paper.api.version>1.21.1-R0.1-SNAPSHOT</paper.api.version>
   </properties>
