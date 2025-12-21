@@ -264,6 +264,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         return patrolManager;
     }
 
+    public AutoEventSystem getAutoEventSystem() {
+        return autoEventSystem;
+    }
+
     public EndResetManager getEndResetManager() {
         return endResetManager;
     }
