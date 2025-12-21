@@ -2,6 +2,7 @@ package dev.gonjy.patrolspectator;
 
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
@@ -50,6 +51,9 @@ public class PatrolManager {
 
     // 直前に観戦していたプレイヤーのUUID（ローテーション用）
     private UUID lastSpectatedUuid;
+
+    // 最後にサマリログを出力した時刻
+    private long lastSummaryLogTime = 0;
 
     /**
      * コンストラクタ。
@@ -167,6 +171,11 @@ public class PatrolManager {
         if (perf.lowSpecMode && dwellSeconds < perf.minIntervalSeconds) {
             dwellSeconds = perf.minIntervalSeconds;
             plugin.getLogger().info("[Performance] 巡回間隔を最小制限の " + dwellSeconds + "秒に設定しました。");
+        }
+
+        // 低スペックモード：パトロール開始直後にイベントが始まらないようにタイマーリセット
+        if (perf.lowSpecMode && perf.disableAutoEventWhilePatrol) {
+            plugin.getAutoEventSystem().resetLastEventTime();
         }
 
         // 次の巡回インデックスのリセット

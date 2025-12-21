@@ -98,8 +98,11 @@ public class AutoEventSystem implements Listener {
             }
         }, 20L * 60, 20L * 60); // 1分後に開始、1分間隔でチェック
 
-        Bukkit.broadcastMessage(ChatColor.GREEN + "🎮 自動イベントシステムが開始されました！");
         Bukkit.broadcastMessage(ChatColor.GRAY + "1時間ごとにランダムイベントが開催されます");
+    }
+
+    public void resetLastEventTime() {
+        this.lastEventTime = System.currentTimeMillis();
     }
 
     private void startRandomEvent() {
