@@ -55,6 +55,9 @@ public class PatrolManager {
     // 最後にサマリログを出力した時刻
     private long lastSummaryLogTime = 0;
 
+    // 事前読み込み用タスク
+    private BukkitTask preLoadTask;
+
     /**
      * コンストラクタ。
      *
@@ -196,6 +199,9 @@ public class PatrolManager {
             }
         }, 1L, tickPeriod);
 
+        // 初回の事前読み込みをスケジュール
+        schedulePreLoad(dwellSeconds);
+
         plugin.getLogger().info("パトロールを開始しました。カメラ: " + camera.getName() + ", 間隔: " + dwellSeconds + "秒");
     }
 
@@ -209,6 +215,11 @@ public class PatrolManager {
         if (patrolTask != null) {
             patrolTask.cancel();
             patrolTask = null;
+        }
+
+        if (preLoadTask != null) {
+            preLoadTask.cancel();
+            preLoadTask = null;
         }
 
         // GameModeEnforcerの停止
@@ -327,6 +338,10 @@ public class PatrolManager {
                 camera.sendMessage(sb.toString());
             }
         }
+
+        // 次のサイクルに向けた事前読み込みをスケジュール
+        schedulePreLoad(plugin.getTourConf().dwellSeconds);
+
         if (target != null) {
             // ターゲットが見つかった場合: プレイヤー観戦モード
             spectateTarget(camera, target);
@@ -409,8 +424,9 @@ public class PatrolManager {
         // *** 特殊ロジック: エンドならドラゴンを探す ***
         // v1.9.53: disableWorldScanがtrueでも、エンドに入った時だけは特別にドラゴンを探す
         if (w.getEnvironment() == World.Environment.THE_END) {
-            org.bukkit.entity.EnderDragon dragon = w.getEntitiesByClass(org.bukkit.entity.EnderDragon.class).stream()
-                    .findFirst().orElse(null);
+            // v1.9.54+: getEntitiesByClass を使用して全エンティティ走査を回避
+            var dragons = w.getEntitiesByClass(org.bukkit.entity.EnderDragon.class);
+            org.bukkit.entity.EnderDragon dragon = dragons.isEmpty() ? null : dragons.iterator().next();
 
             if (dragon != null && dragon.isValid()) {
                 spectateEntity(camera, dragon);
@@ -530,5 +546,65 @@ public class PatrolManager {
                 }
             }
         }, 10L); // 10 ticks delay (0.5s)
+    }
+
+    /**
+     * 次の巡回予定地のチャンクを非同期で事前読み込みします。
+     */
+    private void schedulePreLoad(int dwellSeconds) {
+        if (preLoadTask != null) {
+            preLoadTask.cancel();
+        }
+
+        PatrolSpectatorPlugin.ChunkPreLoadingConf chunkConf = plugin.getChunkPreLoadingConf();
+        if (!chunkConf.enabled)
+            return;
+
+        long delayTicks = (long) (dwellSeconds - chunkConf.secondsBefore) * 20L;
+        if (delayTicks < 0)
+            delayTicks = 1L;
+
+        preLoadTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            preLoadNextChunks();
+        }, delayTicks);
+    }
+
+    private void preLoadNextChunks() {
+        // 次のターゲット（プレイヤーまたは観光地）を予測
+        Player camera = getCamera();
+        if (camera == null)
+            return;
+
+        List<Player> validTargets = engagementSystem.getValidTargets(camera);
+        if (!validTargets.isEmpty()) {
+            // プレイヤー観戦が優先される可能性が高い
+            for (Player p : validTargets) {
+                loadChunksAround(p.getLocation());
+            }
+        } else if (!touristLocations.isEmpty()) {
+            // 観光地巡りになる可能性が高い
+            int nextIndex = (currentTourIndex + 1) % touristLocations.size();
+            TouristLocation nextLoc = touristLocations.get(nextIndex);
+            World w = Bukkit.getWorld(nextLoc.world);
+            if (w != null) {
+                loadChunksAround(new Location(w, nextLoc.x, nextLoc.y, nextLoc.z));
+            }
+        }
+    }
+
+    private void loadChunksAround(Location loc) {
+        if (loc == null || loc.getWorld() == null)
+            return;
+
+        World world = loc.getWorld();
+        int chunkX = loc.getBlockX() >> 4;
+        int chunkZ = loc.getBlockZ() >> 4;
+
+        // 半径1チャンク分を非同期ロード（負荷を抑えつつ準備）
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                world.getChunkAtAsync(chunkX + x, chunkZ + z);
+            }
+        }
     }
 }
