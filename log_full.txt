@@ -1,0 +1,29 @@
+commit a995494e85c1333b6819445dd15c53941b14c8c9
+Author: Akira Miyatake <gonjyu121@gmail.com>
+Date:   Tue Jan 6 20:15:51 2026 +0900
+
+    build: bump version to 1.9.55
+
+commit 2f257ad539c2f15ab57f553cd54fa1f2a4d37aea
+Author: Akira Miyatake <gonjyu121@gmail.com>
+Date:   Wed Dec 31 07:28:04 2025 +0900
+
+    perf(participation): make dirty flag volatile for thread-safe async saving
+
+commit e47af0f1fe1ea5c5a010bc330c62f5151be30423
+Author: Akira Miyatake <gonjyu121@gmail.com>
+Date:   Wed Dec 31 07:27:54 2025 +0900
+
+    perf(patrol): optimize Ender Dragon search in End world using getEntitiesByClass
+
+commit eecdce92ddb2e599fc0bf710174a6eb77280f8b7
+Author: Akira Miyatake <gonjyu121@gmail.com>
+Date:   Sun Dec 21 21:14:44 2025 +0900
+
+    feat: restore End world and dragon check in low-spec mode (v1.9.53)
+
+commit 1f4216b4e03aefa37ce716fbc7921e57a55da53b
+Author: Akira Miyatake <gonjyu121@gmail.com>
+Date:   Sun Dec 21 20:59:22 2025 +0900
+
+    refactor: ultra-low spec stability improvements (v1.9.52)

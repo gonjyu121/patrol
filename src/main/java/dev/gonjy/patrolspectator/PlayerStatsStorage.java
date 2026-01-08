@@ -1,7 +1,9 @@
 package dev.gonjy.patrolspectator;
 
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +22,8 @@ public class PlayerStatsStorage {
     private final JavaPlugin plugin;
     private final File file;
     final YamlConfiguration yaml; // 同一パッケージから参照可
+    private boolean dirty = false;
+    private BukkitTask autoSaveTask;
 
     public PlayerStatsStorage(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -28,118 +32,146 @@ public class PlayerStatsStorage {
         }
         this.file = new File(plugin.getDataFolder(), "player_stats.yml");
         this.yaml = YamlConfiguration.loadConfiguration(file);
-        saveSync();
+
+        // データの整合性チェックと初期保存
+        synchronized (yaml) {
+            saveSync();
+        }
+
+        startAutoSaveTask();
+    }
+
+    private void startAutoSaveTask() {
+        // 30秒ごとにチェックして保存
+        autoSaveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
+            if (dirty) {
+                saveSync();
+            }
+        }, 600L, 600L);
     }
 
     /** ログイン記録（回数+1, 名前更新, 最終ログイン時刻更新） */
     public int recordLogin(UUID playerId, String playerName) {
         if (playerId == null)
             return 0;
-        String base = basePath(playerId);
-        int count = yaml.getInt(base + ".loginCount", 0) + 1;
-        yaml.set(base + ".loginCount", count);
-        yaml.set(base + ".name", playerName);
-        long now = System.currentTimeMillis();
-        yaml.set(base + ".lastJoinAtMs", now);
-        // 連続生存時間用の開始時刻も更新（前回の続きとして扱うため、リセットはしない）
-        // ただし、もし前回のログアウト処理が正常に行われていれば、lastContinuousJoinAtMs は 0 になっているはず？
-        // いや、セッションまたぎで継続させたいので、ログイン時に「現在の時刻」をセットして、
-        // 取得時に (stored + (now - lastContinuous)) で計算する。
-        yaml.set(base + ".lastContinuousJoinAtMs", now);
+        synchronized (yaml) {
+            String base = basePath(playerId);
+            int count = yaml.getInt(base + ".loginCount", 0) + 1;
+            yaml.set(base + ".loginCount", count);
+            yaml.set(base + ".name", playerName);
+            long now = System.currentTimeMillis();
+            yaml.set(base + ".lastJoinAtMs", now);
+            yaml.set(base + ".lastContinuousJoinAtMs", now);
 
-        saveSync();
-        return count;
+            dirty = true;
+            return count;
+        }
     }
 
     /** ログアウト記録（セッション時間を加算, 最終ログアウト時刻を更新） */
     public void recordQuit(UUID playerId) {
         if (playerId == null)
             return;
-        String base = basePath(playerId);
-        long now = System.currentTimeMillis();
+        synchronized (yaml) {
+            String base = basePath(playerId);
+            long now = System.currentTimeMillis();
 
-        // 累計プレイ時間の更新
-        long lastJoin = yaml.getLong(base + ".lastJoinAtMs", 0L);
-        if (lastJoin > 0) {
-            long session = Math.max(0, now - lastJoin);
-            long total = yaml.getLong(base + ".totalPlayMs", 0L) + session;
-            yaml.set(base + ".totalPlayMs", total);
+            // 累計プレイ時間の更新
+            long lastJoin = yaml.getLong(base + ".lastJoinAtMs", 0L);
+            if (lastJoin > 0) {
+                long session = Math.max(0, now - lastJoin);
+                long total = yaml.getLong(base + ".totalPlayMs", 0L) + session;
+                yaml.set(base + ".totalPlayMs", total);
+            }
+
+            // 連続生存時間の更新
+            long lastContinuousJoin = yaml.getLong(base + ".lastContinuousJoinAtMs", 0L);
+            if (lastContinuousJoin > 0) {
+                long session = Math.max(0, now - lastContinuousJoin);
+                long currentContinuous = yaml.getLong(base + ".continuousSurvivalMs", 0L) + session;
+                yaml.set(base + ".continuousSurvivalMs", currentContinuous);
+            }
+
+            yaml.set(base + ".lastQuitAtMs", now);
+            yaml.set(base + ".lastJoinAtMs", 0L);
+            yaml.set(base + ".lastContinuousJoinAtMs", 0L);
+
+            dirty = true;
+            saveSync(); // ログアウト時は重要なので即時保存
         }
-
-        // 連続生存時間の更新
-        long lastContinuousJoin = yaml.getLong(base + ".lastContinuousJoinAtMs", 0L);
-        if (lastContinuousJoin > 0) {
-            long session = Math.max(0, now - lastContinuousJoin);
-            long currentContinuous = yaml.getLong(base + ".continuousSurvivalMs", 0L) + session;
-            yaml.set(base + ".continuousSurvivalMs", currentContinuous);
-        }
-
-        yaml.set(base + ".lastQuitAtMs", now);
-        yaml.set(base + ".lastJoinAtMs", 0L);
-        yaml.set(base + ".lastContinuousJoinAtMs", 0L);
-        saveSync();
     }
 
     /** 名前のみ保存（AutoEventSystem等からの呼び出し用） */
     public void ensureName(UUID playerId, String playerName) {
         if (playerId == null)
             return;
-        String base = basePath(playerId);
-        yaml.set(base + ".name", playerName);
-        saveSync();
+        synchronized (yaml) {
+            String base = basePath(playerId);
+            yaml.set(base + ".name", playerName);
+            dirty = true;
+        }
     }
 
     /** 総プレイ時間（ms）を取得 */
     public long getTotalPlayTimeMillis(UUID playerId) {
-        String base = basePath(playerId);
-        long total = yaml.getLong(base + ".totalPlayMs", 0L);
-        long survival = getContinuousSurvivalTimeMillis(playerId);
+        synchronized (yaml) {
+            String base = basePath(playerId);
+            long total = yaml.getLong(base + ".totalPlayMs", 0L);
+            long survival = getContinuousSurvivalTimeMillis(playerId);
 
-        // データの整合性補正: 連続生存時間が総プレイ時間を超えている場合、総プレイ時間を同期させる
-        if (survival > total) {
-            total = survival;
-            yaml.set(base + ".totalPlayMs", total);
-            saveSync();
+            // データの整合性補正: 連続生存時間が総プレイ時間を超えている場合、総プレイ時間を同期させる
+            if (survival > total) {
+                total = survival;
+                yaml.set(base + ".totalPlayMs", total);
+                dirty = true;
+            }
+            return total;
         }
-        return total;
     }
 
     /** 連続生存時間（ms）を取得 */
     public long getContinuousSurvivalTimeMillis(UUID playerId) {
-        String base = basePath(playerId);
-        long stored = yaml.getLong(base + ".continuousSurvivalMs", 0L);
-        long lastContinuousJoin = yaml.getLong(base + ".lastContinuousJoinAtMs", 0L);
+        synchronized (yaml) {
+            String base = basePath(playerId);
+            long stored = yaml.getLong(base + ".continuousSurvivalMs", 0L);
+            long lastContinuousJoin = yaml.getLong(base + ".lastContinuousJoinAtMs", 0L);
 
-        // オンライン（lastContinuousJoinAtMs > 0）なら、現在のセッション時間を加算
-        if (lastContinuousJoin > 0) {
-            return stored + (System.currentTimeMillis() - lastContinuousJoin);
+            // オンライン（lastContinuousJoinAtMs > 0）なら、現在のセッション時間を加算
+            if (lastContinuousJoin > 0) {
+                return stored + (System.currentTimeMillis() - lastContinuousJoin);
+            }
+            return stored;
         }
-        return stored;
     }
 
     /** 連続生存時間をリセット（死亡時など） */
     public void resetContinuousSurvivalTime(UUID playerId) {
         if (playerId == null)
             return;
-        String base = basePath(playerId);
-        yaml.set(base + ".continuousSurvivalMs", 0L);
-        // 現在のセッション開始時刻を「今」にリセットすることで、
-        // 次回の計算時に (now - now) = 0 から再スタートさせる
-        yaml.set(base + ".lastContinuousJoinAtMs", System.currentTimeMillis());
-        saveSync();
+        synchronized (yaml) {
+            String base = basePath(playerId);
+            yaml.set(base + ".continuousSurvivalMs", 0L);
+            yaml.set(base + ".lastContinuousJoinAtMs", System.currentTimeMillis());
+            dirty = true;
+        }
     }
 
     /** ログイン回数を取得 */
     public int getLoginCount(UUID playerId) {
-        return yaml.getInt(basePath(playerId) + ".loginCount", 0);
+        synchronized (yaml) {
+            return yaml.getInt(basePath(playerId) + ".loginCount", 0);
+        }
     }
 
     /** 全データ保存（即同期） */
     public void saveSync() {
-        try {
-            yaml.save(file);
-        } catch (IOException e) {
-            plugin.getLogger().warning("Failed to save player_stats.yml: " + e.getMessage());
+        synchronized (yaml) {
+            try {
+                yaml.save(file);
+                dirty = false;
+            } catch (IOException e) {
+                plugin.getLogger().warning("Failed to save player_stats.yml: " + e.getMessage());
+            }
         }
     }
 
@@ -149,9 +181,16 @@ public class PlayerStatsStorage {
     }
 
     /**
-     * データをフラッシュ（保存）します（saveSyncのエイリアス）。
+     * データをフラッシュ（保存）します。
+     * プラグイン終了時に呼ばれ、自動保存タスクを停止して最終保存を行います。
      */
     public void flush() {
+        // 自動保存タスクを停止
+        if (autoSaveTask != null) {
+            autoSaveTask.cancel();
+            autoSaveTask = null;
+        }
+        // 最終保存を確実に実行
         saveSync();
     }
 
@@ -165,11 +204,13 @@ public class PlayerStatsStorage {
     public void addEventPoint(UUID playerId, int points, String reason) {
         if (playerId == null)
             return;
-        String base = basePath(playerId);
-        int current = yaml.getInt(base + ".eventPoints", 0);
-        yaml.set(base + ".eventPoints", current + points);
-        yaml.set(base + ".lastEventReason", reason);
-        saveSync();
+        synchronized (yaml) {
+            String base = basePath(playerId);
+            int current = yaml.getInt(base + ".eventPoints", 0);
+            yaml.set(base + ".eventPoints", current + points);
+            yaml.set(base + ".lastEventReason", reason);
+            dirty = true;
+        }
     }
 
     /**
@@ -180,10 +221,12 @@ public class PlayerStatsStorage {
     public void addPlayerKill(UUID playerId) {
         if (playerId == null)
             return;
-        String base = basePath(playerId);
-        int current = yaml.getInt(base + ".playerKills", 0);
-        yaml.set(base + ".playerKills", current + 1);
-        saveSync();
+        synchronized (yaml) {
+            String base = basePath(playerId);
+            int current = yaml.getInt(base + ".playerKills", 0);
+            yaml.set(base + ".playerKills", current + 1);
+            dirty = true;
+        }
     }
 
     /**
@@ -194,10 +237,12 @@ public class PlayerStatsStorage {
     public void addEnderDragonKill(UUID playerId) {
         if (playerId == null)
             return;
-        String base = basePath(playerId);
-        int current = yaml.getInt(base + ".enderDragonKills", 0);
-        yaml.set(base + ".enderDragonKills", current + 1);
-        saveSync();
+        synchronized (yaml) {
+            String base = basePath(playerId);
+            int current = yaml.getInt(base + ".enderDragonKills", 0);
+            yaml.set(base + ".enderDragonKills", current + 1);
+            dirty = true;
+        }
     }
 
     /**
@@ -209,7 +254,9 @@ public class PlayerStatsStorage {
     public int getPlayerKills(UUID playerId) {
         if (playerId == null)
             return 0;
-        return yaml.getInt(basePath(playerId) + ".playerKills", 0);
+        synchronized (yaml) {
+            return yaml.getInt(basePath(playerId) + ".playerKills", 0);
+        }
     }
 
     /**
@@ -221,7 +268,9 @@ public class PlayerStatsStorage {
     public int getEnderDragonKills(UUID playerId) {
         if (playerId == null)
             return 0;
-        return yaml.getInt(basePath(playerId) + ".enderDragonKills", 0);
+        synchronized (yaml) {
+            return yaml.getInt(basePath(playerId) + ".enderDragonKills", 0);
+        }
     }
 
     /**
@@ -233,9 +282,11 @@ public class PlayerStatsStorage {
     public void setHardDragonSlayer(UUID playerId, boolean isSlayer) {
         if (playerId == null)
             return;
-        String base = basePath(playerId);
-        yaml.set(base + ".hasKilledHardDragon", isSlayer);
-        saveSync();
+        synchronized (yaml) {
+            String base = basePath(playerId);
+            yaml.set(base + ".hasKilledHardDragon", isSlayer);
+            dirty = true;
+        }
     }
 
     /**
@@ -247,7 +298,9 @@ public class PlayerStatsStorage {
     public boolean isHardDragonSlayer(UUID playerId) {
         if (playerId == null)
             return false;
-        return yaml.getBoolean(basePath(playerId) + ".hasKilledHardDragon", false);
+        synchronized (yaml) {
+            return yaml.getBoolean(basePath(playerId) + ".hasKilledHardDragon", false);
+        }
     }
 
     /**
@@ -259,7 +312,9 @@ public class PlayerStatsStorage {
     public int getEventPoints(UUID playerId) {
         if (playerId == null)
             return 0;
-        return yaml.getInt(basePath(playerId) + ".eventPoints", 0);
+        synchronized (yaml) {
+            return yaml.getInt(basePath(playerId) + ".eventPoints", 0);
+        }
     }
 
     /**
@@ -271,24 +326,27 @@ public class PlayerStatsStorage {
     public String getPlayerName(UUID playerId) {
         if (playerId == null)
             return "Unknown";
-        return yaml.getString(basePath(playerId) + ".name", "Unknown");
+        synchronized (yaml) {
+            return yaml.getString(basePath(playerId) + ".name", "Unknown");
+        }
     }
 
     /**
      * 全プレイヤーの連続生存時間をリセットします。
      */
     public void resetAllContinuousSurvivalTime() {
-        if (yaml.getConfigurationSection("players") == null)
-            return;
+        synchronized (yaml) {
+            if (yaml.getConfigurationSection("players") == null)
+                return;
 
-        long now = System.currentTimeMillis();
-        for (String key : yaml.getConfigurationSection("players").getKeys(false)) {
-            String base = "players." + key;
-            yaml.set(base + ".continuousSurvivalMs", 0L);
-            // 現在のセッションもリセット（0から再スタート）
-            yaml.set(base + ".lastContinuousJoinAtMs", now);
+            long now = System.currentTimeMillis();
+            for (String key : yaml.getConfigurationSection("players").getKeys(false)) {
+                String base = "players." + key;
+                yaml.set(base + ".continuousSurvivalMs", 0L);
+                yaml.set(base + ".lastContinuousJoinAtMs", now);
+            }
+            dirty = true;
         }
-        saveSync();
     }
 
     /**
@@ -298,12 +356,14 @@ public class PlayerStatsStorage {
      */
     public java.util.List<UUID> getAllPlayerIds() {
         java.util.List<UUID> ids = new java.util.ArrayList<>();
-        if (yaml.getConfigurationSection("players") == null)
-            return ids;
-        for (String key : yaml.getConfigurationSection("players").getKeys(false)) {
-            try {
-                ids.add(UUID.fromString(key));
-            } catch (IllegalArgumentException ignored) {
+        synchronized (yaml) {
+            if (yaml.getConfigurationSection("players") == null)
+                return ids;
+            for (String key : yaml.getConfigurationSection("players").getKeys(false)) {
+                try {
+                    ids.add(UUID.fromString(key));
+                } catch (IllegalArgumentException ignored) {
+                }
             }
         }
         return ids;

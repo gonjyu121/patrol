@@ -59,11 +59,8 @@ try {
         $javaExec = "-Dmaven.compiler.fork=true -Dmaven.compiler.executable=$localJdk"
     }
 
-    # コマンド構築 (PowerShellの引数解析を回避するため cmd /c を使用)
-    # JDKパスのバックスラッシュをエスケープする必要があるかもしれないが、
-    # cmd /c "..." で囲む場合はシングルクォートで囲めば概ね動作する
-    
-    $cmdArgs = "/c `"$mvnCmd clean package -DskipTests $javaExec`""
+    # ビルド実行
+    $cmdArgs = "/c build_jdk21.bat"
     Write-Host "   実行コマンド: cmd $cmdArgs" -ForegroundColor Gray
     
     $process = Start-Process -FilePath "cmd" -ArgumentList $cmdArgs -NoNewWindow -Wait -PassThru

@@ -5,7 +5,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class DiscordWebhookClient {
     private final JavaPlugin plugin;
     private final java.util.concurrent.BlockingQueue<String> messageQueue = new java.util.concurrent.LinkedBlockingQueue<>(
-            1);
+            16);
     private volatile boolean running = true;
     private final Thread workerThread;
     private String webhookUrl;

@@ -8,8 +8,11 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -17,6 +20,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.Comparator;
 import java.util.Random;
+import java.util.UUID;
 
 @SuppressWarnings("deprecation")
 public class EndGameManager implements Listener {
@@ -29,6 +33,8 @@ public class EndGameManager implements Listener {
     private final Random random = new Random();
     // 召喚したミニオンを追跡して、ドラゴン討伐時に道連れにする
     private final java.util.List<org.bukkit.entity.Entity> activeMinions = new java.util.ArrayList<>();
+    // ドラゴンへのダメージを追跡
+    private final java.util.Map<UUID, Double> dragonDamageMap = new java.util.HashMap<>();
 
     public EndGameManager(JavaPlugin plugin, PlayerStatsStorage statsStorage,
             DiscordWebhookClient discordWebhookClient) {
@@ -177,6 +183,38 @@ public class EndGameManager implements Listener {
         activeMinions.add(minion);
     }
 
+    @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR, ignoreCancelled = true)
+    public void onDragonDamage(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof EnderDragon dragon)) {
+            return;
+        }
+        if (!dragon.getWorld().getEnvironment().equals(World.Environment.THE_END)) {
+            return;
+        }
+
+        Player damager = null;
+
+        if (event instanceof EntityDamageByEntityEvent ebee) {
+            org.bukkit.entity.Entity entity = ebee.getDamager();
+            if (entity instanceof Player p) {
+                damager = p;
+            } else if (entity instanceof Projectile proj && proj.getShooter() instanceof Player p) {
+                damager = p;
+            }
+        } else if (event.getCause() == EntityDamageEvent.DamageCause.BLOCK_EXPLOSION) {
+            // ベッド爆破などの場合、爆発地点の近くにいるプレイヤーを検索 (12ブロック以内)
+            damager = dragon.getWorld().getPlayers().stream()
+                    .filter(p -> p.getLocation().distanceSquared(dragon.getLocation()) < 12 * 12)
+                    .min(Comparator.comparingDouble(p -> p.getLocation().distanceSquared(dragon.getLocation())))
+                    .orElse(null);
+        }
+
+        if (damager != null) {
+            UUID uuid = damager.getUniqueId();
+            dragonDamageMap.put(uuid, dragonDamageMap.getOrDefault(uuid, 0.0) + event.getFinalDamage());
+        }
+    }
+
     @EventHandler
     public void onDragonDeath(EntityDeathEvent event) {
         if (event.getEntityType() != EntityType.ENDER_DRAGON) {
@@ -198,9 +236,31 @@ public class EndGameManager implements Listener {
             statsStorage.addEnderDragonKill(killer.getUniqueId());
             statsStorage.ensureName(killer.getUniqueId(), killer.getName());
             plugin.getLogger().info("[Debug] Dragon kill recorded for: " + killer.getName() + " (Killer: "
-                    + (event.getEntity().getKiller() != null ? "Direct" : "Nearby") + ")");
+                    + (event.getEntity().getKiller() != null ? "Direct" : "Nearby/Damage") + ")");
         } else {
-            plugin.getLogger().warning("[Debug] Ender Dragon death detected, but no player found nearby to credit.");
+            // ダメージマップから最大ダメージ者を探す
+            UUID topDamagerId = dragonDamageMap.entrySet().stream()
+                    .max(java.util.Map.Entry.comparingByValue())
+                    .map(java.util.Map.Entry::getKey)
+                    .orElse(null);
+
+            if (topDamagerId != null) {
+                killer = Bukkit.getPlayer(topDamagerId);
+                if (killer != null) {
+                    statsStorage.addEnderDragonKill(topDamagerId);
+                    statsStorage.ensureName(topDamagerId, killer.getName());
+                    plugin.getLogger().info("[Debug] Dragon kill recorded for top damager: " + killer.getName());
+                }
+            }
+        }
+
+        if (killer != null) {
+            // 共通の討伐メッセージ (通常モードでも表示)
+            Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            Bukkit.broadcastMessage(ChatColor.YELLOW + killer.getName() + " が エンダードラゴン を討伐しました！");
+            Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        } else {
+            plugin.getLogger().warning("[Debug] Ender Dragon death detected, but no player found to credit.");
         }
 
         // ハードモードの場合のみ報酬処理 (killerが特定できている場合)
@@ -211,7 +271,7 @@ public class EndGameManager implements Listener {
             Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             Bukkit.broadcastMessage(ChatColor.GOLD + "⚔️ 伝説の誕生！ ⚔️");
             Bukkit.broadcastMessage(ChatColor.YELLOW + killer.getName() + " が " + ChatColor.RED + "ヴォイド・ドラゴン"
-                    + ChatColor.YELLOW + " を討伐しました！");
+                    + ChatColor.YELLOW + " を討伐しました！ (HARD MODE)");
             Bukkit.broadcastMessage(ChatColor.AQUA + "称号 [★] が付与されました！");
             Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
@@ -245,5 +305,6 @@ public class EndGameManager implements Listener {
             }
             activeMinions.clear();
         }
+        dragonDamageMap.clear();
     }
 }

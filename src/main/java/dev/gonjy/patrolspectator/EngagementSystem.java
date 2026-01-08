@@ -83,14 +83,15 @@ public final class EngagementSystem {
         // 基本ルールの強制（API経由）
         for (org.bukkit.World world : Bukkit.getWorlds()) {
             try {
-                world.setGameRule(org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, true);
-                world.setGameRule(org.bukkit.GameRule.KEEP_INVENTORY, false);
-                world.setGameRule(org.bukkit.GameRule.PLAYERS_SLEEPING_PERCENTAGE, 0);
+                // 変更が必要な場合のみセットする（API側でチェックしているが、型チェック等も含め確実にする）
+                setRuleIfNotMatch(world, org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, true);
+                setRuleIfNotMatch(world, org.bukkit.GameRule.KEEP_INVENTORY, false);
+                setRuleIfNotMatch(world, org.bukkit.GameRule.PLAYERS_SLEEPING_PERCENTAGE, 0);
 
                 // 動的な設定（ログなし）
-                setDynamicRuleQuietly(world, new String[] { "locator_bar", "minecraft:locator_bar", "locatorBar" },
+                setDynamicRuleIfNotMatch(world, new String[] { "locator_bar", "minecraft:locator_bar", "locatorBar" },
                         false);
-                setDynamicRuleQuietly(world,
+                setDynamicRuleIfNotMatch(world,
                         new String[] { "show_coordinates", "minecraft:show_coordinates", "showCoordinates" }, false);
 
             } catch (Throwable ignored) {
@@ -98,11 +99,26 @@ public final class EngagementSystem {
         }
     }
 
-    private void setDynamicRuleQuietly(org.bukkit.World world, String[] candidates, boolean value) {
+    private <T> void setRuleIfNotMatch(org.bukkit.World world, org.bukkit.GameRule<T> rule, T value) {
+        try {
+            T current = world.getGameRuleValue(rule);
+            if (current != null && current.equals(value)) {
+                return;
+            }
+            world.setGameRule(rule, value);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private void setDynamicRuleIfNotMatch(org.bukkit.World world, String[] candidates, boolean value) {
         for (String name : candidates) {
             try {
                 org.bukkit.GameRule<?> rule = org.bukkit.GameRule.getByName(name);
                 if (rule != null) {
+                    Object current = world.getGameRuleValue(rule);
+                    if (current instanceof Boolean && current.equals(value)) {
+                        return;
+                    }
                     world.setGameRule((org.bukkit.GameRule<Boolean>) rule, value);
                     return;
                 }

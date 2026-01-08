@@ -1,6 +1,6 @@
 # src/main/resources/config.yml（差し替え）
 patrol:
-  intervalSeconds: 10
+  intervalSeconds: 7
   announce: true
   titles:
     enabled: true
@@ -15,7 +15,7 @@ patrol:
       pitch: 1.2
   tour:
     enabled: true
-    dwellSeconds: 10
+    dwellSeconds: 7
     # 外部ファイルの相対パス（プラグインデータフォルダ直下）
     file: tourist_locations.yml
     # 既存の内蔵リスト（外部ファイルが無い時のフォールバック）
@@ -28,6 +28,14 @@ patrol:
       points: 6
       radius: 60
       yOffset: 0.0
+  # カメラ役が参加した時に自動でパトロールを開始する設定
+  autoStart:
+    enabled: true
+    cameraPlayerName: "OtouGame" # カメラ役のプレイヤー名を設定
+  # 移動前にチャンクを非同期で読み込む設定（負荷分散）
+  chunkPreLoading:
+    enabled: true
+    secondsBefore: 3 # 移動の3秒前に事前読み込みを開始
 
 # YouTube Chat Integration (Safe Mode)
 youtube:

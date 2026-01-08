@@ -61,8 +61,20 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         public boolean debugLog;
     }
 
+    public static class AutoStartConf {
+        public boolean enabled;
+        public String cameraPlayerName;
+    }
+
+    public static class ChunkPreLoadingConf {
+        public boolean enabled;
+        public int secondsBefore;
+    }
+
     private TourConf tourConf;
     private PerformanceConf performanceConf;
+    private AutoStartConf autoStartConf;
+    private ChunkPreLoadingConf chunkPreLoadingConf;
     private int patrolIntervalSeconds;
     @SuppressWarnings("unused") // Reserved for future use, loaded from config
     private boolean announce;
@@ -116,7 +128,6 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         MessageUtils.init(titleConf);
 
         // コマンド登録
-        // コマンド登録
         PatrolCommand patrolCmd = new PatrolCommand(this, patrolManager, rankingDisplaySystem);
         getCommand("patrol").setExecutor(patrolCmd);
         getCommand("patrol").setTabCompleter(patrolCmd);
@@ -142,6 +153,25 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
             String refreshToken = getConfig().getString("youtube.refresh_token");
             youTubeManager.initialize(clientId, clientSecret, refreshToken);
             getServer().getPluginManager().registerEvents(new YouTubeChatListener(this, youTubeManager), this);
+        }
+
+        // Auto Start Listener
+        if (autoStartConf.enabled) {
+            getServer().getPluginManager().registerEvents(new org.bukkit.event.Listener() {
+                @org.bukkit.event.EventHandler
+                public void onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent event) {
+                    if (event.getPlayer().getName().equalsIgnoreCase(autoStartConf.cameraPlayerName)) {
+                        getLogger()
+                                .info("Camera player " + event.getPlayer().getName() + " joined. Starting patrol...");
+                        // Delay slightly to ensure player is fully logged in
+                        getServer().getScheduler().runTaskLater(PatrolSpectatorPlugin.this, () -> {
+                            if (event.getPlayer().isOnline()) {
+                                patrolManager.startPatrol(event.getPlayer(), tourConf.dwellSeconds);
+                            }
+                        }, 40L);
+                    }
+                }
+            }, this);
         }
 
         // Bounty System
@@ -178,6 +208,9 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         // 最後にストレージ保存
         if (statsStorage != null) {
             statsStorage.flush();
+        }
+        if (participationManager != null) {
+            participationManager.shutdown();
         }
         if (this.tickMonitor != null) {
             this.tickMonitor.stop();
@@ -228,6 +261,16 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         performanceConf.disableAutoEventWhilePatrol = getConfig().getBoolean("performance.disableAutoEventWhilePatrol",
                 false);
         performanceConf.debugLog = getConfig().getBoolean("performance.debugLog", false);
+
+        // autoStart
+        autoStartConf = new AutoStartConf();
+        autoStartConf.enabled = getConfig().getBoolean("patrol.autoStart.enabled", true);
+        autoStartConf.cameraPlayerName = getConfig().getString("patrol.autoStart.cameraPlayerName", "OtouGame");
+
+        // chunkPreLoading
+        chunkPreLoadingConf = new ChunkPreLoadingConf();
+        chunkPreLoadingConf.enabled = getConfig().getBoolean("patrol.chunkPreLoading.enabled", true);
+        chunkPreLoadingConf.secondsBefore = getConfig().getInt("patrol.chunkPreLoading.secondsBefore", 3);
     }
 
     // —— ここから公共API（他クラスから呼ばれる） ——
@@ -246,6 +289,14 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
     public PerformanceConf getPerformanceConf() {
         return performanceConf;
+    }
+
+    public AutoStartConf getAutoStartConf() {
+        return autoStartConf;
+    }
+
+    public ChunkPreLoadingConf getChunkPreLoadingConf() {
+        return chunkPreLoadingConf;
     }
 
     public ProtectionData getProtectionData() {
