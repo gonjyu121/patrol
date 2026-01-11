@@ -135,10 +135,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         // 自動イベントシステムの開始
         autoEventSystem.startAutoEvents();
 
-        // ルール定期適用タスク（1分間隔）
+        // ルール定期適用タスク（3分間隔に緩和）
         getServer().getScheduler().runTaskTimer(this, () -> {
             engagementSystem.applyServerRulesQuietly();
-        }, 1200L, 1200L);
+        }, 3600L, 3600L);
 
         if (getConfig().getBoolean("discord.enabled", false)) {
             getServer().getPluginManager().registerEvents(new DiscordListener(this, discordWebhookClient), this);
@@ -182,7 +182,11 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         this.tickMonitor = new TickMonitor(this);
         this.tickMonitor.start();
 
+        getLogger().info("========================================");
+        getLogger().info("PatrolSpectatorPlugin v" + getDescription().getVersion());
+        getLogger().info("Build Date: " + new java.util.Date()); // Simplest build marker
         getLogger().info("PatrolSpectatorPlugin has been enabled!");
+        getLogger().info("========================================");
     }
 
     public DiscordWebhookClient getDiscordWebhookClient() {

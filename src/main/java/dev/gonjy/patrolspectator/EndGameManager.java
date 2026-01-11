@@ -30,6 +30,7 @@ public class EndGameManager implements Listener {
     private final DiscordWebhookClient discordWebhookClient;
     private BukkitTask minionTask;
     private BukkitTask abilityTask;
+    private BukkitTask roarTask;
     private final Random random = new Random();
     // 召喚したミニオンを追跡して、ドラゴン討伐時に道連れにする
     private final java.util.List<org.bukkit.entity.Entity> activeMinions = new java.util.ArrayList<>();
@@ -63,6 +64,7 @@ public class EndGameManager implements Listener {
             setupHardDragon(dragon);
             startMinionTask(dragon);
             startAbilityTask(dragon);
+            startRoarTask(dragon);
 
             String message = "⚠ ヴォイド・ドラゴン (Void Dragon) が出現しました！ (HARD MODE)";
             Bukkit.broadcastMessage(ChatColor.RED + message);
@@ -158,6 +160,53 @@ public class EndGameManager implements Listener {
             }
 
         }, 20 * 20L, 20 * 20L);
+    }
+
+    private void startRoarTask(EnderDragon dragon) {
+        if (roarTask != null && !roarTask.isCancelled()) {
+            roarTask.cancel();
+        }
+
+        // 35秒ごとに Void Roar (虚無の咆哮)
+        roarTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            if (dragon == null || dragon.isDead() || !dragon.isValid()) {
+                if (roarTask != null)
+                    roarTask.cancel();
+                return;
+            }
+
+            World world = dragon.getWorld();
+            boolean roared = false;
+
+            for (Player p : world.getPlayers()) {
+                // サバイバル/アドベンチャーのプレイヤーのみ対象
+                if (p.getGameMode() != org.bukkit.GameMode.SURVIVAL
+                        && p.getGameMode() != org.bukkit.GameMode.ADVENTURE) {
+                    continue;
+                }
+
+                // サウンド再生 (ドラゴンの咆哮 + エンダーマンの叫び)
+                p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.5f);
+                p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_ENDERMAN_STARE, 1.0f, 0.5f);
+
+                // 周囲のエンダーマンを激昂させる (32ブロック以内)
+                world.getNearbyEntities(p.getLocation(), 32, 32, 32).stream()
+                        .filter(e -> e instanceof org.bukkit.entity.Enderman)
+                        .map(e -> (org.bukkit.entity.Enderman) e)
+                        .forEach(enderman -> {
+                            enderman.setTarget(p);
+                            enderman.setScreaming(true);
+                        });
+
+                roared = true;
+            }
+
+            if (roared) {
+                Bukkit.broadcastMessage(ChatColor.DARK_PURPLE + "📢 " + ChatColor.RED + "ヴォイド・ドラゴンの咆哮がエンドに響き渡った！");
+                Bukkit.broadcastMessage(ChatColor.GRAY + "（周囲のエンダーマンが興奮している...）");
+            }
+
+        }, 35 * 20L, 35 * 20L);
     }
 
     private void spawnMinion(Location center, EntityType type) {
@@ -294,6 +343,10 @@ public class EndGameManager implements Listener {
         if (abilityTask != null) {
             abilityTask.cancel();
             abilityTask = null;
+        }
+        if (roarTask != null) {
+            roarTask.cancel();
+            roarTask = null;
         }
 
         // 残っているミニオンを抹消

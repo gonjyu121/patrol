@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>dev.gonjy</groupId>
   <artifactId>patrol-spectator-plugin</artifactId>
-  <version>1.9.56</version>
+  <version>1.9.57</version>
   <name>PatrolSpectatorPlugin</name>
 
   <properties>
@@ -79,6 +79,22 @@
 
   <build>
     <finalName>PatrolSpectatorPlugin-${project.version}</finalName>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>plugin.yml</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>false</filtering>
+        <excludes>
+          <exclude>plugin.yml</exclude>
+        </excludes>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

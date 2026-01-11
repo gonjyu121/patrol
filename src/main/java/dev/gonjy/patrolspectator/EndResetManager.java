@@ -208,7 +208,12 @@ public class EndResetManager implements Listener {
             return;
         }
 
-        Bukkit.broadcast(Component.text("[EndReset] エンドワールドのリセットを開始します...", NamedTextColor.RED));
+        // 事前通知（ラグが発生する可能性があるため）
+        String msg = "[EndReset] エンドワールドのリセット準備を開始します。一時的にサーバーが重くなる可能性があります。";
+        Bukkit.broadcast(Component.text(msg, NamedTextColor.RED));
+        if (plugin.getDiscordWebhookClient() != null) {
+            plugin.getDiscordWebhookClient().send("🔄 **End Resetting...** World maintenance in progress.");
+        }
 
         // 1. プレイヤーを退避
         Location safeSpawn = Bukkit.getWorlds().get(0).getSpawnLocation();
@@ -225,84 +230,91 @@ public class EndResetManager implements Listener {
             return;
         }
 
-        // 3. ファイル削除と再生成
-        try {
-            File worldFolder = new File(Bukkit.getWorldContainer(), endWorldName);
+        // 3. ファイル削除（重いので非同期で実行）
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                plugin.getLogger().info("Starting asynchronous end world file deletion...");
+                File worldFolder = new File(Bukkit.getWorldContainer(), endWorldName);
 
-            // region (地形)
-            File targetRegion = new File(worldFolder, "region");
-            if (!targetRegion.exists())
-                targetRegion = new File(worldFolder, "DIM1/region");
-            if (targetRegion.exists()) {
-                deleteDirectory(targetRegion);
-                plugin.getLogger().info("Deleted region folder: " + targetRegion.getAbsolutePath());
+                // region (地形)
+                File targetRegion = new File(worldFolder, "region");
+                if (!targetRegion.exists())
+                    targetRegion = new File(worldFolder, "DIM1/region");
+                if (targetRegion.exists()) {
+                    deleteDirectory(targetRegion);
+                    plugin.getLogger().info("Deleted region folder: " + targetRegion.getAbsolutePath());
+                }
+
+                // DIM1 (エンティティ等)
+                File dim1 = new File(worldFolder, "DIM1");
+                if (dim1.exists()) {
+                    deleteDirectory(dim1);
+                    plugin.getLogger().info("Deleted DIM1 folder: " + dim1.getAbsolutePath());
+                }
+
+                // level.dat (ドラゴン討伐状態など)
+                File levelDat = new File(worldFolder, "level.dat");
+                if (levelDat.exists()) {
+                    if (levelDat.delete()) {
+                        plugin.getLogger().info("Deleted level.dat");
+                    } else {
+                        plugin.getLogger().warning("Failed to delete level.dat");
+                    }
+                }
+                File levelDatOld = new File(worldFolder, "level.dat_old");
+                if (levelDatOld.exists())
+                    levelDatOld.delete();
+
+                plugin.getLogger().info("Asynchronous file deletion completed.");
+
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.SEVERE, "Error deleting world files asynchronously", e);
             }
 
-            // DIM1 (エンティティ等)
-            File dim1 = new File(worldFolder, "DIM1");
-            if (dim1.exists()) {
-                deleteDirectory(dim1);
-                plugin.getLogger().info("Deleted DIM1 folder: " + dim1.getAbsolutePath());
-            }
+            // 4. ワールドの再ロード（メインスレッドに戻る）
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                plugin.getLogger().info("Recreating End world...");
+                World newEndWorld = Bukkit
+                        .createWorld(new org.bukkit.WorldCreator(endWorldName).environment(World.Environment.THE_END));
 
-            // level.dat (ドラゴン討伐状態など)
-            File levelDat = new File(worldFolder, "level.dat");
-            if (levelDat.exists()) {
-                if (levelDat.delete()) {
-                    plugin.getLogger().info("Deleted level.dat");
+                // エンダードラゴンを明示的にリスポーンさせる
+                if (newEndWorld != null) {
+                    org.bukkit.boss.DragonBattle battle = newEndWorld.getEnderDragonBattle();
+                    if (battle != null) {
+                        battle.initiateRespawn();
+                        plugin.getLogger().info("Initiated Ender Dragon respawn sequence.");
+                    } else {
+                        plugin.getLogger().warning("Could not get DragonBattle instance.");
+                    }
+                }
+
+                // 難易度をランダムに決定 (50%の確率でハードモード)
+                boolean isHardMode = new java.util.Random().nextBoolean();
+                plugin.getConfig().set("end.difficulty", isHardMode ? "HARD" : "NORMAL");
+
+                // リセット完了時刻を記録
+                plugin.getConfig().set("end.lastResetTime", System.currentTimeMillis());
+                plugin.saveConfig();
+
+                Bukkit.broadcast(Component.text("[EndReset] エンドワールドのリセットが完了しました！", NamedTextColor.GREEN));
+
+                if (isHardMode) {
+                    Bukkit.broadcast(Component.text("⚠ エンドワールドから強大なエネルギー反応を検知しました... (HARD MODE)", NamedTextColor.RED));
+                    if (plugin.getDiscordWebhookClient() != null) {
+                        plugin.getDiscordWebhookClient()
+                                .send("🐉 **The Void Dragon** has appeared! (Difficulty: **HARD**)");
+                    }
                 } else {
-                    plugin.getLogger().warning("Failed to delete level.dat");
+                    Bukkit.broadcast(Component.text("エンドワールドのエネルギー反応は正常です。(NORMAL MODE)", NamedTextColor.GREEN));
+                    if (plugin.getDiscordWebhookClient() != null) {
+                        plugin.getDiscordWebhookClient()
+                                .send("🐉 **The Void Dragon** has appeared! (Difficulty: Normal)");
+                    }
                 }
-            }
-            File levelDatOld = new File(worldFolder, "level.dat_old");
-            if (levelDatOld.exists())
-                levelDatOld.delete();
 
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Error deleting world files", e);
-        }
-
-        // 4. ワールドの再ロード（作成）
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            World newEndWorld = Bukkit
-                    .createWorld(new org.bukkit.WorldCreator(endWorldName).environment(World.Environment.THE_END));
-
-            // エンダードラゴンを明示的にリスポーンさせる
-            if (newEndWorld != null) {
-                org.bukkit.boss.DragonBattle battle = newEndWorld.getEnderDragonBattle();
-                if (battle != null) {
-                    battle.initiateRespawn();
-                    plugin.getLogger().info("Initiated Ender Dragon respawn sequence.");
-                } else {
-                    plugin.getLogger().warning("Could not get DragonBattle instance.");
-                }
-            }
-
-            // 難易度をランダムに決定 (50%の確率でハードモード)
-            boolean isHardMode = new java.util.Random().nextBoolean();
-            plugin.getConfig().set("end.difficulty", isHardMode ? "HARD" : "NORMAL");
-
-            // リセット完了時刻を記録
-            plugin.getConfig().set("end.lastResetTime", System.currentTimeMillis());
-            plugin.saveConfig();
-
-            Bukkit.broadcast(Component.text("[EndReset] エンドワールドのリセットが完了しました！", NamedTextColor.GREEN));
-
-            if (isHardMode) {
-                Bukkit.broadcast(Component.text("⚠ エンドワールドから強大なエネルギー反応を検知しました... (HARD MODE)", NamedTextColor.RED));
-                if (plugin.getDiscordWebhookClient() != null) {
-                    plugin.getDiscordWebhookClient()
-                            .send("🐉 **The Void Dragon** has appeared! (Difficulty: **HARD**)");
-                }
-            } else {
-                Bukkit.broadcast(Component.text("エンドワールドのエネルギー反応は正常です。(NORMAL MODE)", NamedTextColor.GREEN));
-                if (plugin.getDiscordWebhookClient() != null) {
-                    plugin.getDiscordWebhookClient().send("🐉 **The Void Dragon** has appeared! (Difficulty: Normal)");
-                }
-            }
-
-            isResetting = false;
-        }, 40L); // 2秒後
+                isResetting = false;
+            }, 20L); // 削除完了後、1秒待ってから再生成
+        });
     }
 
     private void deleteDirectory(File file) {
