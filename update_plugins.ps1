@@ -41,7 +41,7 @@ $buildName = $buildConfig.name
 # pom.xmlからバージョンを読み取る
 $pomPath = Join-Path $rootDir "pom.xml"
 if (Test-Path $pomPath) {
-    $pomContent = Get-Content $pomPath
+    $pomContent = Get-Content $pomPath -Raw
     if ($pomContent -match "<version>(.+?)</version>") {
         # 最初のヒット（project version）を取得
         $buildVersion = $matches[1]
