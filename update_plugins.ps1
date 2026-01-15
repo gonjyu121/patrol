@@ -36,8 +36,25 @@ if ($existingJars.Count -gt 0) {
 # PatrolSpectatorPluginをビルド
 Write-Host "🔨 PatrolSpectatorPluginをビルド中..." -ForegroundColor Yellow
 $buildConfig = $config.build_plugin
-$buildVersion = $buildConfig.version
 $buildName = $buildConfig.name
+
+# pom.xmlからバージョンを読み取る
+$pomPath = Join-Path $rootDir "pom.xml"
+if (Test-Path $pomPath) {
+    $pomContent = Get-Content $pomPath
+    if ($pomContent -match "<version>(.+?)</version>") {
+        # 最初のヒット（project version）を取得
+        $buildVersion = $matches[1]
+        Write-Host "ℹ️  pom.xmlからバージョン $buildVersion を検出しました" -ForegroundColor Cyan
+    }
+    else {
+        Write-Warning "pom.xmlからバージョンを読み取れませんでした。設定ファイルの値を使用します。"
+        $buildVersion = $buildConfig.version
+    }
+}
+else {
+    $buildVersion = $buildConfig.version
+}
 
 try {
     # Maven Wrapperがあればそれを使う、なければパスのmvn

@@ -184,7 +184,24 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
         getLogger().info("========================================");
         getLogger().info("PatrolSpectatorPlugin v" + getDescription().getVersion());
-        getLogger().info("Build Date: " + new java.util.Date()); // Simplest build marker
+
+        // Log Git Commit Hash
+        try {
+            java.io.InputStream is = getResource("git.properties");
+            if (is != null) {
+                Properties gitProps = new Properties();
+                gitProps.load(is);
+                String commitHash = gitProps.getProperty("git.commit.id.abbrev", "unknown");
+                String buildTime = gitProps.getProperty("git.build.time", "unknown");
+                getLogger().info("Commit: " + commitHash);
+                getLogger().info("Build Time: " + buildTime);
+            } else {
+                getLogger().warning("git.properties not found in JAR");
+            }
+        } catch (Exception e) {
+            getLogger().warning("Could not load git.properties: " + e.getMessage());
+        }
+
         getLogger().info("PatrolSpectatorPlugin has been enabled!");
         getLogger().info("========================================");
     }
