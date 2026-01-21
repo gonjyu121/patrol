@@ -40,20 +40,16 @@ $buildName = $buildConfig.name
 
 # pom.xmlからバージョンを読み取る
 $pomPath = Join-Path $rootDir "pom.xml"
+$buildVersion = $buildConfig.version
+
 if (Test-Path $pomPath) {
-    $pomContent = Get-Content $pomPath -Raw
-    if ($pomContent -match "<version>(.+?)</version>") {
-        # 最初のヒット（project version）を取得
-        $buildVersion = $matches[1]
-        Write-Host "ℹ️  pom.xmlからバージョン $buildVersion を検出しました" -ForegroundColor Cyan
+    $match = Select-String -Path $pomPath -Pattern '<version>(.+?)</version>' | Select-Object -First 1
+    if ($match) {
+        if ($match.Matches.Groups[1].Value) {
+            $buildVersion = $match.Matches.Groups[1].Value
+            Write-Host "ℹ️  pom.xmlからバージョン $buildVersion を検出しました" -ForegroundColor Cyan
+        }
     }
-    else {
-        Write-Warning "pom.xmlからバージョンを読み取れませんでした。設定ファイルの値を使用します。"
-        $buildVersion = $buildConfig.version
-    }
-}
-else {
-    $buildVersion = $buildConfig.version
 }
 
 try {
