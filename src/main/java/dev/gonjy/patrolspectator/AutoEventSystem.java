@@ -27,6 +27,8 @@ public class AutoEventSystem implements Listener {
     private final Map<UUID, Integer> playerPoints = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> playerKillStreaks = new ConcurrentHashMap<>();
     private final Map<UUID, Long> playerLastKillTime = new ConcurrentHashMap<>();
+    private final Map<UUID, Location> playerLastLocation = new ConcurrentHashMap<>();
+    private final Map<UUID, Double> playerAccumulatedDistance = new ConcurrentHashMap<>();
 
     // 自動イベント設定
     private boolean autoEventsEnabled = true;
@@ -131,6 +133,8 @@ public class AutoEventSystem implements Listener {
         playerPoints.clear();
         playerKillStreaks.clear();
         playerLastKillTime.clear();
+        playerLastLocation.clear();
+        playerAccumulatedDistance.clear();
         survivalAwarded.clear();
         // 終了予定時刻を設定（開始時刻は eventEndTime - eventDuration*1000）
         eventEndTime = System.currentTimeMillis() + (eventDuration * 1000L);
@@ -209,6 +213,8 @@ public class AutoEventSystem implements Listener {
         playerPoints.clear();
         playerKillStreaks.clear();
         playerLastKillTime.clear();
+        playerLastLocation.clear();
+        playerAccumulatedDistance.clear();
         survivalAwarded.clear();
         eventEndTime = 0L;
 
@@ -403,12 +409,33 @@ public class AutoEventSystem implements Listener {
         if (!currentEvent.equals("speed_contest"))
             return;
 
-        Player player = event.getPlayer();
-        Location from = event.getFrom();
         Location to = event.getTo();
+        if (to == null)
+            return;
 
-        if (to != null && from.distance(to) > 0.1) {
-            addPoints(player.getUniqueId(), 1);
+        Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
+        Location from = playerLastLocation.get(uuid);
+
+        if (from == null || !from.getWorld().equals(to.getWorld())) {
+            playerLastLocation.put(uuid, to.clone());
+            return;
+        }
+
+        double distance = from.distance(to);
+        if (distance > 0.05) { // わずかな動きは無視
+            double total = playerAccumulatedDistance.getOrDefault(uuid, 0.0) + distance;
+            if (total >= 5.0) { // 5ブロック移動ごとにポイント加算
+                addPoints(uuid, (int) (total / 5.0));
+                playerAccumulatedDistance.put(uuid, total % 5.0);
+                playerLastLocation.put(uuid, to.clone());
+            } else {
+                playerAccumulatedDistance.put(uuid, total);
+                // 1ブロック以上動いていたら基準点を更新（累積精度のため、ただし頻度を抑える）
+                if (distance > 0.5) {
+                    playerLastLocation.put(uuid, to.clone());
+                }
+            }
         }
     }
 
