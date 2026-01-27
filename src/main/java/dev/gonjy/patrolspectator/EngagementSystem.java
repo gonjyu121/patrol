@@ -1,12 +1,17 @@
 package dev.gonjy.patrolspectator;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 public final class EngagementSystem {
+    private final PatrolSpectatorPlugin plugin;
     private final Logger log;
 
     public EngagementSystem(PatrolSpectatorPlugin plugin) {
+        this.plugin = plugin;
         this.log = plugin.getLogger();
     }
 
@@ -271,6 +276,116 @@ public final class EngagementSystem {
             log.warning("無効な音名: " + soundName);
         } catch (Throwable t) {
             log.warning("音の再生に失敗: " + t.getMessage());
+        }
+    }
+
+    /**
+     * マイルストーンとランクのチェックを行います。
+     */
+    public void checkEngagement(Player player) {
+        if (player == null || !player.isOnline())
+            return;
+        checkMilestones(player);
+        updatePlayerRank(player);
+    }
+
+    private void checkMilestones(Player player) {
+        UUID uuid = player.getUniqueId();
+        PlayerStatsStorage stats = plugin.getStatsStorage();
+        long totalMs = stats.getTotalPlayTimeMillis(uuid);
+        long lastNotified = stats.getLastNotifiedMilestoneMs(uuid);
+
+        // Milestones: 1h, 5h, 10h, 24h, 50h, 100h
+        long[] milestones = {
+                1 * 3600000L,
+                5 * 3600000L,
+                10 * 3600000L,
+                24 * 3600000L,
+                50 * 3600000L,
+                100 * 3600000L
+        };
+
+        for (long m : milestones) {
+            if (totalMs >= m && lastNotified < m) {
+                notifyMilestone(player, m);
+                stats.setLastNotifiedMilestoneMs(uuid, m);
+                break; // 複数を同時に通知しないように1つずつ
+            }
+        }
+    }
+
+    private void notifyMilestone(Player player, long milestoneMs) {
+        long hours = milestoneMs / 3600000L;
+        String message = ChatColor.GOLD + "🎉 素晴らしい！プレイ時間が " + ChatColor.YELLOW + hours + "時間" + ChatColor.GOLD
+                + " を突破しました！";
+
+        player.sendMessage(message);
+        playNamedSound(player, "UI_TOAST_CHALLENGE_COMPLETE", 1.0f, 1.0f);
+
+        DiscordWebhookClient discord = plugin.getDiscordWebhookClient();
+        if (discord != null) {
+            discord.send("🎉 **" + player.getName() + "** さんが累計プレイ時間 **" + hours + "時間** を突破しました！");
+        }
+    }
+
+    private void updatePlayerRank(Player player) {
+        UUID uuid = player.getUniqueId();
+        PlayerStatsStorage stats = plugin.getStatsStorage();
+        long totalMs = stats.getTotalPlayTimeMillis(uuid);
+        int points = stats.getEventPoints(uuid);
+        String currentRank = stats.getPlayerRank(uuid);
+
+        String newRank = "None";
+        if (totalMs >= 100 * 3600000L) {
+            newRank = "Legend";
+        } else if (totalMs >= 50 * 3600000L && points >= 2000) {
+            newRank = "Gold";
+        } else if (totalMs >= 10 * 3600000L && points >= 500) {
+            newRank = "Silver";
+        } else if (totalMs >= 1 * 3600000L || points >= 100) {
+            newRank = "Bronze";
+        }
+
+        if (!newRank.equals(currentRank) && !newRank.equals("None")) {
+            // ランクアップ時のみ通知（ランクダウンはサイレントまたは考慮外）
+            if (isRankBetter(newRank, currentRank)) {
+                notifyRankUp(player, newRank);
+            }
+            stats.setPlayerRank(uuid, newRank);
+        }
+    }
+
+    private boolean isRankBetter(String newRank, String oldRank) {
+        java.util.List<String> order = java.util.Arrays.asList("None", "Bronze", "Silver", "Gold", "Legend");
+        return order.indexOf(newRank) > order.indexOf(oldRank);
+    }
+
+    private void notifyRankUp(Player player, String rank) {
+        ChatColor color = getRankColor(rank);
+        String message = ChatColor.GOLD + "✨ ランクアップ！ ✨ 新しいランク: " + color + rank;
+
+        Bukkit.broadcastMessage(
+                ChatColor.YELLOW + player.getName() + " さんがランク " + color + rank + ChatColor.YELLOW + " になりました！");
+        playNamedSound(player, "ENTITY_PLAYER_LEVELUP", 1.0f, 0.8f);
+
+        DiscordWebhookClient discord = plugin.getDiscordWebhookClient();
+        if (discord != null) {
+            discord.send("✨ **" + player.getName() + "** さんがランク **" + rank + "** にランクアップしました！");
+        }
+    }
+
+    private ChatColor getRankColor(String rank) {
+        switch (rank) {
+            case "Bronze":
+                return ChatColor.GOLD; // Or a custom copper-like color
+            case "Silver":
+                return ChatColor.GRAY;
+            case "Gold":
+                return ChatColor.YELLOW;
+            case "Legend":
+                return ChatColor.LIGHT_PURPLE;
+            default:
+                return ChatColor.WHITE;
         }
     }
 }
