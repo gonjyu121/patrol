@@ -389,6 +389,7 @@ public class PlayerStatsStorage {
             }
         }
         return ids;
+    }
 
     /**
      * 最後に通知したマイルストーン時間を取得します。
