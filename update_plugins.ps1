@@ -13,7 +13,7 @@ Write-Host "==================================" -ForegroundColor Green
 if (-not (Test-Path $configFile)) {
     Write-Error "設定ファイルが見つかりません: $configFile"
 }
-$config = Get-Content $configFile -Raw | ConvertFrom-Json
+$config = Get-Content $configFile -Encoding UTF8 -Raw | ConvertFrom-Json
 
 # targetディレクトリの確認（なければ作成）
 if (-not (Test-Path $targetDir)) {

@@ -13,7 +13,7 @@ Write-Host "==================" -ForegroundColor Green
 if (-not (Test-Path $configFile)) {
     Write-Error "Config file not found: $configFile"
 }
-$config = Get-Content $configFile -Raw | ConvertFrom-Json
+$config = Get-Content $configFile -Encoding UTF8 -Raw | ConvertFrom-Json
 
 # Check Target Dir
 if (-not (Test-Path $targetDir)) {
