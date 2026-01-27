@@ -33,12 +33,29 @@ public class PlayerStatsStorage {
         this.file = new File(plugin.getDataFolder(), "player_stats.yml");
         this.yaml = YamlConfiguration.loadConfiguration(file);
 
+        // クリーンアップ：再起動時に個別の「オンライン中フラグ」をリセット
+        resetOnlineStatusOnStartup();
+
         // データの整合性チェックと初期保存
         synchronized (yaml) {
             saveSync();
         }
 
         startAutoSaveTask();
+    }
+
+    private void resetOnlineStatusOnStartup() {
+        synchronized (yaml) {
+            if (yaml.getConfigurationSection("players") == null)
+                return;
+            for (String key : yaml.getConfigurationSection("players").getKeys(false)) {
+                String base = "players." + key;
+                // クラッシュ等で残ったオンライン状態をフラッシュ
+                yaml.set(base + ".lastJoinAtMs", 0L);
+                yaml.set(base + ".lastContinuousJoinAtMs", 0L);
+            }
+            dirty = true;
+        }
     }
 
     private void startAutoSaveTask() {
@@ -116,16 +133,24 @@ public class PlayerStatsStorage {
     public long getTotalPlayTimeMillis(UUID playerId) {
         synchronized (yaml) {
             String base = basePath(playerId);
-            long total = yaml.getLong(base + ".totalPlayMs", 0L);
+            long storedTotal = yaml.getLong(base + ".totalPlayMs", 0L);
+            long lastJoin = yaml.getLong(base + ".lastJoinAtMs", 0L);
+
+            long currentTotal = storedTotal;
+            if (lastJoin > 0) {
+                currentTotal += (System.currentTimeMillis() - lastJoin);
+            }
+
             long survival = getContinuousSurvivalTimeMillis(playerId);
 
-            // データの整合性補正: 連続生存時間が総プレイ時間を超えている場合、総プレイ時間を同期させる
-            if (survival > total) {
-                total = survival;
-                yaml.set(base + ".totalPlayMs", total);
+            // データの整合性補正: 連続生存時間が（計算後の）総プレイ時間を超えている場合、同期させる
+            if (survival > currentTotal) {
+                currentTotal = survival;
+                // ここで更新しておくと整合性が保たれやすい（Survivalは既にライブ計算済み）
+                yaml.set(base + ".totalPlayMs", currentTotal);
                 dirty = true;
             }
-            return total;
+            return currentTotal;
         }
     }
 
