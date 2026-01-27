@@ -136,6 +136,7 @@ public class PlayerStatsStorage {
             long storedTotal = yaml.getLong(base + ".totalPlayMs", 0L);
             long lastJoin = yaml.getLong(base + ".lastJoinAtMs", 0L);
 
+            // 現在進行中のセッション時間を反映（オンラインの場合）
             long currentTotal = storedTotal;
             if (lastJoin > 0) {
                 currentTotal += (System.currentTimeMillis() - lastJoin);
@@ -143,14 +144,9 @@ public class PlayerStatsStorage {
 
             long survival = getContinuousSurvivalTimeMillis(playerId);
 
-            // データの整合性補正: 連続生存時間が（計算後の）総プレイ時間を超えている場合、同期させる
-            if (survival > currentTotal) {
-                currentTotal = survival;
-                // ここで更新しておくと整合性が保たれやすい（Survivalは既にライブ計算済み）
-                yaml.set(base + ".totalPlayMs", currentTotal);
-                dirty = true;
-            }
-            return currentTotal;
+            // データの整合性補正: 連続生存時間が総プレイ時間を超えている場合、大きい方を採用
+            // (ここではYAMLへの保存は行わず、計算結果のみを返す。保存は recordQuit に任せる)
+            return Math.max(currentTotal, survival);
         }
     }
 
