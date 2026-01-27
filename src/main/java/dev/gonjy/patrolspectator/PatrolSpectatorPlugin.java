@@ -2,6 +2,7 @@ package dev.gonjy.patrolspectator;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
@@ -112,7 +113,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         endGameManager = new EndGameManager(this, statsStorage, discordWebhookClient);
 
         // イベントリスナーの登録
-        getServer().getPluginManager().registerEvents(new RankingEventListener(statsStorage), this);
+        getServer().getPluginManager().registerEvents(new RankingEventListener(statsStorage, engagementSystem), this);
 
         // PatrolManagerの初期化（依存関係を注入）
         patrolManager = new PatrolManager(this, engagementSystem, participationManager, gameModeEnforcer,
@@ -139,6 +140,13 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         getServer().getScheduler().runTaskTimer(this, () -> {
             engagementSystem.applyServerRulesQuietly();
         }, 3600L, 3600L);
+
+        // エンゲージメント（マイルストーン/ランク）定期チェックタスク（10分間隔）
+        getServer().getScheduler().runTaskTimer(this, () -> {
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                engagementSystem.checkEngagement(p);
+            }
+        }, 12000L, 12000L);
 
         if (getConfig().getBoolean("discord.enabled", false)) {
             getServer().getPluginManager().registerEvents(new DiscordListener(this, discordWebhookClient), this);
