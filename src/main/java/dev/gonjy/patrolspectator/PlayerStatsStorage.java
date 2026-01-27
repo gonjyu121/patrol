@@ -242,6 +242,7 @@ public class PlayerStatsStorage {
             int current = yaml.getInt(base + ".enderDragonKills", 0);
             yaml.set(base + ".enderDragonKills", current + 1);
             dirty = true;
+            saveSync(); // 重要データなので即座に保存
         }
     }
 
@@ -367,5 +368,50 @@ public class PlayerStatsStorage {
             }
         }
         return ids;
+
+    /**
+     * 最後に通知したマイルストーン時間を取得します。
+     */
+    public long getLastNotifiedMilestoneMs(UUID playerId) {
+        if (playerId == null)
+            return 0;
+        synchronized (yaml) {
+            return yaml.getLong(basePath(playerId) + ".lastNotifiedMilestoneMs", 0L);
+        }
+    }
+
+    /**
+     * 最後に通知したマイルストーン時間を設定します。
+     */
+    public void setLastNotifiedMilestoneMs(UUID playerId, long milestoneMs) {
+        if (playerId == null)
+            return;
+        synchronized (yaml) {
+            yaml.set(basePath(playerId) + ".lastNotifiedMilestoneMs", milestoneMs);
+            dirty = true;
+        }
+    }
+
+    /**
+     * 現在のプレイヤーランクを取得します。
+     */
+    public String getPlayerRank(UUID playerId) {
+        if (playerId == null)
+            return "None";
+        synchronized (yaml) {
+            return yaml.getString(basePath(playerId) + ".currentRank", "None");
+        }
+    }
+
+    /**
+     * プレイヤーランクを設定します。
+     */
+    public void setPlayerRank(UUID playerId, String rank) {
+        if (playerId == null)
+            return;
+        synchronized (yaml) {
+            yaml.set(basePath(playerId) + ".currentRank", rank);
+            dirty = true;
+        }
     }
 }
