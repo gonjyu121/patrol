@@ -12,10 +12,10 @@
 
 ## Pending Tasks
 - [ ] Commit version-sync changes and `build_v2.ps1`.
-- [ ] Optimize `AutoEventSystem.java` or investigate user-requested logic updates.
+- [ ] Implement Engagement visibility improvements (milestones, rank changes, daily stats).
 - [ ] Verify build with `v1.9.58`.
 
 ## Reference for Next Session
 1. Read this file immediately to restore state.
 2. Check `git status` to see if anything was left in progress.
-3. Check `task.md` in brain for detailed task breakdown of the current session.
+3. Check `task.md` and `implementation_plan.md` in brain for engagement features.

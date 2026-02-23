@@ -1,7 +1,6 @@
 package dev.gonjy.patrolspectator;
 
 import org.bukkit.Bukkit;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -133,6 +132,9 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         getCommand("patrol").setExecutor(patrolCmd);
         getCommand("patrol").setTabCompleter(patrolCmd);
 
+        // Stats コマンド登録
+        getCommand("stats").setExecutor(new StatsCommand(this, engagementSystem));
+
         // 自動イベントシステムの開始
         autoEventSystem.startAutoEvents();
 
@@ -191,11 +193,17 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         this.tickMonitor.start();
 
         getLogger().info("========================================");
-        getLogger().info("PatrolSpectatorPlugin v" + getDescription().getVersion());
+        getLogger().info("PatrolSpectatorPlugin v" + getPluginMeta().getVersion());
 
         // Log Git Commit Hash
-        try {
-            java.io.InputStream is = getResource("git.properties");
+        logGitInfo();
+
+        getLogger().info("PatrolSpectatorPlugin has been enabled!");
+        getLogger().info("========================================");
+    }
+
+    private void logGitInfo() {
+        try (java.io.InputStream is = getResource("git.properties")) {
             if (is != null) {
                 Properties gitProps = new Properties();
                 gitProps.load(is);
@@ -209,9 +217,6 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         } catch (Exception e) {
             getLogger().warning("Could not load git.properties: " + e.getMessage());
         }
-
-        getLogger().info("PatrolSpectatorPlugin has been enabled!");
-        getLogger().info("========================================");
     }
 
     public DiscordWebhookClient getDiscordWebhookClient() {
@@ -340,6 +345,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         return participationManager;
     }
 
+    public JavaPlugin getPlugin() {
+        return this;
+    }
+
     public PatrolManager getPatrolManager() {
         return patrolManager;
     }
@@ -372,6 +381,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         if (uuid == null || name == null || name.isEmpty() || statsStorage == null)
             return;
         statsStorage.ensureName(uuid, name);
+    }
+
+    public EngagementSystem getEngagementSystem() {
+        return engagementSystem;
     }
 
     // 死亡保護の延長（存在しなかったので用意）

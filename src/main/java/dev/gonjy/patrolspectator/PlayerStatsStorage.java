@@ -109,12 +109,45 @@ public class PlayerStatsStorage {
                 yaml.set(base + ".continuousSurvivalMs", currentContinuous);
             }
 
+            // 日次プレイ時間の更新
+            if (lastJoin > 0) {
+                long session = Math.max(0, now - lastJoin);
+                recordDailyPlayTime(playerId, session);
+            }
+
             yaml.set(base + ".lastQuitAtMs", now);
             yaml.set(base + ".lastJoinAtMs", 0L);
             yaml.set(base + ".lastContinuousJoinAtMs", 0L);
 
             dirty = true;
             saveSync(); // ログアウト時は重要なので即時保存
+        }
+    }
+
+    /**
+     * 日次プレイ時間の加算
+     */
+    private void recordDailyPlayTime(UUID playerId, long sessionMs) {
+        String today = java.time.LocalDate.now().toString(); // "YYYY-MM-DD"
+        String path = basePath(playerId) + ".daily." + today;
+        long current = yaml.getLong(path, 0L);
+        yaml.set(path, current + sessionMs);
+    }
+
+    /**
+     * 今日のプレイ時間を取得
+     */
+    public long getTodayPlayTimeMillis(UUID playerId) {
+        synchronized (yaml) {
+            String today = java.time.LocalDate.now().toString();
+            String path = basePath(playerId) + ".daily." + today;
+            long stored = yaml.getLong(path, 0L);
+            long lastJoin = yaml.getLong(basePath(playerId) + ".lastJoinAtMs", 0L);
+
+            if (lastJoin > 0) {
+                stored += (System.currentTimeMillis() - lastJoin);
+            }
+            return stored;
         }
     }
 

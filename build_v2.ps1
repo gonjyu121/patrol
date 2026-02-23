@@ -1,4 +1,4 @@
-# Build Script V2 (Clean Version)
+# Build Script V2
 # Usage: .\build_v2.ps1
 
 $ErrorActionPreference = "Stop"
@@ -86,8 +86,7 @@ $plugins = $config.plugins
 foreach ($name in $plugins.PSObject.Properties.Name) {
     $pluginInfo = $plugins.$name
     $url = $pluginInfo.url
-    $description = $pluginInfo.description
-    $filename = "$name.jar"
+    $filename = if ($name.EndsWith(".jar")) { $name } else { "$name.jar" }
     $outputPath = Join-Path $targetDir $filename
 
     Write-Host "Downloading $name..." -ForegroundColor Cyan
@@ -123,5 +122,15 @@ foreach ($name in $plugins.PSObject.Properties.Name) {
     }
 }
 
+
+Write-Host ""
+Write-Host "Build Summary:" -ForegroundColor Green
+Write-Host "==============" -ForegroundColor Green
+Get-ChildItem -Path $targetDir -Filter "*.jar" | ForEach-Object {
+    $size = [math]::Round($_.Length / 1MB, 2)
+    Write-Host "- $($_.Name) ($size MB)" -ForegroundColor White
+}
+
+Write-Host ""
 Write-Host "Done!" -ForegroundColor Green
 Write-Host "Output: $targetDir" -ForegroundColor Yellow

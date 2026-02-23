@@ -6,13 +6,16 @@ api-version: '1.21'
 authors: [ 'gonjy' ]
 commands:
   patrol:
-    description: Start/stop patrol or tour camera
-    usage: /patrol <start|stop|next|tour|reload>
+    description: 観光巡りコマンド
+    usage: /patrol <start|stop|status|rank>
     permission: patrolspectator.use
   bounty:
-    description: Manage bounties
-    usage: /bounty [list|add]
+    description: 賞金首コマンド
+    usage: /bounty <info|claim>
     permission: patrol.bounty.use
+  stats:
+    description: 自分の統計情報と進捗を表示します
+    usage: /stats
 permissions:
   patrolspectator.use:
     default: op

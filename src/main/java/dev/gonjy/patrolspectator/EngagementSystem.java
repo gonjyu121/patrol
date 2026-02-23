@@ -1,7 +1,8 @@
 package dev.gonjy.patrolspectator;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -55,31 +56,15 @@ public final class EngagementSystem {
                     if (Boolean.valueOf(value).equals(current)) {
                         return; // すでに設定済みならスキップ
                     }
-                    world.setGameRule((org.bukkit.GameRule<Boolean>) rule, value);
+                    @SuppressWarnings("unchecked")
+                    org.bukkit.GameRule<Boolean> boolRule = (org.bukkit.GameRule<Boolean>) rule;
+                    world.setGameRule(boolRule, value);
                     log.info("[Rules] applied (Dynamic API): " + name + " = " + value + " in " + world.getName());
                     return; // 適用できたら終了
                 }
             } catch (Throwable ignored) {
                 // 次の候補へ
             }
-        }
-    }
-
-    private void run(String cmd) {
-        try {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
-            log.info("[Rules] applied: " + cmd);
-        } catch (Throwable t) {
-            log.warning("[Rules] failed: " + cmd + " (" + t.getMessage() + ")");
-        }
-    }
-
-    private void runQuietly(String cmd) {
-        try {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
-            // ログ出力なし
-        } catch (Throwable ignored) {
-            // エラーも無視
         }
     }
 
@@ -124,7 +109,9 @@ public final class EngagementSystem {
                     if (current instanceof Boolean && current.equals(value)) {
                         return;
                     }
-                    world.setGameRule((org.bukkit.GameRule<Boolean>) rule, value);
+                    @SuppressWarnings("unchecked")
+                    org.bukkit.GameRule<Boolean> boolRule = (org.bukkit.GameRule<Boolean>) rule;
+                    world.setGameRule(boolRule, value);
                     return;
                 }
             } catch (Throwable ignored) {
@@ -316,10 +303,17 @@ public final class EngagementSystem {
 
     private void notifyMilestone(Player player, long milestoneMs) {
         long hours = milestoneMs / 3600000L;
-        String message = ChatColor.GOLD + "🎉 素晴らしい！プレイ時間が " + ChatColor.YELLOW + hours + "時間" + ChatColor.GOLD
-                + " を突破しました！";
+        Component message = Component.text("🎉 素晴らしい！プレイ時間が ", NamedTextColor.GOLD)
+                .append(Component.text(hours + "時間", NamedTextColor.YELLOW))
+                .append(Component.text(" を突破しました！", NamedTextColor.GOLD));
 
         player.sendMessage(message);
+        // Title通知の追加
+        player.sendTitle(
+                org.bukkit.ChatColor.GOLD + "🎉 Milestone Reached! 🎉",
+                org.bukkit.ChatColor.YELLOW + "累計プレイ時間 " + hours + "時間突破！",
+                10, 70, 20);
+
         playNamedSound(player, "UI_TOAST_CHALLENGE_COMPLETE", 1.0f, 1.0f);
 
         DiscordWebhookClient discord = plugin.getDiscordWebhookClient();
@@ -361,11 +355,21 @@ public final class EngagementSystem {
     }
 
     private void notifyRankUp(Player player, String rank) {
-        ChatColor color = getRankColor(rank);
-        String message = ChatColor.GOLD + "✨ ランクアップ！ ✨ 新しいランク: " + color + rank;
+        NamedTextColor color = getRankColor(rank);
 
-        Bukkit.broadcastMessage(
-                ChatColor.YELLOW + player.getName() + " さんがランク " + color + rank + ChatColor.YELLOW + " になりました！");
+        Bukkit.broadcast(Component.text(player.getName() + " さんがランク ", NamedTextColor.YELLOW)
+                .append(Component.text(rank, color))
+                .append(Component.text(" になりました！", NamedTextColor.YELLOW)));
+
+        player.sendMessage(Component.text("✨ ランクアップ！ ✨ 新しいランク: ", NamedTextColor.GOLD)
+                .append(Component.text(rank, color)));
+
+        // Title通知の追加
+        player.sendTitle(
+                org.bukkit.ChatColor.GOLD + "✨ RANK UP! ✨",
+                org.bukkit.ChatColor.YELLOW + "新ランク: " + getLegacyRankColor(rank) + rank,
+                10, 80, 20);
+
         playNamedSound(player, "ENTITY_PLAYER_LEVELUP", 1.0f, 0.8f);
 
         DiscordWebhookClient discord = plugin.getDiscordWebhookClient();
@@ -374,18 +378,89 @@ public final class EngagementSystem {
         }
     }
 
-    private ChatColor getRankColor(String rank) {
+    private NamedTextColor getRankColor(String rank) {
         switch (rank) {
             case "Bronze":
-                return ChatColor.GOLD; // Or a custom copper-like color
+                return NamedTextColor.GOLD; // Or a custom copper-like color
             case "Silver":
-                return ChatColor.GRAY;
+                return NamedTextColor.GRAY;
             case "Gold":
-                return ChatColor.YELLOW;
+                return NamedTextColor.YELLOW;
             case "Legend":
-                return ChatColor.LIGHT_PURPLE;
+                return NamedTextColor.LIGHT_PURPLE;
             default:
-                return ChatColor.WHITE;
+                return NamedTextColor.WHITE;
         }
+    }
+
+    private org.bukkit.ChatColor getLegacyRankColor(String rank) {
+        switch (rank) {
+            case "Bronze":
+                return org.bukkit.ChatColor.GOLD;
+            case "Silver":
+                return org.bukkit.ChatColor.GRAY;
+            case "Gold":
+                return org.bukkit.ChatColor.YELLOW;
+            case "Legend":
+                return org.bukkit.ChatColor.LIGHT_PURPLE;
+            default:
+                return org.bukkit.ChatColor.WHITE;
+        }
+    }
+
+    /**
+     * 次のランクまでの進捗情報を取得
+     */
+    public String getRankProgressMessage(Player player) {
+        UUID uuid = player.getUniqueId();
+        PlayerStatsStorage stats = plugin.getStatsStorage();
+        long totalMs = stats.getTotalPlayTimeMillis(uuid);
+        int points = stats.getEventPoints(uuid);
+        String currentRank = stats.getPlayerRank(uuid);
+
+        String nextRank;
+        String requirement;
+        double progress = 0;
+
+        switch (currentRank) {
+            case "None":
+            case "Bronze":
+                nextRank = "Silver";
+                requirement = "10時間 & 500pt";
+                double timeProg = Math.min(1.0, (double) totalMs / (10 * 3600000L));
+                double pointProg = Math.min(1.0, (double) points / 500.0);
+                progress = (timeProg + pointProg) / 2.0;
+                break;
+            case "Silver":
+                nextRank = "Gold";
+                requirement = "50時間 & 2000pt";
+                timeProg = Math.min(1.0, (double) totalMs / (50 * 3600000L));
+                pointProg = Math.min(1.0, (double) points / 2000.0);
+                progress = (timeProg + pointProg) / 2.0;
+                break;
+            case "Gold":
+                nextRank = "Legend";
+                requirement = "100時間";
+                progress = Math.min(1.0, (double) totalMs / (100 * 3600000L));
+                break;
+            case "Legend":
+                return "§bあなたは伝説のプレイヤーです！";
+            default:
+                return "§cデータの取得に失敗しました。";
+        }
+
+        int percent = (int) (progress * 100);
+        StringBuilder bar = new StringBuilder("§7[");
+        int filled = percent / 10;
+        for (int i = 0; i < 10; i++) {
+            if (i < filled)
+                bar.append("§a■");
+            else
+                bar.append("§8□");
+        }
+        bar.append("§7]");
+
+        return "§f次のランク: " + getLegacyRankColor(nextRank) + nextRank + " §7(" + requirement + ")\n" +
+                bar.toString() + " §e" + percent + "%";
     }
 }
