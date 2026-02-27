@@ -1,0 +1,293 @@
+[01:41:07] [ServerMain/INFO]: [bootstrap] Running Java 21 (OpenJDK 64-Bit Server VM 21.0.9+10-LTS; Eclipse Adoptium Temurin-21.0.9+10) on Linux 5.4.0-216-generic (amd64)
+[01:41:07] [ServerMain/INFO]: [bootstrap] Loading Paper 1.21.11-38-main@4446f17 (2025-12-09T22:51:57Z) for Minecraft 1.21.11
+[01:41:07] [ServerMain/INFO]: [PluginInitializerManager] Initializing plugins...
+[01:41:07] [ServerMain/ERROR]: [DirectoryProviderSource] Error loading plugin: java.lang.IllegalArgumentException: Directory 'plugins/GrimAC-Plugin.jar' does not contain a paper-plugin.yml or plugin.yml! Could not determine plugin type, cannot load a plugin from it!
+java.lang.RuntimeException: java.lang.IllegalArgumentException: Directory 'plugins/GrimAC-Plugin.jar' does not contain a paper-plugin.yml or plugin.yml! Could not determine plugin type, cannot load a plugin from it!
+	at io.papermc.paper.plugin.provider.source.FileProviderSource.registerProviders(FileProviderSource.java:85) ~[paper-1.21.11.jar:1.21.11-38-4446f17]
+	at io.papermc.paper.plugin.provider.source.DirectoryProviderSource.registerProviders(DirectoryProviderSource.java:52) ~[paper-1.21.11.jar:1.21.11-38-4446f17]
+	at io.papermc.paper.plugin.provider.source.DirectoryProviderSource.registerProviders(DirectoryProviderSource.java:17) ~[paper-1.21.11.jar:1.21.11-38-4446f17]
+	at io.papermc.paper.plugin.util.EntrypointUtil.registerProvidersFromSource(EntrypointUtil.java:15) ~[paper-1.21.11.jar:1.21.11-38-4446f17]
+	at io.papermc.paper.plugin.PluginInitializerManager.load(PluginInitializerManager.java:113) ~[paper-1.21.11.jar:1.21.11-38-4446f17]
+	at net.minecraft.server.Main.main(Main.java:108) ~[paper-1.21.11.jar:1.21.11-38-4446f17]
+	at io.papermc.paper.PaperBootstrap.boot(PaperBootstrap.java:21) ~[paper-1.21.11.jar:1.21.11-38-4446f17]
+	at org.bukkit.craftbukkit.Main.main(Main.java:242) ~[paper-1.21.11.jar:1.21.11-38-4446f17]
+	at io.papermc.paperclip.Paperclip.lambda$main$0(Paperclip.java:42) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[?:?]
+Caused by: java.lang.IllegalArgumentException: Directory 'plugins/GrimAC-Plugin.jar' does not contain a paper-plugin.yml or plugin.yml! Could not determine plugin type, cannot load a plugin from it!
+	... 10 more
+[01:41:08] [ServerMain/INFO]: [PluginInitializerManager] Initialized 7 plugins
+[01:41:08] [ServerMain/INFO]: [PluginInitializerManager] Bukkit plugins (7):
+ - Geyser-Spigot (2.9.2-SNAPSHOT), LunaChat (3.0.19), PatrolSpectatorPlugin (1.9.58), ViaBackwards (5.6.0), ViaRewind (4.0.12), ViaVersion (5.6.0), floodgate (2.2.5-SNAPSHOT (b125-a772911))
+[01:41:14] [ServerMain/ERROR]: You have used the Spigot command line EULA agreement flag.
+[01:41:14] [ServerMain/ERROR]: By using this setting you are indicating your agreement to Mojang's EULA (https://aka.ms/MinecraftEULA).
+[01:41:14] [ServerMain/ERROR]: If you do not agree to the above EULA please stop your server and remove this flag immediately.
+[01:41:14] [ServerMain/INFO]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]
+[01:41:18] [ServerMain/INFO]: Loaded 1470 recipes
+[01:41:18] [ServerMain/INFO]: Loaded 1584 advancements
+[01:41:18] [ServerMain/INFO]: [ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry] Initialising converters for DataConverter...
+[01:41:19] [ServerMain/INFO]: [ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry] Finished initialising converters for DataConverter in 782.6ms
+[01:41:19] [Server thread/INFO]: Starting minecraft server version 1.21.11
+[01:41:19] [Server thread/INFO]: Loading properties
+[01:41:19] [Server thread/INFO]: This server is running Paper version 1.21.11-38-main@4446f17 (2025-12-09T22:51:57Z) (Implementing API version 1.21.11-R0.1-SNAPSHOT)
+[01:41:19] [Server thread/INFO]: [spark] This server bundles the spark profiler. For more information please visit https://docs.papermc.io/paper/profiling
+[01:41:19] [Server thread/INFO]: Server Ping Player Sample Count: 12
+[01:41:19] [Server thread/INFO]: Using 4 threads for Netty based IO
+[01:41:19] [Server thread/INFO]: [MoonriseCommon] Paper is using 1 worker threads, 1 I/O threads
+[01:41:20] [Server thread/INFO]: Default game type: SURVIVAL
+[01:41:20] [Server thread/INFO]: Generating keypair
+[01:41:20] [Server thread/INFO]: Starting Minecraft server on 0.0.0.0:34148
+[01:41:20] [Server thread/INFO]: Paper: Using libdeflate (Linux x86_64) compression from Velocity.
+[01:41:20] [Server thread/INFO]: Paper: Using OpenSSL 3.x.x (Linux x86_64) cipher from Velocity.
+[01:41:21] [Server thread/INFO]: [ViaVersion] Loading server plugin ViaVersion v5.6.0
+[01:41:21] [Server thread/INFO]: [ViaVersion] ViaVersion 5.6.0 is now loaded. Registering protocol transformers and injecting...
+[01:41:22] [Via-Mappingloader-1/INFO]: [ViaVersion] Loading block connection mappings ...
+[01:41:22] [Via-Mappingloader-1/INFO]: [ViaVersion] Using FastUtil Long2ObjectOpenHashMap for block connections
+[01:41:23] [Server thread/INFO]: [ViaBackwards] Loading translations...
+[01:41:23] [Server thread/INFO]: [ViaBackwards] Registering protocols...
+[01:41:24] [Server thread/INFO]: [ViaRewind] Registering protocols...
+[01:41:25] [Server thread/INFO]: [floodgate] Loading server plugin floodgate v2.2.5-SNAPSHOT (b125-a772911)
+[01:41:26] [Server thread/INFO]: [floodgate] Took 1,094ms to boot Floodgate
+[01:41:26] [Server thread/INFO]: [ViaBackwards] Loading server plugin ViaBackwards v5.6.0
+[01:41:26] [Server thread/INFO]: [PatrolSpectatorPlugin] Loading server plugin PatrolSpectatorPlugin v1.9.58
+[01:41:26] [Server thread/INFO]: [Geyser-Spigot] Loading server plugin Geyser-Spigot v2.9.2-SNAPSHOT
+[01:41:26] [Server thread/INFO]: [Geyser-Spigot] Loading extensions...
+[01:41:26] [Server thread/INFO]: [Geyser-Spigot] Loaded 0 extension(s)
+[01:41:26] [Server thread/INFO]: [LunaChat] Loading server plugin LunaChat v3.0.19
+[01:41:26] [Server thread/INFO]: [ViaRewind] Loading server plugin ViaRewind v4.0.12
+[01:41:26] [Server thread/INFO]: Server permissions file permissions.yml is empty, ignoring it
+[01:41:26] [Server thread/INFO]: [ViaRewind] Enabling ViaRewind v4.0.12
+[01:41:26] [Server thread/INFO]: Preparing level "world"
+[01:41:27] [Server thread/INFO]: Loading 0 persistent chunks for world 'minecraft:overworld'...
+[01:41:27] [Server thread/INFO]: Preparing spawn area: 100%
+[01:41:27] [Server thread/INFO]: Prepared spawn area in 1 ms
+[01:41:27] [Server thread/INFO]: Loading 0 persistent chunks for world 'minecraft:the_nether'...
+[01:41:27] [Server thread/INFO]: Prepared spawn area in 1 ms
+[01:41:27] [Server thread/INFO]: Loading 0 persistent chunks for world 'minecraft:the_end'...
+[01:41:27] [Server thread/INFO]: Prepared spawn area in 0 ms
+[01:41:27] [Server thread/INFO]: Done preparing level "world" (1.005s)
+[01:41:27] [Server thread/INFO]: [ViaVersion] Enabling ViaVersion v5.6.0
+[01:41:27] [Server thread/INFO]: [ViaVersion] ViaVersion detected server version: 1.21.11 (774)
+[01:41:27] [Server thread/INFO]: [floodgate] Enabling floodgate v2.2.5-SNAPSHOT (b125-a772911)
+[01:41:28] [Server thread/INFO]: [ViaBackwards] Enabling ViaBackwards v5.6.0
+[01:41:28] [Server thread/INFO]: [PatrolSpectatorPlugin] Enabling PatrolSpectatorPlugin v1.9.58
+[01:41:29] [Server thread/INFO]: [PatrolSpectatorPlugin] 観光地データをロードしました: 3 件
+[01:41:29] [Server thread/INFO]: [PatrolSpectatorPlugin] エンドワールドが見つかりました。観光地に追加します。
+[01:41:29] [Server thread/INFO]: [PatrolSpectatorPlugin] [Discord] Integration enabled.
+[01:41:29] [Server thread/INFO]: [PatrolSpectatorPlugin] ========================================
+[01:41:29] [Server thread/INFO]: [PatrolSpectatorPlugin] PatrolSpectatorPlugin v1.9.58
+[01:41:29] [Server thread/INFO]: [PatrolSpectatorPlugin] Commit: b075624
+[01:41:29] [Server thread/INFO]: [PatrolSpectatorPlugin] Build Time: 2026-01-15T21:13:31+0900
+[01:41:29] [Server thread/INFO]: [PatrolSpectatorPlugin] PatrolSpectatorPlugin has been enabled!
+[01:41:29] [Server thread/INFO]: [PatrolSpectatorPlugin] ========================================
+[01:41:29] [Server thread/INFO]: [Geyser-Spigot] Enabling Geyser-Spigot v2.9.2-SNAPSHOT
+[01:41:32] [Server thread/INFO]: [LunaChat] Enabling LunaChat v3.0.19
+[01:41:32] [Server thread/INFO]: [spark] Starting background profiler...
+[01:41:33] [Server thread/INFO]: [Geyser-Spigot] ******************************************
+[01:41:33] [Server thread/INFO]: [Geyser-Spigot] 
+[01:41:33] [Server thread/INFO]: [Geyser-Spigot] Loading Geyser version 2.9.2-b1015 (git-master-3332528)
+[01:41:33] [Server thread/INFO]: [Geyser-Spigot] 
+[01:41:33] [Server thread/INFO]: [Geyser-Spigot] ******************************************
+[01:41:40] [GeyserServer-3-1/INFO]: [Geyser-Spigot] Started Geyser on UDP port 19132
+[01:41:40] [Server thread/INFO]: [Geyser-Spigot] Done (7.12s)! Run /geyser help for help!
+[01:41:40] [Server thread/INFO]: Starting GS4 status listener
+[01:41:40] [Query Listener #1/INFO]: Query running on 0.0.0.0:25565
+[01:41:40] [Server thread/INFO]: Thread Query Listener started
+[01:41:40] [Server thread/INFO]: Running delayed init tasks
+[01:41:40] [Server thread/INFO]: Done (34.577s)! For help, type "help"
+[01:41:40] [Craft Scheduler Thread - 2 - ViaVersion/INFO]: [ViaVersion] Finished mapping loading, shutting down loader executor.
+[01:41:41] [Server thread/WARN]: [ViaVersion] There is a newer plugin version available: 5.7.1, you're on: 5.6.0
+[01:41:49] [Server thread/INFO]: OtouGame (IP hidden) lost connection: Disconnected
+[01:42:40] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:42:40] [Server thread/INFO]: 🎊 自動イベント開始！ 🎊
+[01:42:40] [Server thread/INFO]: 🎮 スピード大会
+[01:42:40] [Server thread/INFO]: ⏰ 制限時間: 15分間
+[01:42:40] [Server thread/INFO]: 🏆 上位3位に特別報酬！
+[01:42:40] [Server thread/INFO]: 💎 参加者全員に報酬配布！
+[01:42:40] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:42:51] [User Authenticator #0/INFO]: UUID of player OtouGame is cd78b799-3496-47a3-9809-a7cfcd19dae1
+[01:42:54] [Server thread/INFO]: [PatrolSpectatorPlugin] Camera player OtouGame joined. Starting patrol...
+[01:42:54] [Server thread/INFO]: OtouGame joined the game
+[01:42:54] [Server thread/INFO]: OtouGame[IP hidden] logged in with entity id 49 at ([world]-192.3, -39.61819016875237, 640.3)
+[01:42:56] [Server thread/INFO]: [PatrolSpectatorPlugin] パトロールを停止しました。
+[01:42:56] [Server thread/INFO]: [PatrolSpectatorPlugin] ランキング表示を開始しました（300秒間隔）
+[01:42:56] [Server thread/INFO]: [PatrolSpectatorPlugin] [Performance] 巡回間隔を最小制限の 60秒に設定しました。
+[01:42:56] [Server thread/INFO]: [PatrolSpectatorPlugin] パトロールを開始しました。カメラ: OtouGame, 間隔: 60秒
+[01:42:56] [Server thread/INFO]: [PatrolSpectatorPlugin] [Patrol Summary] Running. Camera: OtouGame, Online: 1
+[01:47:57] [Server thread/INFO]: [PatrolSpectatorPlugin] [Patrol Summary] Running. Camera: OtouGame, Online: 1
+[01:47:57] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:47:57] [Server thread/INFO]: 🏆 累計プレイ時間ランキング 🏆
+[01:47:57] [Server thread/INFO]:   サーバーで遊んでくれた時間の合計です
+[01:47:57] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:47:57] [Server thread/INFO]:   🥇 ⚫ minato20131201: 784時間48分
+[01:47:57] [Server thread/INFO]:   🥈 ⚫ gjtx: 782時間1分
+[01:47:57] [Server thread/INFO]:   🥉 ⚫ banto2008: 778時間47分
+[01:47:59] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:47:59] [Server thread/INFO]: 🔥 連続生存時間ランキング 🔥
+[01:47:59] [Server thread/INFO]:   死なずにプレイできているランキングです
+[01:47:59] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:47:59] [Server thread/INFO]:   🥇 ⚫ minato20131201: 784時間48分
+[01:47:59] [Server thread/INFO]:   🥈 ⚫ gjtx: 782時間1分
+[01:47:59] [Server thread/INFO]:   🥉 ⚫ banto2008: 778時間47分
+[01:48:01] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:48:01] [Server thread/INFO]: ⚔️ PK数ランキング ⚔️
+[01:48:01] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:48:01] [Server thread/INFO]:   🥇 ⚫ GlobalSneeze: 64キル
+[01:48:01] [Server thread/INFO]:   🥈 ⚫ miya2012: 1キル
+[01:48:01] [Server thread/INFO]:   🥉 ⚫ SIITAKE7575: 1キル
+[01:48:03] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:48:03] [Server thread/INFO]: 🐉 エンダードラゴン討伐数ランキング 🐉
+[01:48:03] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:48:03] [Server thread/INFO]:   🥇 ⚫ miya2012: 1討伐
+[01:48:05] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:48:05] [Server thread/INFO]: 🎮 イベントポイントランキング 🎮
+[01:48:05] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:48:05] [Server thread/INFO]:   🥇 ⚫ GlobalSneeze: 2037ポイント
+[01:48:05] [Server thread/INFO]:   🥈 ⚫ SIITAKE7575: 1423ポイント
+[01:48:05] [Server thread/INFO]:   🥉 ⚫ Deemaou: 664ポイント
+[01:48:05] [Server thread/INFO]: 
+[01:48:05] [Server thread/INFO]: ※ [★] は ヴォイド・ドラゴン 討伐の証です
+[01:50:24] [User Authenticator #1/INFO]: UUID of player OtouGame is cd78b799-3496-47a3-9809-a7cfcd19dae1
+[01:50:24] [Server thread/INFO]: OtouGame lost connection: You logged in from another location
+[01:50:24] [Server thread/INFO]: OtouGame left the game
+[01:50:26] [Server thread/INFO]: [PatrolSpectatorPlugin] Camera player OtouGame joined. Starting patrol...
+[01:50:26] [Server thread/INFO]: OtouGame joined the game
+[01:50:26] [Server thread/INFO]: OtouGame[IP hidden] logged in with entity id 1518 at ([world_the_end]0.0, 100.0, 0.0)
+[01:50:28] [Server thread/INFO]: [PatrolSpectatorPlugin] ランキング表示を停止しました
+[01:50:28] [Server thread/INFO]: [PatrolSpectatorPlugin] パトロールを停止しました。
+[01:50:28] [Server thread/INFO]: [PatrolSpectatorPlugin] ランキング表示を開始しました（300秒間隔）
+[01:50:28] [Server thread/INFO]: [PatrolSpectatorPlugin] [Performance] 巡回間隔を最小制限の 60秒に設定しました。
+[01:50:28] [Server thread/INFO]: [PatrolSpectatorPlugin] パトロールを開始しました。カメラ: OtouGame, 間隔: 60秒
+[01:53:28] [Server thread/INFO]: [PatrolSpectatorPlugin] [Patrol Summary] Running. Camera: OtouGame, Online: 1
+[01:55:28] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:55:28] [Server thread/INFO]: 🏆 累計プレイ時間ランキング 🏆
+[01:55:28] [Server thread/INFO]:   サーバーで遊んでくれた時間の合計です
+[01:55:28] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:55:28] [Server thread/INFO]:   🥇 ⚫ minato20131201: 784時間55分
+[01:55:28] [Server thread/INFO]:   🥈 ⚫ gjtx: 782時間8分
+[01:55:28] [Server thread/INFO]:   🥉 ⚫ banto2008: 778時間55分
+[01:55:30] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:55:30] [Server thread/INFO]: 🔥 連続生存時間ランキング 🔥
+[01:55:30] [Server thread/INFO]:   死なずにプレイできているランキングです
+[01:55:30] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:55:30] [Server thread/INFO]:   🥇 ⚫ minato20131201: 784時間55分
+[01:55:30] [Server thread/INFO]:   🥈 ⚫ gjtx: 782時間8分
+[01:55:30] [Server thread/INFO]:   🥉 ⚫ banto2008: 778時間55分
+[01:55:32] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:55:32] [Server thread/INFO]: ⚔️ PK数ランキング ⚔️
+[01:55:32] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:55:32] [Server thread/INFO]:   🥇 ⚫ GlobalSneeze: 64キル
+[01:55:32] [Server thread/INFO]:   🥈 ⚫ miya2012: 1キル
+[01:55:32] [Server thread/INFO]:   🥉 ⚫ SIITAKE7575: 1キル
+[01:55:34] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:55:34] [Server thread/INFO]: 🐉 エンダードラゴン討伐数ランキング 🐉
+[01:55:34] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:55:34] [Server thread/INFO]:   🥇 ⚫ miya2012: 1討伐
+[01:55:36] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:55:36] [Server thread/INFO]: 🎮 イベントポイントランキング 🎮
+[01:55:36] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[01:55:36] [Server thread/INFO]:   🥇 ⚫ GlobalSneeze: 2037ポイント
+[01:55:36] [Server thread/INFO]:   🥈 ⚫ SIITAKE7575: 1423ポイント
+[01:55:36] [Server thread/INFO]:   🥉 ⚫ Deemaou: 664ポイント
+[01:55:36] [Server thread/INFO]: 
+[01:55:36] [Server thread/INFO]: ※ [★] は ヴォイド・ドラゴン 討伐の証です
+[01:57:42] [Server thread/INFO]: 🏆 イベント終了！結果発表 🏆
+[01:57:42] [Server thread/INFO]: 🏆 イベント結果 (TOP 3):
+[01:59:28] [Server thread/INFO]: [PatrolSpectatorPlugin] [Patrol Summary] Running. Camera: OtouGame, Online: 1
+[02:00:28] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:00:28] [Server thread/INFO]: 🏆 累計プレイ時間ランキング 🏆
+[02:00:28] [Server thread/INFO]:   サーバーで遊んでくれた時間の合計です
+[02:00:28] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:00:28] [Server thread/INFO]:   🥇 ⚫ minato20131201: 785時間0分
+[02:00:28] [Server thread/INFO]:   🥈 ⚫ gjtx: 782時間13分
+[02:00:28] [Server thread/INFO]:   🥉 ⚫ banto2008: 779時間0分
+[02:00:30] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:00:30] [Server thread/INFO]: 🔥 連続生存時間ランキング 🔥
+[02:00:30] [Server thread/INFO]:   死なずにプレイできているランキングです
+[02:00:30] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:00:30] [Server thread/INFO]:   🥇 ⚫ minato20131201: 785時間0分
+[02:00:30] [Server thread/INFO]:   🥈 ⚫ gjtx: 782時間13分
+[02:00:30] [Server thread/INFO]:   🥉 ⚫ banto2008: 779時間0分
+[02:00:32] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:00:32] [Server thread/INFO]: ⚔️ PK数ランキング ⚔️
+[02:00:32] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:00:32] [Server thread/INFO]:   🥇 ⚫ GlobalSneeze: 64キル
+[02:00:32] [Server thread/INFO]:   🥈 ⚫ miya2012: 1キル
+[02:00:32] [Server thread/INFO]:   🥉 ⚫ SIITAKE7575: 1キル
+[02:00:34] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:00:34] [Server thread/INFO]: 🐉 エンダードラゴン討伐数ランキング 🐉
+[02:00:34] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:00:34] [Server thread/INFO]:   🥇 ⚫ miya2012: 1討伐
+[02:00:36] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:00:36] [Server thread/INFO]: 🎮 イベントポイントランキング 🎮
+[02:00:36] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:00:36] [Server thread/INFO]:   🥇 ⚫ GlobalSneeze: 2037ポイント
+[02:00:36] [Server thread/INFO]:   🥈 ⚫ SIITAKE7575: 1423ポイント
+[02:00:36] [Server thread/INFO]:   🥉 ⚫ Deemaou: 664ポイント
+[02:00:36] [Server thread/INFO]: 
+[02:00:36] [Server thread/INFO]: ※ [★] は ヴォイド・ドラゴン 討伐の証です
+[02:05:28] [Server thread/INFO]: [PatrolSpectatorPlugin] [Patrol Summary] Running. Camera: OtouGame, Online: 1
+[02:05:28] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:05:28] [Server thread/INFO]: 🏆 累計プレイ時間ランキング 🏆
+[02:05:28] [Server thread/INFO]:   サーバーで遊んでくれた時間の合計です
+[02:05:28] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:05:28] [Server thread/INFO]:   🥇 ⚫ minato20131201: 785時間5分
+[02:05:28] [Server thread/INFO]:   🥈 ⚫ gjtx: 782時間18分
+[02:05:28] [Server thread/INFO]:   🥉 ⚫ banto2008: 779時間5分
+[02:05:30] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:05:30] [Server thread/INFO]: 🔥 連続生存時間ランキング 🔥
+[02:05:30] [Server thread/INFO]:   死なずにプレイできているランキングです
+[02:05:30] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:05:30] [Server thread/INFO]:   🥇 ⚫ minato20131201: 785時間5分
+[02:05:30] [Server thread/INFO]:   🥈 ⚫ gjtx: 782時間18分
+[02:05:30] [Server thread/INFO]:   🥉 ⚫ banto2008: 779時間5分
+[02:05:32] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:05:32] [Server thread/INFO]: ⚔️ PK数ランキング ⚔️
+[02:05:32] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:05:32] [Server thread/INFO]:   🥇 ⚫ GlobalSneeze: 64キル
+[02:05:32] [Server thread/INFO]:   🥈 ⚫ miya2012: 1キル
+[02:05:32] [Server thread/INFO]:   🥉 ⚫ SIITAKE7575: 1キル
+[02:05:34] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:05:34] [Server thread/INFO]: 🐉 エンダードラゴン討伐数ランキング 🐉
+[02:05:34] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:05:34] [Server thread/INFO]:   🥇 ⚫ miya2012: 1討伐
+[02:05:36] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:05:36] [Server thread/INFO]: 🎮 イベントポイントランキング 🎮
+[02:05:36] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:05:36] [Server thread/INFO]:   🥇 ⚫ GlobalSneeze: 2037ポイント
+[02:05:36] [Server thread/INFO]:   🥈 ⚫ SIITAKE7575: 1423ポイント
+[02:05:36] [Server thread/INFO]:   🥉 ⚫ Deemaou: 664ポイント
+[02:05:36] [Server thread/INFO]: 
+[02:05:36] [Server thread/INFO]: ※ [★] は ヴォイド・ドラゴン 討伐の証です
+[02:10:28] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:10:28] [Server thread/INFO]: 🏆 累計プレイ時間ランキング 🏆
+[02:10:28] [Server thread/INFO]:   サーバーで遊んでくれた時間の合計です
+[02:10:28] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:10:28] [Server thread/INFO]:   🥇 ⚫ minato20131201: 785時間10分
+[02:10:28] [Server thread/INFO]:   🥈 ⚫ gjtx: 782時間23分
+[02:10:28] [Server thread/INFO]:   🥉 ⚫ banto2008: 779時間10分
+[02:10:30] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:10:30] [Server thread/INFO]: 🔥 連続生存時間ランキング 🔥
+[02:10:30] [Server thread/INFO]:   死なずにプレイできているランキングです
+[02:10:30] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:10:30] [Server thread/INFO]:   🥇 ⚫ minato20131201: 785時間10分
+[02:10:30] [Server thread/INFO]:   🥈 ⚫ gjtx: 782時間23分
+[02:10:30] [Server thread/INFO]:   🥉 ⚫ banto2008: 779時間10分
+[02:10:32] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:10:32] [Server thread/INFO]: ⚔️ PK数ランキング ⚔️
+[02:10:32] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:10:32] [Server thread/INFO]:   🥇 ⚫ GlobalSneeze: 64キル
+[02:10:32] [Server thread/INFO]:   🥈 ⚫ miya2012: 1キル
+[02:10:32] [Server thread/INFO]:   🥉 ⚫ SIITAKE7575: 1キル
+[02:10:34] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:10:34] [Server thread/INFO]: 🐉 エンダードラゴン討伐数ランキング 🐉
+[02:10:34] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:10:34] [Server thread/INFO]:   🥇 ⚫ miya2012: 1討伐
+[02:10:36] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:10:36] [Server thread/INFO]: 🎮 イベントポイントランキング 🎮
+[02:10:36] [Server thread/INFO]: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[02:10:36] [Server thread/INFO]:   🥇 ⚫ GlobalSneeze: 2037ポイント
+[02:10:36] [Server thread/INFO]:   🥈 ⚫ SIITAKE7575: 1423ポイント
+[02:10:36] [Server thread/INFO]:   🥉 ⚫ Deemaou: 664ポイント
+[02:10:36] [Server thread/INFO]: 
+[02:10:36] [Server thread/INFO]: ※ [★] は ヴォイド・ドラゴン 討伐の証です
+[02:11:28] [Server thread/INFO]: [PatrolSpectatorPlugin] [Patrol Summary] Running. Camera: OtouGame, Online: 1

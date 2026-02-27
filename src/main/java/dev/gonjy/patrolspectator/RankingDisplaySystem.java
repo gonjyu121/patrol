@@ -81,6 +81,7 @@ public class RankingDisplaySystem {
         List<Map.Entry<UUID, Integer>> kills;
         List<Map.Entry<UUID, Integer>> dragonKills;
         List<Map.Entry<UUID, Integer>> eventPoints;
+        List<Map.Entry<UUID, Integer>> dungeonLevels;
     }
 
     public void displayRankings() {
@@ -101,7 +102,17 @@ public class RankingDisplaySystem {
             data.dragonKills = getEnderDragonKillRanking();
             data.eventPoints = getEventPointsRanking();
 
-            // メインスレッドに戻して順次表示
+            if (plugin instanceof PatrolSpectatorPlugin) {
+                dev.gonjy.patrolspectator.dungeon.DungeonStatsStorage ds = ((PatrolSpectatorPlugin) plugin)
+                        .getDungeonStatsStorage();
+                if (ds != null) {
+                    List<Map.Entry<UUID, Integer>> dungeonRanking = new ArrayList<>(ds.getAllPlayerLevels().entrySet());
+                    dungeonRanking.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
+                    data.dungeonLevels = dungeonRanking;
+                }
+            }
+
+            // メメインスレッドに戻して順次表示
             Bukkit.getScheduler().runTask(plugin, () -> {
                 displayAllRankingsSequentially(data);
             });
@@ -123,10 +134,16 @@ public class RankingDisplaySystem {
                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
                         displayEventPointsRanking(data.eventPoints);
 
-                        Bukkit.getServer().broadcastMessage("");
-                        Bukkit.getServer()
-                                .broadcastMessage(ChatColor.GRAY + "※ " + ChatColor.GOLD + "[★]" + ChatColor.GRAY
-                                        + " は " + ChatColor.RED + "ヴォイド・ドラゴン" + ChatColor.GRAY + " 討伐の証です");
+                        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                            if (data.dungeonLevels != null && !data.dungeonLevels.isEmpty()) {
+                                displayDungeonRanking(data.dungeonLevels);
+                            }
+
+                            Bukkit.getServer().broadcastMessage("");
+                            Bukkit.getServer()
+                                    .broadcastMessage(ChatColor.GRAY + "※ " + ChatColor.GOLD + "[★]" + ChatColor.GRAY
+                                            + " は " + ChatColor.RED + "ヴォイド・ドラゴン" + ChatColor.GRAY + " 討伐の証です");
+                        }, 40L);
                     }, 40L);
                 }, 40L);
             }, 40L);
@@ -356,6 +373,39 @@ public class RankingDisplaySystem {
         } else {
             Bukkit.getServer()
                     .broadcastMessage(ChatColor.GRAY + "  🎮 まだイベント勝者はいません。次のイベントで勝利を掴め！");
+        }
+    }
+
+    /**
+     * 迷宮踏破ランキングを表示します。
+     */
+    private void displayDungeonRanking(List<Map.Entry<UUID, Integer>> ranking) {
+        // Title表示
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.sendTitle(
+                    ChatColor.DARK_RED + "💀 迷宮踏破ランキング 💀",
+                    ChatColor.YELLOW + "地下深く、魔境に挑んだ勇者たちです",
+                    10, 40, 10);
+        }
+
+        // チャット表示
+        Bukkit.getServer().broadcastMessage(ChatColor.DARK_RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        Bukkit.getServer().broadcastMessage(ChatColor.DARK_RED + "💀 迷宮踏破ランキング 💀");
+        Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "  地下深く、魔境に挑んだ勇者たちです");
+        Bukkit.getServer().broadcastMessage(ChatColor.DARK_RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+        if (!ranking.isEmpty()) {
+            for (int i = 0; i < Math.min(3, ranking.size()); i++) {
+                Map.Entry<UUID, Integer> entry = ranking.get(i);
+                String playerName = getDisplayName(entry.getKey());
+                int level = entry.getValue();
+                String medal = i == 0 ? "🥇" : i == 1 ? "🥈" : "🥉";
+                String status = Bukkit.getPlayer(entry.getKey()) != null ? "🟢" : "⚫";
+
+                Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "  " + medal + " " + status + " "
+                        + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": " + ChatColor.RED + "地下 " + level
+                        + " 階");
+            }
         }
     }
 

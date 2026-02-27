@@ -86,6 +86,12 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     private PlayerStatsStorage statsStorage;
 
     private TickMonitor tickMonitor;
+    private dev.gonjy.patrolspectator.dungeon.DungeonManager dungeonManager;
+    private dev.gonjy.patrolspectator.dungeon.DungeonStatsStorage dungeonStatsStorage;
+    private dev.gonjy.patrolspectator.dungeon.DungeonBuilder dungeonBuilder;
+    private dev.gonjy.patrolspectator.dungeon.TrapRunner trapRunner;
+    private dev.gonjy.patrolspectator.dungeon.DungeonLootSystem dungeonLootSystem;
+    private dev.gonjy.patrolspectator.dungeon.DungeonBossSystem dungeonBossSystem;
 
     @Override
     public void onEnable() {
@@ -111,8 +117,20 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         endResetManager = new EndResetManager(this);
         endGameManager = new EndGameManager(this, statsStorage, discordWebhookClient);
 
+        // 死の迷宮システム初期化
+        dungeonManager = new dev.gonjy.patrolspectator.dungeon.DungeonManager(this);
+        dungeonStatsStorage = new dev.gonjy.patrolspectator.dungeon.DungeonStatsStorage(this);
+        trapRunner = new dev.gonjy.patrolspectator.dungeon.TrapRunner(this, dungeonManager);
+        dungeonBuilder = new dev.gonjy.patrolspectator.dungeon.DungeonBuilder(this, dungeonManager);
+        dungeonLootSystem = new dev.gonjy.patrolspectator.dungeon.DungeonLootSystem();
+        dungeonBossSystem = new dev.gonjy.patrolspectator.dungeon.DungeonBossSystem();
+
         // イベントリスナーの登録
         getServer().getPluginManager().registerEvents(new RankingEventListener(statsStorage, engagementSystem), this);
+        getServer().getPluginManager().registerEvents(
+                new dev.gonjy.patrolspectator.dungeon.DungeonListener(this, dungeonManager, dungeonStatsStorage,
+                        trapRunner),
+                this);
 
         // PatrolManagerの初期化（依存関係を注入）
         patrolManager = new PatrolManager(this, engagementSystem, participationManager, gameModeEnforcer,
@@ -134,6 +152,12 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
         // Stats コマンド登録
         getCommand("stats").setExecutor(new StatsCommand(this, engagementSystem));
+
+        // Dungeon コマンド登録
+        dev.gonjy.patrolspectator.dungeon.DungeonCommand dungeonCmd = new dev.gonjy.patrolspectator.dungeon.DungeonCommand(
+                dungeonManager);
+        getCommand("dungeon").setExecutor(dungeonCmd);
+        getCommand("dungeon").setTabCompleter(dungeonCmd);
 
         // 自動イベントシステムの開始
         autoEventSystem.startAutoEvents();
@@ -385,6 +409,30 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
     public EngagementSystem getEngagementSystem() {
         return engagementSystem;
+    }
+
+    public dev.gonjy.patrolspectator.dungeon.DungeonManager getDungeonManager() {
+        return dungeonManager;
+    }
+
+    public dev.gonjy.patrolspectator.dungeon.DungeonStatsStorage getDungeonStatsStorage() {
+        return dungeonStatsStorage;
+    }
+
+    public dev.gonjy.patrolspectator.dungeon.DungeonBuilder getDungeonBuilder() {
+        return dungeonBuilder;
+    }
+
+    public dev.gonjy.patrolspectator.dungeon.TrapRunner getTrapRunner() {
+        return trapRunner;
+    }
+
+    public dev.gonjy.patrolspectator.dungeon.DungeonLootSystem getDungeonLootSystem() {
+        return dungeonLootSystem;
+    }
+
+    public dev.gonjy.patrolspectator.dungeon.DungeonBossSystem getDungeonBossSystem() {
+        return dungeonBossSystem;
     }
 
     // 死亡保護の延長（存在しなかったので用意）

@@ -171,9 +171,6 @@ public class AutoEventSystem implements Listener {
         if (plugin instanceof PatrolSpectatorPlugin) {
             PatrolSpectatorPlugin mainPlugin = (PatrolSpectatorPlugin) plugin;
             if (plugin.getConfig().getBoolean("discord.notifications.events", true)) {
-                String ip = plugin.getConfig().getString("discord.server_ip", "your.server.ip");
-                int port = plugin.getServer().getPort();
-                String address = ip + ":" + port;
 
                 String discordMsg = String.format("🎮 Event **%s** has started! (15m)", eventName);
                 mainPlugin.getDiscordWebhookClient().send(discordMsg);

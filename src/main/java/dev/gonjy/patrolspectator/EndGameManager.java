@@ -18,6 +18,8 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.Random;
 import java.util.UUID;
@@ -25,6 +27,7 @@ import java.util.UUID;
 @SuppressWarnings("deprecation")
 public class EndGameManager implements Listener {
 
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
     private final JavaPlugin plugin;
     private final PlayerStatsStorage statsStorage;
     private final DiscordWebhookClient discordWebhookClient;
@@ -43,6 +46,56 @@ public class EndGameManager implements Listener {
         this.statsStorage = statsStorage;
         this.discordWebhookClient = discordWebhookClient;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
+
+        // 起動時および定期的なボスの状態監視タスクを開始
+        startBossVerificationTask();
+    }
+
+    private void startBossVerificationTask() {
+        // 起動10秒後に初回チェック、その後5分ごとに状態を検証して維持する
+        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            World endWorld = Bukkit.getWorld("world_the_end");
+            if (endWorld == null)
+                return;
+
+            for (org.bukkit.entity.Entity entity : endWorld.getEntities()) {
+                if (entity instanceof EnderDragon dragon) {
+                    if (isHardMode()) {
+                        verifyAndSetupHardDragon(dragon);
+                    }
+                }
+            }
+        }, 200L, 5 * 60 * 20L);
+    }
+
+    private void verifyAndSetupHardDragon(EnderDragon dragon) {
+        boolean needsSetup = false;
+
+        // 名前が設定されていない、または異なる場合に再適用
+        String expectedName = ChatColor.RED + "Void Dragon";
+        if (dragon.getCustomName() == null || !dragon.getCustomName().equals(expectedName)) {
+            needsSetup = true;
+        }
+
+        // 最大体力が強化値(600)未満の場合に再適用
+        if (dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
+            if (dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue() < 600.0) {
+                needsSetup = true;
+            }
+        }
+
+        if (needsSetup) {
+            plugin.getLogger().info("[EndGameManager] Void Dragon の状態異常を検知しました。再設定を行います。");
+            setupHardDragon(dragon);
+
+            // 各種特殊攻撃タスクが止まっている場合は再開
+            if (minionTask == null || minionTask.isCancelled())
+                startMinionTask(dragon);
+            if (abilityTask == null || abilityTask.isCancelled())
+                startAbilityTask(dragon);
+            if (roarTask == null || roarTask.isCancelled())
+                startRoarTask(dragon);
+        }
     }
 
     private boolean isHardMode() {
@@ -66,7 +119,8 @@ public class EndGameManager implements Listener {
             startAbilityTask(dragon);
             startRoarTask(dragon);
 
-            String message = "⚠ ヴォイド・ドラゴン (Void Dragon) が出現しました！ (HARD MODE)";
+            String timestamp = LocalDateTime.now().format(TIME_FORMATTER);
+            String message = String.format("[%s] ⚠ ヴォイド・ドラゴン (Void Dragon) が出現しました！ (HARD MODE)", timestamp);
             Bukkit.broadcastMessage(ChatColor.RED + message);
             if (discordWebhookClient != null) {
                 discordWebhookClient.send("🐉 **[ボス出現]** " + message);
@@ -317,16 +371,17 @@ public class EndGameManager implements Listener {
             // 称号付与
             statsStorage.setHardDragonSlayer(killer.getUniqueId(), true);
 
+            String timestamp = LocalDateTime.now().format(TIME_FORMATTER);
             Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             Bukkit.broadcastMessage(ChatColor.GOLD + "⚔️ 伝説の誕生！ ⚔️");
             Bukkit.broadcastMessage(ChatColor.YELLOW + killer.getName() + " が " + ChatColor.RED + "ヴォイド・ドラゴン"
                     + ChatColor.YELLOW + " を討伐しました！ (HARD MODE)");
-            Bukkit.broadcastMessage(ChatColor.AQUA + "称号 [★] が付与されました！");
+            Bukkit.broadcastMessage(ChatColor.AQUA + "称号 [★] が付与されました！ " + ChatColor.GRAY + "[" + timestamp + "]");
             Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
             if (discordWebhookClient != null) {
                 discordWebhookClient.send(
-                        "⚔️ **伝説の誕生！**\n" +
+                        "⚔️ **伝説の誕生！** [" + timestamp + "]\n" +
                                 "**" + killer.getName() + "** が **ヴォイド・ドラゴン** を討伐しました！\n" +
                                 "称号 **[★]** が付与されました！");
             }

@@ -1,0 +1,103 @@
+diff --git a/DEVELOPMENT_LOG.md b/DEVELOPMENT_LOG.md
+index 40d5b44..758007d 100644
+--- a/DEVELOPMENT_LOG.md
++++ b/DEVELOPMENT_LOG.md
+@@ -12,10 +12,10 @@
+ 
+ ## Pending Tasks
+ - [ ] Commit version-sync changes and `build_v2.ps1`.
+-- [ ] Optimize `AutoEventSystem.java` or investigate user-requested logic updates.
++- [ ] Implement Engagement visibility improvements (milestones, rank changes, daily stats).
+ - [ ] Verify build with `v1.9.58`.
+ 
+ ## Reference for Next Session
+ 1. Read this file immediately to restore state.
+ 2. Check `git status` to see if anything was left in progress.
+-3. Check `task.md` in brain for detailed task breakdown of the current session.
++3. Check `task.md` and `implementation_plan.md` in brain for engagement features.
+diff --git a/pom.xml b/pom.xml
+index 521774c..73b7e03 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -5,7 +5,7 @@
+   <modelVersion>4.0.0</modelVersion>
+   <groupId>dev.gonjy</groupId>
+   <artifactId>patrol-spectator-plugin</artifactId>
+-  <version>1.9.58</version>
++  <version>1.9.59</version>
+   <name>PatrolSpectatorPlugin</name>
+ 
+   <properties>
+diff --git a/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java b/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java
+index e3c324d..b327356 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java
++++ b/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java
+@@ -43,6 +43,56 @@ public class EndGameManager implements Listener {
+         this.statsStorage = statsStorage;
+         this.discordWebhookClient = discordWebhookClient;
+         plugin.getServer().getPluginManager().registerEvents(this, plugin);
++
++        // 起動時および定期的なボスの状態監視タスクを開始
++        startBossVerificationTask();
++    }
++
++    private void startBossVerificationTask() {
++        // 起動10秒後に初回チェック、その後5分ごとに状態を検証して維持する
++        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
++            World endWorld = Bukkit.getWorld("world_the_end");
++            if (endWorld == null)
++                return;
++
++            for (org.bukkit.entity.Entity entity : endWorld.getEntities()) {
++                if (entity instanceof EnderDragon dragon) {
++                    if (isHardMode()) {
++                        verifyAndSetupHardDragon(dragon);
++                    }
++                }
++            }
++        }, 200L, 5 * 60 * 20L);
++    }
++
++    private void verifyAndSetupHardDragon(EnderDragon dragon) {
++        boolean needsSetup = false;
++
++        // 名前が設定されていない、または異なる場合に再適用
++        String expectedName = ChatColor.RED + "Void Dragon";
++        if (dragon.getCustomName() == null || !dragon.getCustomName().equals(expectedName)) {
++            needsSetup = true;
++        }
++
++        // 最大体力が強化値(600)未満の場合に再適用
++        if (dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
++            if (dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue() < 600.0) {
++                needsSetup = true;
++            }
++        }
++
++        if (needsSetup) {
++            plugin.getLogger().info("[EndGameManager] Void Dragon の状態異常を検知しました。再設定を行います。");
++            setupHardDragon(dragon);
++
++            // 各種特殊攻撃タスクが止まっている場合は再開
++            if (minionTask == null || minionTask.isCancelled())
++                startMinionTask(dragon);
++            if (abilityTask == null || abilityTask.isCancelled())
++                startAbilityTask(dragon);
++            if (roarTask == null || roarTask.isCancelled())
++                startRoarTask(dragon);
++        }
+     }
+ 
+     private boolean isHardMode() {
+diff --git a/src/main/java/dev/gonjy/patrolspectator/PlayerStatsStorage.java b/src/main/java/dev/gonjy/patrolspectator/PlayerStatsStorage.java
+index c9c24b6..f0b392a 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/PlayerStatsStorage.java
++++ b/src/main/java/dev/gonjy/patrolspectator/PlayerStatsStorage.java
+@@ -242,6 +242,7 @@ public class PlayerStatsStorage {
+             int current = yaml.getInt(base + ".enderDragonKills", 0);
+             yaml.set(base + ".enderDragonKills", current + 1);
+             dirty = true;
++            saveSync(); // 重要データなので即座に保存
+         }
+     }
+ 

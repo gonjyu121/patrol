@@ -53,25 +53,6 @@ if (Test-Path $pomPath) {
 }
 
 try {
-    # Maven Wrapperがあればそれを使う、なければパスのmvn
-    $mvnCmd = "mvn"
-    if (Test-Path (Join-Path $rootDir "mvnw.cmd")) {
-        $mvnCmd = ".\mvnw.cmd"
-    }
-    
-    # ユーザー環境に合わせて .maven ディレクトリの mvn を優先するロジック（既存スクリプト踏襲）
-    $localMvn = Join-Path $rootDir ".maven\apache-maven-3.9.6\bin\mvn.cmd"
-    if (Test-Path $localMvn) {
-        $mvnCmd = $localMvn
-    }
-    
-    # JDK指定（既存環境踏襲）
-    $javaExec = ""
-    $localJdk = Join-Path $rootDir ".jdk\jdk-21.0.2+13\bin\javac.exe"
-    if (Test-Path $localJdk) {
-        $javaExec = "-Dmaven.compiler.fork=true -Dmaven.compiler.executable=$localJdk"
-    }
-
     # ビルド実行
     $cmdArgs = "/c build_jdk21.bat"
     Write-Host "   実行コマンド: cmd $cmdArgs" -ForegroundColor Gray
@@ -106,7 +87,7 @@ foreach ($name in $plugins.PSObject.Properties.Name) {
     $pluginInfo = $plugins.$name
     $url = $pluginInfo.url
     $description = $pluginInfo.description
-    $filename = "$name.jar"
+    $filename = if ($name.EndsWith(".jar")) { $name } else { "$name.jar" }
     $outputPath = Join-Path $targetDir $filename
 
     Write-Host "📥 $name ($description) をダウンロード中..." -ForegroundColor Cyan
@@ -126,7 +107,6 @@ foreach ($name in $plugins.PSObject.Properties.Name) {
             
             if ($latestVersion) {
                 $downloadUrl = $latestVersion.files[0].url
-                $actualFileName = $latestVersion.files[0].filename
                 # ファイル名は指定のもの($name.jar)に統一するか、元ファイル名を使うか。
                 # ここでは管理しやすくするため $name.jar にリネームして保存する
                 Invoke-WebRequest -Uri $downloadUrl -OutFile $outputPath
