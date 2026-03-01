@@ -88,7 +88,36 @@ public class DungeonListener implements Listener {
 
         Player p = event.getPlayer();
         Location loc = p.getLocation();
-        if (!manager.isInDungeon(loc))
+
+        // 早期リターン: 迷宮内でも外でもない（遠い）なら無視
+        if (loc.getWorld().equals(manager.getCenter().getWorld())) {
+            double distSq = loc.distanceSquared(manager.getCenter());
+            if (distSq > 50 * 50)
+                return; // 迷宮のさらに外側
+        }
+
+        boolean inDungeon = manager.isInDungeon(loc);
+        if (!inDungeon && manager.isEnabled()) {
+            // 迷宮のすぐ外側（壁抜けチェック）
+            Location center = manager.getCenter();
+            double dx = Math.abs(loc.getX() - center.getX());
+            double dz = Math.abs(loc.getZ() - center.getZ());
+            double dy = Math.abs(loc.getY() - center.getY());
+
+            // 迷宮の外壁（30マス）のすぐ外側（31〜35マス）にいる場合
+            if ((dx > 30.5 && dx < 36) || (dz > 30.5 && dz < 36) || (dy > 10.5 && dy < 15)) {
+                Material type = loc.getBlock().getType();
+                if (type == Material.STONE || type == Material.DEEPSLATE || type == Material.DIRT) {
+                    p.sendMessage(ChatColor.RED + "迷宮の外へ逃げることはできません…");
+                    Location exit = center.clone().add(0, 0, -35);
+                    exit.setY(center.getWorld().getHighestBlockYAt(exit) + 1.0);
+                    p.teleport(exit);
+                    return;
+                }
+            }
+        }
+
+        if (!inDungeon)
             return;
 
         // 水中なら高確率でドラウンド襲来 (15%)
@@ -179,6 +208,23 @@ public class DungeonListener implements Listener {
             // 報酬 (ボスの足元)
             entity.getLocation().getWorld().dropItemNaturally(entity.getLocation(),
                     plugin.getDungeonBossSystem().getBossLoot());
+
+            // 迷宮内にいるプレイヤーを退避させる (SAO style extraction)
+            Location center = manager.getCenter();
+            if (center != null) {
+                // 入口付近 (南側に少し離れた位置を暫定出口とする)
+                Location exitLoc = center.clone().add(0, 0, -35); // 入口案内の近く
+                exitLoc.setY(center.getWorld().getHighestBlockYAt(exitLoc) + 1.0);
+
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    if (manager.isInDungeon(p.getLocation())) {
+                        p.sendMessage(ChatColor.AQUA + "迷宮の崩壊が始まります！安全な場所へ転送されます...");
+                        p.sendTitle(ChatColor.GOLD + "迷宮脱出", ChatColor.YELLOW + "入口へ転送中...", 10, 40, 10);
+                        p.teleport(exitLoc);
+                        p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
+                    }
+                }
+            }
 
             // 統計更新 (暫定的にランクポイント付与)
             if (killer != null) {

@@ -2,6 +2,7 @@ package dev.gonjy.patrolspectator.dungeon;
 
 import dev.gonjy.patrolspectator.PatrolSpectatorPlugin;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -26,6 +27,8 @@ public class DungeonBuilder {
         Location center = manager.getCenter();
         if (center == null)
             return;
+
+        cleanupEntities(center);
 
         World world = center.getWorld();
         int size = 60;
@@ -243,5 +246,15 @@ public class DungeonBuilder {
                 }
             }
         }.runTaskTimer(plugin, 1L, 1L);
+    }
+
+    private void cleanupEntities(Location center) {
+        int half = 30; // DUNGEON_SIZE / 2
+        center.getWorld().getNearbyEntities(center, half, 10, half).forEach(entity -> {
+            if (!(entity instanceof org.bukkit.entity.Player)) {
+                entity.remove();
+            }
+        });
+        plugin.getLogger().info("[Dungeon] 迷宮内のエンティティをクリーニングしました。");
     }
 }

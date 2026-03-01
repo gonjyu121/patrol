@@ -140,6 +140,28 @@ public class PatrolManager {
                         "end"));
             }
         }
+
+        // 死の迷宮追加
+        boolean hasDungeon = touristLocations.stream()
+                .anyMatch(l -> "auto_dungeon_entrance".equals(l.id));
+        if (!hasDungeon) {
+            dev.gonjy.patrolspectator.dungeon.DungeonManager dungeon = plugin.getDungeonManager();
+            if (dungeon != null && dungeon.isEnabled()) {
+                org.bukkit.Location center = dungeon.getCenter();
+                if (center != null) {
+                    plugin.getLogger().info("死の迷宮が見つかりました。観光地に追加します。");
+                    // 入口が見える位置に配置（北側に少し離れて、やや高い視点）
+                    touristLocations.add(new TouristLocation(
+                            "auto_dungeon_entrance",
+                            "§4死の迷宮 - 入口",
+                            center.getWorld().getName(),
+                            center.getX(), center.getY() + 4.0, center.getZ() - 8.0,
+                            0f, 20f,
+                            "Death Dungeon Entrance",
+                            "overworld"));
+                }
+            }
+        }
     }
 
     /**

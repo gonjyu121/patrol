@@ -1,28 +1,61 @@
+========================================
+PatrolSpectatorPlugin Build Script
+========================================
+
+JAVA_HOME: C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot
+MAVEN_HOME: C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\.maven\apache-maven-3.9.6
+Project Dir: C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin
+
+Testing Java installation...
+openjdk version "17.0.16" 2025-07-15
+OpenJDK Runtime Environment Temurin-17.0.16+8 (build 17.0.16+8)
+OpenJDK 64-Bit Server VM Temurin-17.0.16+8 (build 17.0.16+8, mixed mode, sharing)
+
+Testing Maven installation...
+Apache Maven 3.9.6 (bc0240f3c744dd6b6ec2920b3cd08dcc295161ae)
+Maven home: C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\.maven\apache-maven-3.9.6
+Java version: 17.0.16, vendor: Eclipse Adoptium, runtime: C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot
+Default locale: ja_JP, platform encoding: MS932
+OS name: "windows 11", version: "10.0", arch: "amd64", family: "windows"
+
+========================================
+Starting Maven build...
+========================================
+
 [INFO] Scanning for projects...
-Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/mojo/maven-metadata.xml
-Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-metadata.xml
-Progress (1): 4.6 kB
-Progress (2): 4.6 kB | 3.1 kB
-Progress (2): 10.0 kB | 3.1 kB
-Progress (2): 10.0 kB | 8.0 kB
-Progress (2): 14 kB | 8.0 kB  
-Progress (2): 14 kB | 11 kB 
-Progress (2): 14 kB | 16 kB
-Progress (2): 14 kB | 20 kB
-Progress (2): 14 kB | 21 kB
-                           
-Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-metadata.xml (14 kB at 35 kB/s)
-Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/mojo/maven-metadata.xml (21 kB at 46 kB/s)
+[INFO] 
+[INFO] -----------------< dev.gonjy:patrol-spectator-plugin >------------------
+[INFO] Building PatrolSpectatorPlugin 1.9.61
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ patrol-spectator-plugin ---
+[INFO] Deleting C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\target
+[INFO] 
+[INFO] --- git-commit-id:7.0.0:revision (get-the-git-infos) @ patrol-spectator-plugin ---
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ patrol-spectator-plugin ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ patrol-spectator-plugin ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 33 source files with javac [debug release 21] to target\classes
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD FAILURE
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  1.492 s
-[INFO] Finished at: 2025-12-04T11:23:49+09:00
+[INFO] Total time:  2.213 s
+[INFO] Finished at: 2026-02-28T07:15:48+09:00
 [INFO] ------------------------------------------------------------------------
-[ERROR] No plugin found for prefix '.compiler.executable=c' in the current project and in the plugin groups [org.apache.maven.plugins, org.codehaus.mojo] available from the repositories [local (C:\Users\gonjy\.m2\repository), central (https://repo.maven.apache.org/maven2)] -> [Help 1]
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project patrol-spectator-plugin: Fatal error compiling: エラー: リリース・バージョン21はサポートされていません -> [Help 1]
 [ERROR] 
 [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
 [ERROR] Re-run Maven using the -X switch to enable full debug logging.
 [ERROR] 
 [ERROR] For more information about the errors and possible solutions, please read the following articles:
-[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/NoPluginFoundForPrefixException
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
+[ERROR] C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\.git\.probe-a489bedf-9691-436b-ba72-e14359d4fec1
+
+========================================
+BUILD FAILED
+========================================
