@@ -23,13 +23,13 @@ if (-not (Test-Path $targetDir)) {
 # バックアップディレクトリを作成（既存のJARがある場合）
 $existingJars = Get-ChildItem -Path $targetDir -Filter "*.jar"
 if ($existingJars.Count -gt 0) {
-    $backupDir = Join-Path $rootDir "backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
+    $backupDir = Join-Path $rootDir ("backup_" + (Get-Date -Format "yyyyMMdd_HHmmss"))
     Write-Host "📁 バックアップディレクトリ作成: $backupDir" -ForegroundColor Yellow
     New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
     
     foreach ($jar in $existingJars) {
         Copy-Item $jar.FullName -Destination $backupDir
-        Write-Host "📦 $($jar.Name) をバックアップしました" -ForegroundColor Gray
+        Write-Host ("📦 " + $jar.Name + " をバックアップしました") -ForegroundColor Gray
     }
 }
 
@@ -47,7 +47,7 @@ if (Test-Path $pomPath) {
     if ($match) {
         if ($match.Matches.Groups[1].Value) {
             $buildVersion = $match.Matches.Groups[1].Value
-            Write-Host "ℹ️  pom.xmlからバージョン $buildVersion を検出しました" -ForegroundColor Cyan
+            Write-Host ("ℹ️ pom.xmlからバージョン " + $buildVersion + " を検出しました") -ForegroundColor Cyan
         }
     }
 }
@@ -55,51 +55,49 @@ if (Test-Path $pomPath) {
 try {
     # ビルド実行
     $cmdArgs = "/c build_jdk21.bat"
-    Write-Host "   実行コマンド: cmd $cmdArgs" -ForegroundColor Gray
+    Write-Host ("   実行コマンド: cmd " + $cmdArgs) -ForegroundColor Gray
     
     $process = Start-Process -FilePath "cmd" -ArgumentList $cmdArgs -NoNewWindow -Wait -PassThru
 
     if ($process.ExitCode -eq 0) {
-        # ビルド成果物は既に target にあるはずだが、名前を確認
-        $builtJar = Join-Path $targetDir "$buildName-$buildVersion.jar"
+        $builtJar = Join-Path $targetDir ($buildName + "-" + $buildVersion + ".jar")
         if (Test-Path $builtJar) {
-            Write-Host "✅ $buildName ビルド完了 ($builtJar)" -ForegroundColor Green
+            Write-Host ("✅ " + $buildName + " ビルド完了 (" + $builtJar + ")") -ForegroundColor Green
         }
         else {
-            Write-Host "⚠️ ビルドは成功しましたが、ファイルが見つかりません: $builtJar" -ForegroundColor Yellow
+            Write-Host ("⚠️ ビルドは成功しましたが、ファイルが見つかりません: " + $builtJar) -ForegroundColor Yellow
         }
     }
     else {
-        Write-Host "❌ $buildName のビルドに失敗しました" -ForegroundColor Red
+        Write-Host ("❌ " + $buildName + " のビルドに失敗しました") -ForegroundColor Red
         exit 1
     }
 }
 catch {
-    Write-Host "❌ ビルド処理中にエラーが発生しました: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host ("❌ ビルド処理中にエラーが発生しました: " + $_.Exception.Message) -ForegroundColor Red
     exit 1
 }
 
 # 外部プラグインのダウンロード
-Write-Host "⬇️  外部プラグインをダウンロード中..." -ForegroundColor Yellow
+Write-Host "⬇️ 外部プラグインをダウンロード中..." -ForegroundColor Yellow
 $plugins = $config.plugins
 
-foreach ($name in $plugins.PSObject.Properties.Name) {
-    $pluginInfo = $plugins.$name
+foreach ($prop in $plugins.PSObject.Properties) {
+    $name = $prop.Name
+    $pluginInfo = $prop.Value
     $url = $pluginInfo.url
     $description = $pluginInfo.description
-    $filename = if ($name.EndsWith(".jar")) { $name } else { "$name.jar" }
+    $filename = if ($name.EndsWith(".jar")) { $name } else { $name + ".jar" }
     $outputPath = Join-Path $targetDir $filename
 
-    Write-Host "📥 $name ($description) をダウンロード中..." -ForegroundColor Cyan
+    Write-Host ("📥 " + $name + " (" + $description + ") をダウンロード中...") -ForegroundColor Cyan
 
     try {
-        # Modrinth対応
         if ($url -like "MODRINTH:*") {
             $slug = $url -replace "MODRINTH:", ""
-            Write-Host "   Modrinth APIから最新バージョンを検索中 ($slug)..." -ForegroundColor Gray
-            $apiUrl = "https://api.modrinth.com/v2/project/$slug/version"
+            Write-Host ("   Modrinth APIから最新バージョンを検索中 (" + $slug + ")...") -ForegroundColor Gray
+            $apiUrl = "https://api.modrinth.com/v2/project/" + $slug + "/version"
             $versions = Invoke-RestMethod -Uri $apiUrl -Method Get
-            # 最新の安定版を探す（なければ最新）
             $latestVersion = $versions | Where-Object { $_.version_type -eq "release" } | Select-Object -First 1
             if (-not $latestVersion) {
                 $latestVersion = $versions | Select-Object -First 1
@@ -107,23 +105,20 @@ foreach ($name in $plugins.PSObject.Properties.Name) {
             
             if ($latestVersion) {
                 $downloadUrl = $latestVersion.files[0].url
-                # ファイル名は指定のもの($name.jar)に統一するか、元ファイル名を使うか。
-                # ここでは管理しやすくするため $name.jar にリネームして保存する
                 Invoke-WebRequest -Uri $downloadUrl -OutFile $outputPath
-                Write-Host "✅ $name ダウンロード完了 (Version: $($latestVersion.version_number))" -ForegroundColor Green
+                Write-Host ("✅ " + $name + " ダウンロード完了 (Version: " + $latestVersion.version_number + ")") -ForegroundColor Green
             }
             else {
-                Write-Host "❌ $name のバージョンが見つかりませんでした" -ForegroundColor Red
+                Write-Host ("❌ " + $name + " のバージョンが見つかりませんでした") -ForegroundColor Red
             }
         }
         else {
-            # 通常のURL
             Invoke-WebRequest -Uri $url -OutFile $outputPath
-            Write-Host "✅ $name ダウンロード完了" -ForegroundColor Green
+            Write-Host ("✅ " + $name + " ダウンロード完了") -ForegroundColor Green
         }
     }
     catch {
-        Write-Host "❌ $name のダウンロードに失敗しました: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host ("❌ " + $name + " のダウンロードに失敗しました: " + $_.Exception.Message) -ForegroundColor Red
     }
 }
 
@@ -133,9 +128,9 @@ Write-Host "📊 更新結果 (Targetフォルダ):" -ForegroundColor Green
 Write-Host "==================================" -ForegroundColor Green
 Get-ChildItem -Path $targetDir -Filter "*.jar" | ForEach-Object {
     $size = [math]::Round($_.Length / 1MB, 2)
-    Write-Host "📦 $($_.Name) ($size MB)" -ForegroundColor White
+    Write-Host ("📦 " + $_.Name + " (" + $size + " MB)") -ForegroundColor White
 }
 
 Write-Host ""
 Write-Host "🎉 処理完了！" -ForegroundColor Green
-Write-Host "📁 出力先: $targetDir" -ForegroundColor Yellow
+Write-Host ("📁 出力先: " + $targetDir) -ForegroundColor Yellow

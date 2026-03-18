@@ -16,7 +16,13 @@ commands:
   stats:
     description: 自分の統計情報と進捗を表示します
     usage: /stats
+  dungeon:
+    description: 迷宮管理コマンド (Admin用)
+    usage: /dungeon
+    permission: patrol.dungeon.admin
 permissions:
+  patrol.dungeon.admin:
+    default: op
   patrolspectator.use:
     default: op
   patrolspectator.exempt:

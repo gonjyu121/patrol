@@ -1,0 +1,10 @@
+# dungeon_config.yml
+# 迷宮システムの中心座標
+center:
+  world: world
+  x: 0.0
+  y: 64.0
+  z: 0.0
+
+# 迷宮システムを有効にするかどうか
+enabled: false

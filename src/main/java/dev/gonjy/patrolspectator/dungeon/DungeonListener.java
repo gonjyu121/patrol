@@ -87,6 +87,9 @@ public class DungeonListener implements Listener {
             return;
 
         Player p = event.getPlayer();
+        if (p.getGameMode() == org.bukkit.GameMode.SPECTATOR)
+            return;
+
         Location loc = p.getLocation();
 
         // 早期リターン: 迷宮内でも外でもない（遠い）なら無視

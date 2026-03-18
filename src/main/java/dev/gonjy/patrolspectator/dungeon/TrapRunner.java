@@ -33,13 +33,19 @@ public class TrapRunner {
 
         cooldowns.put(p.getUniqueId(), now + 30000); // 30秒クールダウン
 
-        int choice = random.nextInt(12); // 分岐を増やす
-        if (choice < 4) {
+        int choice = random.nextInt(16); // 分岐をさらに増やす
+        if (choice < 3) {
             runTeleportTrap(p);
-        } else if (choice < 8) {
+        } else if (choice < 6) {
             runMobTrap(p, triggerLoc);
-        } else {
+        } else if (choice < 9) {
             runWaterTrap(p, triggerLoc);
+        } else if (choice < 12) {
+            runDebuffTrap(p);
+        } else if (choice < 14) {
+            runExplosionTrap(p, triggerLoc);
+        } else {
+            runPitfallTrap(p, triggerLoc);
         }
     }
 
@@ -74,6 +80,7 @@ public class TrapRunner {
 
     public void runWaterTrap(Player p, Location loc) {
         p.sendMessage(ChatColor.BLUE + "水面が激しく揺れ、三叉槍を構えたドラウンドが這い出してきた！");
+        loc.getWorld().playSound(loc, org.bukkit.Sound.ENTITY_PLAYER_SPLASH, 1.0f, 0.5f);
 
         for (int i = 0; i < 4; i++) {
             Location spawnLoc = loc.clone().add(random.nextInt(3) - 1, 0, random.nextInt(3) - 1);
@@ -93,5 +100,39 @@ public class TrapRunner {
                 }
             }.runTaskLater(plugin, 600L);
         }
+    }
+
+    private void runDebuffTrap(Player p) {
+        p.sendMessage(ChatColor.GRAY + "どこからともなく不気味な笑い声が聞こえる…");
+        p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_WITCH_CELEBRATE, 1.0f, 0.8f);
+
+        p.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.BLINDNESS, 100, 0));
+        p.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SLOWNESS, 200, 1));
+        p.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.WEAKNESS, 200, 1));
+    }
+
+    private void runExplosionTrap(Player p, Location loc) {
+        p.sendMessage(ChatColor.RED + "導火線の燃える音が聞こえる…！");
+        loc.getWorld().playSound(loc, org.bukkit.Sound.ENTITY_TNT_PRIMED, 1.0f, 1.0f);
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                loc.getWorld().createExplosion(loc, 3.0f, false, false);
+                p.sendMessage(ChatColor.DARK_RED + "ドカンッ！！");
+            }
+        }.runTaskLater(plugin, 40L); // 2秒後
+    }
+
+    private void runPitfallTrap(Player p, Location loc) {
+        p.sendMessage(ChatColor.GOLD + "足元の床が崩れ落ちた！");
+        loc.getWorld().playSound(loc, org.bukkit.Sound.BLOCK_STONE_BREAK, 1.0f, 0.5f);
+
+        Location target = p.getLocation().clone().add(0, -5, 0);
+        p.teleport(target);
+
+        // 周囲にパーティクル
+        loc.getWorld().spawnParticle(org.bukkit.Particle.BLOCK, loc, 50, 0.5, 0.5, 0.5,
+                Material.STONE.createBlockData());
     }
 }

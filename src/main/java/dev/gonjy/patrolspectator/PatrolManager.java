@@ -92,15 +92,23 @@ public class PatrolManager {
         // 外部YAML優先
         File f = new File(plugin.getDataFolder(), tourConf.file);
         if (f.exists()) {
-            touristLocations.addAll(TouristLocation.loadFromYaml(f));
+            List<TouristLocation> loaded = TouristLocation.loadFromYaml(f);
+            touristLocations.addAll(loaded);
+            plugin.getLogger().info("[Patrol] " + tourConf.file + " から " + loaded.size() + " 件の観光地を読み込みました。");
+        } else {
+            plugin.getLogger().warning("[Patrol] 観光地設定ファイルが見つかりません: " + f.getPath());
         }
 
         // config内のフォールバック
         List<Map<?, ?>> fallback = plugin.getConfig().getMapList("patrol.tour.locations");
-        touristLocations.addAll(TouristLocation.fromMapList(fallback));
+        if (fallback != null && !fallback.isEmpty()) {
+            List<TouristLocation> fallbackLoaded = TouristLocation.fromMapList(fallback);
+            touristLocations.addAll(fallbackLoaded);
+            plugin.getLogger().info("[Patrol] config.yml から " + fallbackLoaded.size() + " 件の観光地を読み込みました（フォールバック）。");
+        }
 
-        plugin.getLogger().info("観光地データをロードしました: " + touristLocations.size() + " 件");
         prepareTour();
+        plugin.getLogger().info("[Patrol] 最終的な観光地リスト: " + touristLocations.size() + " 件");
     }
 
     /**
@@ -224,7 +232,12 @@ public class PatrolManager {
         // 初回の事前読み込みをスケジュール
         schedulePreLoad(dwellSeconds);
 
-        plugin.getLogger().info("パトロールを開始しました。カメラ: " + camera.getName() + ", 間隔: " + dwellSeconds + "秒");
+        if (touristLocations.isEmpty()) {
+            plugin.getLogger().warning("[Patrol] 観光地リストが空です。観戦可能なプレイヤーがいない場合、カメラは何もしません。");
+        }
+
+        plugin.getLogger().info("パトロールを開始しました。カメラ: " + camera.getName() + ", 間隔: " + dwellSeconds + "秒, 観光地数: "
+                + touristLocations.size());
     }
 
     /**

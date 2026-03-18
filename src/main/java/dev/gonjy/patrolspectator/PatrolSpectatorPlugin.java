@@ -96,6 +96,15 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        // 観光地リストの初期ファイルを出力（存在しない場合のみ）
+        try {
+            if (!new java.io.File(getDataFolder(), "tourist_locations.yml").exists()) {
+                saveResource("tourist_locations.yml", false);
+            }
+        } catch (Exception e) {
+            getLogger().warning("Could not save tourist_locations.yml: " + e.getMessage());
+        }
+
         loadConfigValues();
 
         // 保護データの初期化
@@ -147,17 +156,29 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
         // コマンド登録
         PatrolCommand patrolCmd = new PatrolCommand(this, patrolManager, rankingDisplaySystem);
-        getCommand("patrol").setExecutor(patrolCmd);
-        getCommand("patrol").setTabCompleter(patrolCmd);
+        if (getCommand("patrol") != null) {
+            getCommand("patrol").setExecutor(patrolCmd);
+            getCommand("patrol").setTabCompleter(patrolCmd);
+        } else {
+            getLogger().warning("Command 'patrol' not found in plugin.yml!");
+        }
 
         // Stats コマンド登録
-        getCommand("stats").setExecutor(new StatsCommand(this, engagementSystem));
+        if (getCommand("stats") != null) {
+            getCommand("stats").setExecutor(new StatsCommand(this, engagementSystem));
+        } else {
+            getLogger().warning("Command 'stats' not found in plugin.yml!");
+        }
 
         // Dungeon コマンド登録
         dev.gonjy.patrolspectator.dungeon.DungeonCommand dungeonCmd = new dev.gonjy.patrolspectator.dungeon.DungeonCommand(
                 dungeonManager);
-        getCommand("dungeon").setExecutor(dungeonCmd);
-        getCommand("dungeon").setTabCompleter(dungeonCmd);
+        if (getCommand("dungeon") != null) {
+            getCommand("dungeon").setExecutor(dungeonCmd);
+            getCommand("dungeon").setTabCompleter(dungeonCmd);
+        } else {
+            getLogger().warning("Command 'dungeon' not found in plugin.yml!");
+        }
 
         // 自動イベントシステムの開始
         autoEventSystem.startAutoEvents();
@@ -191,26 +212,36 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
         // Auto Start Listener
         if (autoStartConf.enabled) {
+            getLogger().info("AutoStart is enabled for camera player: " + autoStartConf.cameraPlayerName);
             getServer().getPluginManager().registerEvents(new org.bukkit.event.Listener() {
                 @org.bukkit.event.EventHandler
                 public void onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent event) {
-                    if (event.getPlayer().getName().equalsIgnoreCase(autoStartConf.cameraPlayerName)) {
-                        getLogger()
-                                .info("Camera player " + event.getPlayer().getName() + " joined. Starting patrol...");
+                    String playerName = event.getPlayer().getName();
+                    if (playerName.equalsIgnoreCase(autoStartConf.cameraPlayerName)) {
+                        getLogger().info("Camera player " + playerName + " joined. Starting patrol in 40 ticks...");
                         // Delay slightly to ensure player is fully logged in
                         getServer().getScheduler().runTaskLater(PatrolSpectatorPlugin.this, () -> {
                             if (event.getPlayer().isOnline()) {
                                 patrolManager.startPatrol(event.getPlayer(), tourConf.dwellSeconds);
+                            } else {
+                                getLogger().warning(
+                                        "Camera player " + playerName + " is no longer online. AutoStart aborted.");
                             }
                         }, 40L);
                     }
                 }
             }, this);
+        } else {
+            getLogger().info("AutoStart is disabled.");
         }
 
         // Bounty System
         bountyManager = new BountyManager(this);
-        getCommand("bounty").setExecutor(new BountyCommand(bountyManager));
+        if (getCommand("bounty") != null) {
+            getCommand("bounty").setExecutor(new BountyCommand(bountyManager));
+        } else {
+            getLogger().warning("Command 'bounty' not found in plugin.yml!");
+        }
 
         // Create TickMonitor
         this.tickMonitor = new TickMonitor(this);
