@@ -7,11 +7,10 @@
     - Harmonized version strings across `pom.xml`, `plugin_urls.json`, and `update_plugins.ps1`.
     - Created `build_v2.ps1` for synchronized build processes.
 - **Uncommitted Changes**:
-    - Versions synchronized in configuration files.
-    - `build_v2.ps1` added as an untracked/new script.
+    - None (Committed versions and `build_v2.ps1`)
 
 ## Pending Tasks
-- [ ] Commit version-sync changes and `build_v2.ps1`.
+- [x] Commit version-sync changes and `build_v2.ps1`.
 - [ ] Implement Engagement visibility improvements (milestones, rank changes, daily stats).
 - [ ] Verify build with `v1.9.58`.
 

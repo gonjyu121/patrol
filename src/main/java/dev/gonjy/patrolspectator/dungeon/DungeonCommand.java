@@ -42,11 +42,17 @@ public class DungeonCommand implements CommandExecutor, TabCompleter {
                 Player p = (Player) sender;
                 manager.setCenter(p.getLocation());
                 sender.sendMessage(ChatColor.GREEN + "迷宮の中心を現在地に設定しました。");
+                if (manager.getPlugin() != null && manager.getPlugin().getPatrolManager() != null) {
+                    manager.getPlugin().getPatrolManager().addDungeonLocations(manager);
+                }
                 break;
 
             case "enable":
                 manager.setEnabled(true);
                 sender.sendMessage(ChatColor.GREEN + "迷宮を有効化しました。");
+                if (manager.getPlugin() != null && manager.getPlugin().getPatrolManager() != null) {
+                    manager.getPlugin().getPatrolManager().addDungeonLocations(manager);
+                }
                 break;
 
             case "disable":

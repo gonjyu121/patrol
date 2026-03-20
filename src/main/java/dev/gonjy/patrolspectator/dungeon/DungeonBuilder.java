@@ -140,6 +140,19 @@ public class DungeonBuilder {
                                     new Location(finalWorld, finalStartX + 31, finalBaseY + 1, finalStartZ + 31));
                             // 入口の案内掲示
                             placeEntranceSigns(finalWorld, manager.getCenter());
+                            
+                            // 観光案内へダンジョン最下層を動的に登録
+                            Location bossLoc = new Location(finalWorld, finalStartX + 31, finalBaseY + 1, finalStartZ + 31);
+                            dev.gonjy.patrolspectator.TouristLocation bossTourLoc = new dev.gonjy.patrolspectator.TouristLocation(
+                                    "auto_dungeon_boss",
+                                    "§4死の迷宮 - 最下層(B1)",
+                                    finalWorld.getName(),
+                                    bossLoc.getX() - 5.0, bossLoc.getY() + 3.0, bossLoc.getZ() - 5.0,
+                                    -45f, 20f,
+                                    "Death Dungeon Boss Room",
+                                    "overworld"
+                            );
+                            plugin.getPatrolManager().addTouristLocation(bossTourLoc);
                         });
                     }
                 }.runTask(plugin);

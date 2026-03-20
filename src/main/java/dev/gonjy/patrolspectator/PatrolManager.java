@@ -153,22 +153,44 @@ public class PatrolManager {
         boolean hasDungeon = touristLocations.stream()
                 .anyMatch(l -> "auto_dungeon_entrance".equals(l.id));
         if (!hasDungeon) {
-            dev.gonjy.patrolspectator.dungeon.DungeonManager dungeon = plugin.getDungeonManager();
-            if (dungeon != null && dungeon.isEnabled()) {
-                org.bukkit.Location center = dungeon.getCenter();
-                if (center != null) {
-                    plugin.getLogger().info("死の迷宮が見つかりました。観光地に追加します。");
-                    // 入口が見える位置に配置（北側に少し離れて、やや高い視点）
-                    touristLocations.add(new TouristLocation(
-                            "auto_dungeon_entrance",
-                            "§4死の迷宮 - 入口",
-                            center.getWorld().getName(),
-                            center.getX(), center.getY() + 4.0, center.getZ() - 8.0,
-                            0f, 20f,
-                            "Death Dungeon Entrance",
-                            "overworld"));
-                }
-            }
+            addDungeonLocations(plugin.getDungeonManager());
+        }
+    }
+
+    /**
+     * 強制的にダンジョンの場所（入口）を（再）登録します。
+     * 重複を避けるため、既存の auto_dungeon_entrance は削除します。
+     */
+    public void addDungeonLocations(dev.gonjy.patrolspectator.dungeon.DungeonManager dungeon) {
+        if (dungeon == null || !dungeon.isEnabled()) return;
+        org.bukkit.Location center = dungeon.getCenter();
+        if (center == null) return;
+
+        // 既存のダンジョン入口を削除
+        touristLocations.removeIf(l -> "auto_dungeon_entrance".equals(l.id));
+
+        // 入口を追加
+        touristLocations.add(new TouristLocation(
+                "auto_dungeon_entrance",
+                "§4死の迷宮 - 入口",
+                center.getWorld().getName(),
+                center.getX(), center.getY() + 4.0, center.getZ() - 8.0,
+                0f, 20f,
+                "Death Dungeon Entrance",
+                "overworld"));
+
+        plugin.getLogger().info("[Patrol] 観光案内リストに死の迷宮の入口を登録しました。");
+    }
+
+    /**
+     * 動的に観光地を追加します（作成完了時に呼ばれる想定）。
+     * 同じIDがあれば上書きします。
+     */
+    public void addTouristLocation(TouristLocation loc) {
+        if (loc != null) {
+            touristLocations.removeIf(l -> l.id.equals(loc.id));
+            touristLocations.add(loc);
+            plugin.getLogger().info("[Patrol] 観光案内リストに " + loc.name + " (" + loc.id + ") を追加しました。");
         }
     }
 
