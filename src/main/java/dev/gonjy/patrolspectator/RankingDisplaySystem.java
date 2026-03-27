@@ -77,6 +77,7 @@ public class RankingDisplaySystem {
      */
     private static class RankingData {
         List<Map.Entry<UUID, Long>> totalPlayTime;
+        List<Map.Entry<UUID, Long>> todayPlayTime;
         List<Map.Entry<UUID, Long>> continuousSurvival;
         List<Map.Entry<UUID, Integer>> kills;
         List<Map.Entry<UUID, Integer>> dragonKills;
@@ -97,6 +98,7 @@ public class RankingDisplaySystem {
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             RankingData data = new RankingData();
             data.totalPlayTime = getTotalSurvivalTimeRanking();
+            data.todayPlayTime = getTodayPlayTimeRanking();
             data.continuousSurvival = getContinuousSurvivalTimeRanking();
             data.kills = getKillCountRanking();
             data.dragonKills = getEnderDragonKillRanking();
@@ -123,26 +125,30 @@ public class RankingDisplaySystem {
         displayTotalPlayTimeRanking(data.totalPlayTime);
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            displayContinuousSurvivalTimeRanking(data.continuousSurvival);
+            displayTodayPlayTimeRanking(data.todayPlayTime);
 
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                displayKillCountRanking(data.kills);
+                displayContinuousSurvivalTimeRanking(data.continuousSurvival);
 
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    displayEnderDragonKillRanking(data.dragonKills);
+                    displayKillCountRanking(data.kills);
 
                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                        displayEventPointsRanking(data.eventPoints);
+                        displayEnderDragonKillRanking(data.dragonKills);
 
                         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                            if (data.dungeonLevels != null && !data.dungeonLevels.isEmpty()) {
-                                displayDungeonRanking(data.dungeonLevels);
-                            }
+                            displayEventPointsRanking(data.eventPoints);
 
-                            Bukkit.getServer().broadcastMessage("");
-                            Bukkit.getServer()
-                                    .broadcastMessage(ChatColor.GRAY + "※ " + ChatColor.GOLD + "[★]" + ChatColor.GRAY
-                                            + " は " + ChatColor.RED + "ヴォイド・ドラゴン" + ChatColor.GRAY + " 討伐の証です");
+                            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                                if (data.dungeonLevels != null && !data.dungeonLevels.isEmpty()) {
+                                    displayDungeonRanking(data.dungeonLevels);
+                                }
+
+                                Bukkit.getServer().broadcastMessage("");
+                                Bukkit.getServer()
+                                        .broadcastMessage(ChatColor.GRAY + "※ " + ChatColor.GOLD + "[★]" + ChatColor.GRAY
+                                                + " は " + ChatColor.RED + "ヴォイド・ドラゴン" + ChatColor.GRAY + " 討伐の証です");
+                            }, 40L);
                         }, 40L);
                     }, 40L);
                 }, 40L);
@@ -215,6 +221,57 @@ public class RankingDisplaySystem {
         }
 
         broadcastToDiscord("🏆 累計プレイ時間ランキング", discordLines);
+    }
+
+    /**
+     * 今日のプレイ時間ランキングを表示します。
+     */
+    private void displayTodayPlayTimeRanking(List<Map.Entry<UUID, Long>> ranking) {
+        List<String> discordLines = new ArrayList<>();
+
+        // Title表示
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.sendTitle(
+                    ChatColor.GREEN + "📅 今日のプレイ時間ランキング",
+                    ChatColor.YELLOW + "本日（0時以降）のプレイ時間です",
+                    10, 40, 10);
+        }
+
+        // チャット表示
+        Bukkit.getServer().broadcastMessage(ChatColor.GREEN + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        Bukkit.getServer().broadcastMessage(ChatColor.GREEN + "📅 今日のプレイ時間ランキング 📅");
+        Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "  本日（0時以降）のプレイ時間です");
+        Bukkit.getServer().broadcastMessage(ChatColor.GREEN + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+        if (!ranking.isEmpty()) {
+            for (int i = 0; i < Math.min(3, ranking.size()); i++) {
+                Map.Entry<UUID, Long> entry = ranking.get(i);
+                String playerName = getDisplayName(entry.getKey());
+                long totalMinutes = entry.getValue() / (1000 * 60);
+                long totalHours = totalMinutes / 60;
+                String medal = i == 0 ? "🥇" : i == 1 ? "🥈" : "🥉";
+                String status = Bukkit.getPlayer(entry.getKey()) != null ? "🟢" : "⚫";
+
+                String timeDisplay;
+                if (totalHours > 0) {
+                    timeDisplay = totalHours + "時間" + (totalMinutes % 60) + "分";
+                } else {
+                    timeDisplay = totalMinutes + "分";
+                }
+
+                String line = "  " + medal + " " + status + " " + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": "
+                        + ChatColor.GREEN + timeDisplay;
+                Bukkit.getServer().broadcastMessage(line);
+
+                discordLines.add(ChatColor.stripColor(medal + " " + playerName + ": " + timeDisplay));
+            }
+        } else {
+            Bukkit.getServer()
+                    .broadcastMessage(ChatColor.GRAY + "  📅 まだ本日の記録保持者がいません。");
+            discordLines.add("記録保持者なし");
+        }
+
+        broadcastToDiscord("📅 今日のプレイ時間ランキング", discordLines);
     }
 
     /**
@@ -432,6 +489,26 @@ public class RankingDisplaySystem {
         }
 
         // 累計生存時間の長い順にソート
+        ranking.sort((a, b) -> Long.compare(b.getValue(), a.getValue()));
+        return ranking;
+    }
+
+    /**
+     * 今日のプレイ時間ランキングを取得します。
+     * 
+     * @return 今日のプレイ時間ランキング（上位から順）
+     */
+    private List<Map.Entry<UUID, Long>> getTodayPlayTimeRanking() {
+        List<Map.Entry<UUID, Long>> ranking = new ArrayList<>();
+
+        for (UUID playerId : statsStorage.getAllPlayerIds()) {
+            if (playerId.equals(excludedPlayerUuid)) continue;
+            long todayTime = statsStorage.getTodayPlayTimeMillis(playerId);
+            if (todayTime > 60000) { // 1分以上
+                ranking.add(new SimpleEntry<>(playerId, todayTime));
+            }
+        }
+
         ranking.sort((a, b) -> Long.compare(b.getValue(), a.getValue()));
         return ranking;
     }

@@ -188,12 +188,12 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
             engagementSystem.applyServerRulesQuietly();
         }, 3600L, 3600L);
 
-        // エンゲージメント（マイルストーン/ランク）定期チェックタスク（10分間隔）
+        // エンゲージメント（マイルストーン/ランク）定期チェックタスク（1分間隔に短縮）
         getServer().getScheduler().runTaskTimer(this, () -> {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 engagementSystem.checkEngagement(p);
             }
-        }, 12000L, 12000L);
+        }, 1200L, 1200L);
 
         if (getConfig().getBoolean("discord.enabled", false)) {
             getServer().getPluginManager().registerEvents(new DiscordListener(this, discordWebhookClient), this);
