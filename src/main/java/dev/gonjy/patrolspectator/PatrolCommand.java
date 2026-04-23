@@ -40,6 +40,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage("§a/patrol rank                 - ランキング表示");
             if (sender.isOp()) {
                 sender.sendMessage("§a/patrol reset_survival       - 連続生存時間リセット(OP)");
+                sender.sendMessage("§a/patrol backup               - ランキングのDiscordバックアップ(OP)");
             }
             return true;
         }
@@ -92,6 +93,15 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage("§a[Patrol] All continuous survival times have been reset.");
                 break;
             }
+            case "backup": {
+                if (!sender.isOp()) {
+                    sender.sendMessage("§cPermission denied.");
+                    return true;
+                }
+                sender.sendMessage("§a[Patrol] Stats backup triggered. Check Discord shortly.");
+                plugin.backupStats();
+                break;
+            }
             default:
                 sender.sendMessage("Unknown subcommand. /patrol help");
         }
@@ -104,6 +114,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             List<String> sub = new ArrayList<>(Arrays.asList("start", "stop", "status", "rank"));
             if (sender.isOp()) {
                 sub.add("reset_survival");
+                sub.add("backup");
             }
             List<String> ret = new ArrayList<>();
             for (String s : sub) {

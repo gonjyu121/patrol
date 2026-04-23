@@ -78,8 +78,9 @@ public class EndGameManager implements Listener {
         }
 
         // 最大体力が強化値(600)未満の場合に再適用
-        if (dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
-            if (dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue() < 600.0) {
+        org.bukkit.attribute.AttributeInstance healthAttr = getSafeAttribute(dragon, new String[]{"MAX_HEALTH", "GENERIC_MAX_HEALTH"});
+        if (healthAttr != null) {
+            if (healthAttr.getBaseValue() < 600.0) {
                 needsSetup = true;
             }
         }
@@ -135,8 +136,9 @@ public class EndGameManager implements Listener {
 
         // 体力強化 (通常200 -> 600)
         double maxHealth = 600.0;
-        if (dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
-            dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(maxHealth);
+        org.bukkit.attribute.AttributeInstance healthAttr = getSafeAttribute(dragon, new String[]{"MAX_HEALTH", "GENERIC_MAX_HEALTH"});
+        if (healthAttr != null) {
+            healthAttr.setBaseValue(maxHealth);
         }
         dragon.setHealth(maxHealth);
 
@@ -388,6 +390,32 @@ public class EndGameManager implements Listener {
         }
 
         shutdown();
+    }
+
+    private org.bukkit.attribute.AttributeInstance getSafeAttribute(org.bukkit.attribute.Attributable entity, String[] names) {
+        for (String name : names) {
+            try {
+                // 1. Enum.valueOf (1.20以前)
+                // 2. static field (1.21+)
+                // 両方を試すためにリフレクションを使用するか、単に valueOf を試す
+                // ここでは列挙型としての名前解決を試みる
+                Attribute attr = null;
+                try {
+                    attr = Attribute.valueOf(name);
+                } catch (Exception e) {
+                    // 1.21+ ではフィールドとして存在する場合があるため、リフレクションで取得を試みる
+                    try {
+                        java.lang.reflect.Field field = Attribute.class.getField(name);
+                        attr = (Attribute) field.get(null);
+                    } catch (Exception ignored) {}
+                }
+
+                if (attr != null) {
+                    return entity.getAttribute(attr);
+                }
+            } catch (Exception ignored) {}
+        }
+        return null;
     }
 
     public void shutdown() {

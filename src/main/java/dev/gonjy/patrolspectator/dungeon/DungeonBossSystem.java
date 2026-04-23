@@ -51,12 +51,14 @@ public class DungeonBossSystem {
                 org.bukkit.plugin.java.JavaPlugin.getProvidingPlugin(DungeonBossSystem.class), "is_dungeon_boss");
         boss.getPersistentDataContainer().set(key, org.bukkit.persistence.PersistentDataType.BYTE, (byte) 1);
 
-        if (boss.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
-            boss.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(health);
+        org.bukkit.attribute.AttributeInstance healthAttr = getSafeAttribute(boss, new String[]{"MAX_HEALTH", "GENERIC_MAX_HEALTH"});
+        if (healthAttr != null) {
+            healthAttr.setBaseValue(health);
             boss.setHealth(health);
         }
-        if (boss.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE) != null) {
-            boss.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE).setBaseValue(damage);
+        org.bukkit.attribute.AttributeInstance damageAttr = getSafeAttribute(boss, new String[]{"ATTACK_DAMAGE", "GENERIC_ATTACK_DAMAGE"});
+        if (damageAttr != null) {
+            damageAttr.setBaseValue(damage);
         }
     }
 
@@ -71,5 +73,26 @@ public class DungeonBossSystem {
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    private org.bukkit.attribute.AttributeInstance getSafeAttribute(org.bukkit.attribute.Attributable entity, String[] names) {
+        for (String name : names) {
+            try {
+                Attribute attr = null;
+                try {
+                    attr = Attribute.valueOf(name);
+                } catch (Exception e) {
+                    try {
+                        java.lang.reflect.Field field = Attribute.class.getField(name);
+                        attr = (Attribute) field.get(null);
+                    } catch (Exception ignored) {}
+                }
+
+                if (attr != null) {
+                    return entity.getAttribute(attr);
+                }
+            } catch (Exception ignored) {}
+        }
+        return null;
     }
 }

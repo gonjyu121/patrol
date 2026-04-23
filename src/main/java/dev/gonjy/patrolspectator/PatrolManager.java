@@ -24,7 +24,7 @@ import java.util.logging.Level;
  * <li>観光モードとプレイヤー観戦モードの切り替え判断</li>
  * </ul>
  */
-public class PatrolManager {
+public class PatrolManager implements org.bukkit.event.Listener {
 
     private final PatrolSpectatorPlugin plugin;
     private final EngagementSystem engagementSystem;
@@ -58,6 +58,9 @@ public class PatrolManager {
     // 事前読み込み用タスク
     private BukkitTask preLoadTask;
 
+    // シネマティック追跡用タスク（エンドラ等で使用）
+    private BukkitTask trackingTask;
+
     /**
      * コンストラクタ。
      *
@@ -89,14 +92,15 @@ public class PatrolManager {
         touristLocations.clear();
         PatrolSpectatorPlugin.TourConf tourConf = plugin.getTourConf();
 
-        // 外部YAML優先
         File f = new File(plugin.getDataFolder(), tourConf.file);
-        if (f.exists()) {
+        boolean fileExists = f.exists();
+
+        if (fileExists) {
             List<TouristLocation> loaded = TouristLocation.loadFromYaml(f);
             touristLocations.addAll(loaded);
             plugin.getLogger().info("[Patrol] " + tourConf.file + " から " + loaded.size() + " 件の観光地を読み込みました。");
         } else {
-            plugin.getLogger().warning("[Patrol] 観光地設定ファイルが見つかりません: " + f.getPath());
+            plugin.getLogger().warning("[Patrol] 観光地設定ファイルが見つかりません。初期スポットの自動生成を行います。");
         }
 
         // config内のフォールバック
@@ -108,6 +112,12 @@ public class PatrolManager {
         }
 
         prepareTour();
+
+        if (!fileExists && !touristLocations.isEmpty()) {
+            TouristLocation.saveToYaml(f, touristLocations);
+            plugin.getLogger().info("[Patrol] 自動生成された初期の観光地リストを " + tourConf.file + " に保存しました！");
+        }
+
         plugin.getLogger().info("[Patrol] 最終的な観光地リスト: " + touristLocations.size() + " 件");
     }
 
@@ -118,16 +128,42 @@ public class PatrolManager {
     public void prepareTour() {
         PatrolSpectatorPlugin.TourConf tourConf = plugin.getTourConf();
 
-        // 観光地リストが空の場合の自動生成処理
         if (touristLocations.isEmpty()) {
+            plugin.getLogger().info("観光地リストが空のため、初期拠点等を自動生成します。");
             World world = Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0);
             if (world != null) {
-                plugin.getLogger().info("観光地リストが空のため、自動生成を試みます。");
-                touristLocations.addAll(TouristLocation.autoGenerate(
-                        world,
-                        tourConf.autogenPoints,
-                        tourConf.autogenRadius,
-                        tourConf.autogenYOffset));
+                org.bukkit.Location spawn = world.getSpawnLocation();
+                double y = Math.max(spawn.getY(), world.getHighestBlockYAt(spawn) + 2.0);
+                touristLocations.add(new TouristLocation(
+                        "auto_spawn",
+                        "§a初期リスポーン地点",
+                        world.getName(),
+                        spawn.getX(), y, spawn.getZ(),
+                        0f, 20f,
+                        "Server Spawn Point",
+                        "overworld"
+                ));
+            }
+
+            World nether = Bukkit.getWorld("world_nether");
+            if (nether == null) {
+                for (World w : Bukkit.getWorlds()) {
+                    if (w.getEnvironment() == World.Environment.NETHER) {
+                        nether = w;
+                        break;
+                    }
+                }
+            }
+            if (nether != null) {
+                touristLocations.add(new TouristLocation(
+                        "auto_nether",
+                        "§cNether",
+                        nether.getName(),
+                        0.0, 64.0, 0.0,
+                        0f, 0f,
+                        "Nether Initial Point",
+                        "nether"
+                ));
             }
         }
 
@@ -205,6 +241,7 @@ public class PatrolManager {
      */
     public void startPatrol(Player camera, int dwellSeconds) {
         stopPatrol(); // 既存タスクがあれば停止
+        stopTracking(); // 追跡タスクも停止
 
         this.cameraUuid = camera.getUniqueId();
         this.startLocation = camera.getLocation(); // 開始地点を保存
@@ -273,6 +310,8 @@ public class PatrolManager {
             patrolTask.cancel();
             patrolTask = null;
         }
+
+        stopTracking();
 
         if (preLoadTask != null) {
             preLoadTask.cancel();
@@ -399,6 +438,9 @@ public class PatrolManager {
         // 次のサイクルに向けた事前読み込みをスケジュール
         schedulePreLoad(plugin.getTourConf().dwellSeconds);
 
+        // 前の追跡タスクがあれば停止
+        stopTracking();
+
         if (target != null) {
             // ターゲットが見つかった場合: プレイヤー観戦モード
             spectateTarget(camera, target);
@@ -479,17 +521,52 @@ public class PatrolManager {
         }
 
         // *** 特殊ロジック: エンドならドラゴンを探す ***
-        // v1.9.53: disableWorldScanがtrueでも、エンドに入った時だけは特別にドラゴンを探す
         if (w.getEnvironment() == World.Environment.THE_END) {
-            // v1.9.54+: getEntitiesByClass を使用して全エンティティ走査を回避
-            var dragons = w.getEntitiesByClass(org.bukkit.entity.EnderDragon.class);
-            org.bukkit.entity.EnderDragon dragon = dragons.isEmpty() ? null : dragons.iterator().next();
+            org.bukkit.entity.EnderDragon dragon = null;
+            for (org.bukkit.entity.Entity ent : w.getEntities()) {
+                if (ent instanceof org.bukkit.entity.EnderDragon) {
+                    dragon = (org.bukkit.entity.EnderDragon) ent;
+                    break;
+                }
+            }
 
             if (dragon != null && dragon.isValid()) {
-                spectateEntity(camera, dragon);
+                // v1.9.66: 憑依ではなく3人称視点（追跡モード）で映す
+                startCinematicFollow(camera, dragon, "§5The Void Dragon", "§dエンドラを追跡中...");
+                return;
+            }
+        }
 
-                // タイトル表示
-                MessageUtils.showTitleLargeSmall(camera, "§5The Void Dragon", "§7Now On Air");
+        // *** 特殊ロジック: ネザー (ピグリンブルート) を探す ***
+        if (w.getEnvironment() == World.Environment.NETHER) {
+            org.bukkit.entity.PiglinBrute brute = null;
+            for (org.bukkit.entity.Entity ent : w.getEntities()) {
+                if (ent instanceof org.bukkit.entity.PiglinBrute) {
+                    brute = (org.bukkit.entity.PiglinBrute) ent;
+                    break;
+                }
+            }
+            if (brute != null && brute.isValid()) {
+                // v1.9.71: ピグリンブルートも3人称追跡にする
+                startCinematicFollow(camera, brute, "§6砦の遺跡", "§eピグリンブルートを観測中...");
+                return;
+            }
+        }
+
+        // *** 特殊ロジック: 海底神殿 (エルダーガーディアン) を探す ***
+        if (w.getEnvironment() == World.Environment.NORMAL) {
+            org.bukkit.entity.ElderGuardian elder = null;
+            for (org.bukkit.entity.Entity ent : w.getEntities()) {
+                if (ent instanceof org.bukkit.entity.ElderGuardian) {
+                    elder = (org.bukkit.entity.ElderGuardian) ent;
+                    break;
+                }
+            }
+
+            if (elder != null && elder.isValid()) {
+                // エルダーガーディアンは憑依の方が「迫力」があるかもしれないが、
+                // 3人称追跡の方が「場所」がわかりやすい。ここでは追跡を採用。
+                startCinematicFollow(camera, elder, "§b海底神殿", "§3エルダーガーディアンを観測中...");
                 return;
             }
         }
@@ -501,6 +578,7 @@ public class PatrolManager {
         org.bukkit.Location loc = new org.bukkit.Location(w, nextLocation.x, nextLocation.y, nextLocation.z,
                 nextLocation.yaw, safePitch);
         camera.teleport(loc);
+        camera.setGameMode(GameMode.SPECTATOR); // 強制適用
         camera.setFlying(true); // スペクテイターモードでの重力落下（視点ズレ）防止
 
         // タイトル表示（エンドリセット待機中なら残り時間を追記）
@@ -571,6 +649,8 @@ public class PatrolManager {
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (camera.isOnline() && target.isValid()) {
                     camera.teleport(target.getLocation());
+                    camera.setGameMode(GameMode.SPECTATOR); // ワールド移動直後に適用して落下防止
+                    camera.setFlying(true);
                 }
             }, 1L);
         }
@@ -662,6 +742,67 @@ public class PatrolManager {
             for (int z = -1; z <= 1; z++) {
                 world.getChunkAtAsync(chunkX + x, chunkZ + z);
             }
+        }
+    }
+    @org.bukkit.event.EventHandler
+    public void onRespawn(org.bukkit.event.player.PlayerRespawnEvent e) {
+        if (cameraUuid != null && e.getPlayer().getUniqueId().equals(cameraUuid)) {
+            final Player camera = e.getPlayer();
+            // リスポーン直後はSurvivalに戻されることが多いため、1tick後に強制的に戻す
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (camera.isOnline() && cameraUuid != null) {
+                    camera.setGameMode(GameMode.SPECTATOR);
+                    camera.setFlying(true);
+                    plugin.getLogger().info("[Patrol] カメラ役のリスポーンを検知。パトロールを続行します。");
+                    // 次の巡回を即座に実行して、死体ポイントから離脱させる
+                    tickPatrol();
+                }
+            }, 1L);
+        }
+    }
+
+    /**
+     * 指定したエンティティをシネマティックに追跡（3人称視点）します。
+     */
+    private void startCinematicFollow(Player camera, org.bukkit.entity.Entity target, String title, String subtitle) {
+        stopTracking();
+        stopSpectating(camera);
+
+        MessageUtils.showTitleLargeSmall(camera, title, subtitle);
+
+        trackingTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            if (!camera.isOnline() || !target.isValid() || !camera.getGameMode().equals(GameMode.SPECTATOR)) {
+                stopTracking();
+                return;
+            }
+
+            // ターゲットの後方・上方にカメラを配置
+            org.bukkit.util.Vector direction = target.getLocation().getDirection().normalize();
+            double distance = (target instanceof org.bukkit.entity.EnderDragon) ? 15.0 : 6.0;
+            double height = (target instanceof org.bukkit.entity.EnderDragon) ? 5.0 : 3.0;
+
+            Location followLoc = target.getLocation().clone().subtract(direction.multiply(distance));
+            followLoc.setY(followLoc.getY() + height);
+
+            // ターゲットの方を向く
+            org.bukkit.util.Vector lookDir = target.getLocation().toVector().subtract(followLoc.toVector());
+            followLoc.setDirection(lookDir);
+
+            // スムーズな移動（テレポート）
+            camera.teleport(followLoc);
+        }, 1L, 1L); // 毎ティック更新してスムーズにする
+    }
+
+    private void stopTracking() {
+        if (trackingTask != null) {
+            trackingTask.cancel();
+            trackingTask = null;
+        }
+    }
+
+    private void stopSpectating(Player camera) {
+        if (camera != null && camera.getGameMode() == GameMode.SPECTATOR) {
+            camera.setSpectatorTarget(null);
         }
     }
 }

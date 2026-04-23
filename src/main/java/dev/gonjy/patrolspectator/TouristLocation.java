@@ -124,4 +124,33 @@ public class TouristLocation {
         return String.format("TouristLocation{id='%s', name='%s', loc=(%s,%.1f,%.1f,%.1f)}",
                 id, name, world, x, y, z);
     }
+
+    public Map<String, Object> toMap() {
+        Map<String, Object> map = new java.util.LinkedHashMap<>();
+        map.put("id", id);
+        map.put("name", name);
+        map.put("world", world);
+        map.put("x", x);
+        map.put("y", y);
+        map.put("z", z);
+        map.put("yaw", yaw);
+        map.put("pitch", pitch);
+        map.put("description", description);
+        map.put("worldType", worldType);
+        return map;
+    }
+
+    public static void saveToYaml(File file, List<TouristLocation> locations) {
+        org.bukkit.configuration.file.YamlConfiguration config = new org.bukkit.configuration.file.YamlConfiguration();
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (TouristLocation loc : locations) {
+            list.add(loc.toMap());
+        }
+        config.set("locations", list);
+        try {
+            config.save(file);
+        } catch (java.io.IOException e) {
+            System.err.println("Could not save tourist locations to " + file.getName() + ": " + e.getMessage());
+        }
+    }
 }

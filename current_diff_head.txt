@@ -1,0 +1,429 @@
+diff --git a/plugin_urls.json b/plugin_urls.json
+index e7ee5e6..88ab267 100644
+--- a/plugin_urls.json
++++ b/plugin_urls.json
+@@ -9,15 +9,15 @@
+       "description": "Geyserと連携してBedrock Editionプレイヤーの認証を管理"
+     },
+     "ViaVersion": {
+-      "url": "https://github.com/ViaVersion/ViaVersion/releases/download/5.6.0/ViaVersion-5.6.0.jar",
++      "url": "https://github.com/ViaVersion/ViaVersion/releases/download/5.7.2/ViaVersion-5.7.2.jar",
+       "description": "複数のMinecraftバージョンに対応するプロトコル変換プラグイン"
+     },
+     "ViaBackwards": {
+-      "url": "https://github.com/ViaVersion/ViaBackwards/releases/download/5.6.0/ViaBackwards-5.6.0.jar",
++      "url": "https://github.com/ViaVersion/ViaBackwards/releases/download/5.7.2/ViaBackwards-5.7.2.jar",
+       "description": "古いバージョンのクライアントが新しいサーバーに接続可能にする"
+     },
+     "ViaRewind": {
+-      "url": "https://github.com/ViaVersion/ViaRewind/releases/download/4.0.12/ViaRewind-4.0.12.jar",
++      "url": "https://github.com/ViaVersion/ViaRewind/releases/download/4.0.14/ViaRewind-4.0.14.jar",
+       "description": "新しいバージョンのクライアントが古いサーバーに接続可能にする"
+     },
+     "LunaChat": {
+@@ -31,7 +31,7 @@
+   },
+   "build_plugin": {
+     "name": "PatrolSpectatorPlugin",
+-    "version": "1.9.60",
++    "version": "1.9.62",
+     "description": "配信用パトロールプラグイン（エンドワールドリセット・観光地システム改善版）"
+   }
+ }
+\ No newline at end of file
+diff --git a/pom.xml b/pom.xml
+index ae27931..f8e364f 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -5,7 +5,7 @@
+   <modelVersion>4.0.0</modelVersion>
+   <groupId>dev.gonjy</groupId>
+   <artifactId>patrol-spectator-plugin</artifactId>
+-  <version>1.9.61</version>
++  <version>1.9.62</version>
+   <name>PatrolSpectatorPlugin</name>
+ 
+   <properties>
+diff --git a/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java b/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java
+index 26a5c1d..67bfec1 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java
++++ b/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java
+@@ -92,15 +92,23 @@ public class PatrolManager {
+         // 外部YAML優先
+         File f = new File(plugin.getDataFolder(), tourConf.file);
+         if (f.exists()) {
+-            touristLocations.addAll(TouristLocation.loadFromYaml(f));
++            List<TouristLocation> loaded = TouristLocation.loadFromYaml(f);
++            touristLocations.addAll(loaded);
++            plugin.getLogger().info("[Patrol] " + tourConf.file + " から " + loaded.size() + " 件の観光地を読み込みました。");
++        } else {
++            plugin.getLogger().warning("[Patrol] 観光地設定ファイルが見つかりません: " + f.getPath());
+         }
+ 
+         // config内のフォールバック
+         List<Map<?, ?>> fallback = plugin.getConfig().getMapList("patrol.tour.locations");
+-        touristLocations.addAll(TouristLocation.fromMapList(fallback));
++        if (fallback != null && !fallback.isEmpty()) {
++            List<TouristLocation> fallbackLoaded = TouristLocation.fromMapList(fallback);
++            touristLocations.addAll(fallbackLoaded);
++            plugin.getLogger().info("[Patrol] config.yml から " + fallbackLoaded.size() + " 件の観光地を読み込みました（フォールバック）。");
++        }
+ 
+-        plugin.getLogger().info("観光地データをロードしました: " + touristLocations.size() + " 件");
+         prepareTour();
++        plugin.getLogger().info("[Patrol] 最終的な観光地リスト: " + touristLocations.size() + " 件");
+     }
+ 
+     /**
+@@ -224,7 +232,12 @@ public class PatrolManager {
+         // 初回の事前読み込みをスケジュール
+         schedulePreLoad(dwellSeconds);
+ 
+-        plugin.getLogger().info("パトロールを開始しました。カメラ: " + camera.getName() + ", 間隔: " + dwellSeconds + "秒");
++        if (touristLocations.isEmpty()) {
++            plugin.getLogger().warning("[Patrol] 観光地リストが空です。観戦可能なプレイヤーがいない場合、カメラは何もしません。");
++        }
++
++        plugin.getLogger().info("パトロールを開始しました。カメラ: " + camera.getName() + ", 間隔: " + dwellSeconds + "秒, 観光地数: "
++                + touristLocations.size());
+     }
+ 
+     /**
+diff --git a/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java b/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java
+index 66da5ff..bf1bfa5 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java
++++ b/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java
+@@ -96,6 +96,15 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+     @Override
+     public void onEnable() {
+         saveDefaultConfig();
++        // 観光地リストの初期ファイルを出力（存在しない場合のみ）
++        try {
++            if (!new java.io.File(getDataFolder(), "tourist_locations.yml").exists()) {
++                saveResource("tourist_locations.yml", false);
++            }
++        } catch (Exception e) {
++            getLogger().warning("Could not save tourist_locations.yml: " + e.getMessage());
++        }
++
+         loadConfigValues();
+ 
+         // 保護データの初期化
+@@ -147,17 +156,29 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+ 
+         // コマンド登録
+         PatrolCommand patrolCmd = new PatrolCommand(this, patrolManager, rankingDisplaySystem);
+-        getCommand("patrol").setExecutor(patrolCmd);
+-        getCommand("patrol").setTabCompleter(patrolCmd);
++        if (getCommand("patrol") != null) {
++            getCommand("patrol").setExecutor(patrolCmd);
++            getCommand("patrol").setTabCompleter(patrolCmd);
++        } else {
++            getLogger().warning("Command 'patrol' not found in plugin.yml!");
++        }
+ 
+         // Stats コマンド登録
+-        getCommand("stats").setExecutor(new StatsCommand(this, engagementSystem));
++        if (getCommand("stats") != null) {
++            getCommand("stats").setExecutor(new StatsCommand(this, engagementSystem));
++        } else {
++            getLogger().warning("Command 'stats' not found in plugin.yml!");
++        }
+ 
+         // Dungeon コマンド登録
+         dev.gonjy.patrolspectator.dungeon.DungeonCommand dungeonCmd = new dev.gonjy.patrolspectator.dungeon.DungeonCommand(
+                 dungeonManager);
+-        getCommand("dungeon").setExecutor(dungeonCmd);
+-        getCommand("dungeon").setTabCompleter(dungeonCmd);
++        if (getCommand("dungeon") != null) {
++            getCommand("dungeon").setExecutor(dungeonCmd);
++            getCommand("dungeon").setTabCompleter(dungeonCmd);
++        } else {
++            getLogger().warning("Command 'dungeon' not found in plugin.yml!");
++        }
+ 
+         // 自動イベントシステムの開始
+         autoEventSystem.startAutoEvents();
+@@ -191,26 +212,36 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+ 
+         // Auto Start Listener
+         if (autoStartConf.enabled) {
++            getLogger().info("AutoStart is enabled for camera player: " + autoStartConf.cameraPlayerName);
+             getServer().getPluginManager().registerEvents(new org.bukkit.event.Listener() {
+                 @org.bukkit.event.EventHandler
+                 public void onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent event) {
+-                    if (event.getPlayer().getName().equalsIgnoreCase(autoStartConf.cameraPlayerName)) {
+-                        getLogger()
+-                                .info("Camera player " + event.getPlayer().getName() + " joined. Starting patrol...");
++                    String playerName = event.getPlayer().getName();
++                    if (playerName.equalsIgnoreCase(autoStartConf.cameraPlayerName)) {
++                        getLogger().info("Camera player " + playerName + " joined. Starting patrol in 40 ticks...");
+                         // Delay slightly to ensure player is fully logged in
+                         getServer().getScheduler().runTaskLater(PatrolSpectatorPlugin.this, () -> {
+                             if (event.getPlayer().isOnline()) {
+                                 patrolManager.startPatrol(event.getPlayer(), tourConf.dwellSeconds);
++                            } else {
++                                getLogger().warning(
++                                        "Camera player " + playerName + " is no longer online. AutoStart aborted.");
+                             }
+                         }, 40L);
+                     }
+                 }
+             }, this);
++        } else {
++            getLogger().info("AutoStart is disabled.");
+         }
+ 
+         // Bounty System
+         bountyManager = new BountyManager(this);
+-        getCommand("bounty").setExecutor(new BountyCommand(bountyManager));
++        if (getCommand("bounty") != null) {
++            getCommand("bounty").setExecutor(new BountyCommand(bountyManager));
++        } else {
++            getLogger().warning("Command 'bounty' not found in plugin.yml!");
++        }
+ 
+         // Create TickMonitor
+         this.tickMonitor = new TickMonitor(this);
+diff --git a/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonListener.java b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonListener.java
+index 2edce7f..cb24f63 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonListener.java
++++ b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonListener.java
+@@ -87,6 +87,9 @@ public class DungeonListener implements Listener {
+             return;
+ 
+         Player p = event.getPlayer();
++        if (p.getGameMode() == org.bukkit.GameMode.SPECTATOR)
++            return;
++
+         Location loc = p.getLocation();
+ 
+         // 早期リターン: 迷宮内でも外でもない（遠い）なら無視
+diff --git a/src/main/java/dev/gonjy/patrolspectator/dungeon/TrapRunner.java b/src/main/java/dev/gonjy/patrolspectator/dungeon/TrapRunner.java
+index 69b9042..184bc64 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/dungeon/TrapRunner.java
++++ b/src/main/java/dev/gonjy/patrolspectator/dungeon/TrapRunner.java
+@@ -33,13 +33,19 @@ public class TrapRunner {
+ 
+         cooldowns.put(p.getUniqueId(), now + 30000); // 30秒クールダウン
+ 
+-        int choice = random.nextInt(12); // 分岐を増やす
+-        if (choice < 4) {
++        int choice = random.nextInt(16); // 分岐をさらに増やす
++        if (choice < 3) {
+             runTeleportTrap(p);
+-        } else if (choice < 8) {
++        } else if (choice < 6) {
+             runMobTrap(p, triggerLoc);
+-        } else {
++        } else if (choice < 9) {
+             runWaterTrap(p, triggerLoc);
++        } else if (choice < 12) {
++            runDebuffTrap(p);
++        } else if (choice < 14) {
++            runExplosionTrap(p, triggerLoc);
++        } else {
++            runPitfallTrap(p, triggerLoc);
+         }
+     }
+ 
+@@ -74,6 +80,7 @@ public class TrapRunner {
+ 
+     public void runWaterTrap(Player p, Location loc) {
+         p.sendMessage(ChatColor.BLUE + "水面が激しく揺れ、三叉槍を構えたドラウンドが這い出してきた！");
++        loc.getWorld().playSound(loc, org.bukkit.Sound.ENTITY_PLAYER_SPLASH, 1.0f, 0.5f);
+ 
+         for (int i = 0; i < 4; i++) {
+             Location spawnLoc = loc.clone().add(random.nextInt(3) - 1, 0, random.nextInt(3) - 1);
+@@ -94,4 +101,38 @@ public class TrapRunner {
+             }.runTaskLater(plugin, 600L);
+         }
+     }
++
++    private void runDebuffTrap(Player p) {
++        p.sendMessage(ChatColor.GRAY + "どこからともなく不気味な笑い声が聞こえる…");
++        p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_WITCH_CELEBRATE, 1.0f, 0.8f);
++
++        p.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.BLINDNESS, 100, 0));
++        p.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SLOWNESS, 200, 1));
++        p.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.WEAKNESS, 200, 1));
++    }
++
++    private void runExplosionTrap(Player p, Location loc) {
++        p.sendMessage(ChatColor.RED + "導火線の燃える音が聞こえる…！");
++        loc.getWorld().playSound(loc, org.bukkit.Sound.ENTITY_TNT_PRIMED, 1.0f, 1.0f);
++
++        new BukkitRunnable() {
++            @Override
++            public void run() {
++                loc.getWorld().createExplosion(loc, 3.0f, false, false);
++                p.sendMessage(ChatColor.DARK_RED + "ドカンッ！！");
++            }
++        }.runTaskLater(plugin, 40L); // 2秒後
++    }
++
++    private void runPitfallTrap(Player p, Location loc) {
++        p.sendMessage(ChatColor.GOLD + "足元の床が崩れ落ちた！");
++        loc.getWorld().playSound(loc, org.bukkit.Sound.BLOCK_STONE_BREAK, 1.0f, 0.5f);
++
++        Location target = p.getLocation().clone().add(0, -5, 0);
++        p.teleport(target);
++
++        // 周囲にパーティクル
++        loc.getWorld().spawnParticle(org.bukkit.Particle.BLOCK, loc, 50, 0.5, 0.5, 0.5,
++                Material.STONE.createBlockData());
++    }
+ }
+diff --git a/src/main/resources/plugin.yml b/src/main/resources/plugin.yml
+index fb846e1..9589961 100644
+--- a/src/main/resources/plugin.yml
++++ b/src/main/resources/plugin.yml
+@@ -16,7 +16,13 @@ commands:
+   stats:
+     description: 自分の統計情報と進捗を表示します
+     usage: /stats
++  dungeon:
++    description: 迷宮管理コマンド (Admin用)
++    usage: /dungeon
++    permission: patrol.dungeon.admin
+ permissions:
++  patrol.dungeon.admin:
++    default: op
+   patrolspectator.use:
+     default: op
+   patrolspectator.exempt:
+diff --git a/update_plugins.ps1 b/update_plugins.ps1
+index ce1dced..b0a22d4 100644
+--- a/update_plugins.ps1
++++ b/update_plugins.ps1
+@@ -23,13 +23,13 @@ if (-not (Test-Path $targetDir)) {
+ # バックアップディレクトリを作成（既存のJARがある場合）
+ $existingJars = Get-ChildItem -Path $targetDir -Filter "*.jar"
+ if ($existingJars.Count -gt 0) {
+-    $backupDir = Join-Path $rootDir "backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
++    $backupDir = Join-Path $rootDir ("backup_" + (Get-Date -Format "yyyyMMdd_HHmmss"))
+     Write-Host "📁 バックアップディレクトリ作成: $backupDir" -ForegroundColor Yellow
+     New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
+     
+     foreach ($jar in $existingJars) {
+         Copy-Item $jar.FullName -Destination $backupDir
+-        Write-Host "📦 $($jar.Name) をバックアップしました" -ForegroundColor Gray
++        Write-Host ("📦 " + $jar.Name + " をバックアップしました") -ForegroundColor Gray
+     }
+ }
+ 
+@@ -47,7 +47,7 @@ if (Test-Path $pomPath) {
+     if ($match) {
+         if ($match.Matches.Groups[1].Value) {
+             $buildVersion = $match.Matches.Groups[1].Value
+-            Write-Host "ℹ️  pom.xmlからバージョン $buildVersion を検出しました" -ForegroundColor Cyan
++            Write-Host ("ℹ️ pom.xmlからバージョン " + $buildVersion + " を検出しました") -ForegroundColor Cyan
+         }
+     }
+ }
+@@ -55,51 +55,49 @@ if (Test-Path $pomPath) {
+ try {
+     # ビルド実行
+     $cmdArgs = "/c build_jdk21.bat"
+-    Write-Host "   実行コマンド: cmd $cmdArgs" -ForegroundColor Gray
++    Write-Host ("   実行コマンド: cmd " + $cmdArgs) -ForegroundColor Gray
+     
+     $process = Start-Process -FilePath "cmd" -ArgumentList $cmdArgs -NoNewWindow -Wait -PassThru
+ 
+     if ($process.ExitCode -eq 0) {
+-        # ビルド成果物は既に target にあるはずだが、名前を確認
+-        $builtJar = Join-Path $targetDir "$buildName-$buildVersion.jar"
++        $builtJar = Join-Path $targetDir ($buildName + "-" + $buildVersion + ".jar")
+         if (Test-Path $builtJar) {
+-            Write-Host "✅ $buildName ビルド完了 ($builtJar)" -ForegroundColor Green
++            Write-Host ("✅ " + $buildName + " ビルド完了 (" + $builtJar + ")") -ForegroundColor Green
+         }
+         else {
+-            Write-Host "⚠️ ビルドは成功しましたが、ファイルが見つかりません: $builtJar" -ForegroundColor Yellow
++            Write-Host ("⚠️ ビルドは成功しましたが、ファイルが見つかりません: " + $builtJar) -ForegroundColor Yellow
+         }
+     }
+     else {
+-        Write-Host "❌ $buildName のビルドに失敗しました" -ForegroundColor Red
++        Write-Host ("❌ " + $buildName + " のビルドに失敗しました") -ForegroundColor Red
+         exit 1
+     }
+ }
+ catch {
+-    Write-Host "❌ ビルド処理中にエラーが発生しました: $($_.Exception.Message)" -ForegroundColor Red
++    Write-Host ("❌ ビルド処理中にエラーが発生しました: " + $_.Exception.Message) -ForegroundColor Red
+     exit 1
+ }
+ 
+ # 外部プラグインのダウンロード
+-Write-Host "⬇️  外部プラグインをダウンロード中..." -ForegroundColor Yellow
++Write-Host "⬇️ 外部プラグインをダウンロード中..." -ForegroundColor Yellow
+ $plugins = $config.plugins
+ 
+-foreach ($name in $plugins.PSObject.Properties.Name) {
+-    $pluginInfo = $plugins.$name
++foreach ($prop in $plugins.PSObject.Properties) {
++    $name = $prop.Name
++    $pluginInfo = $prop.Value
+     $url = $pluginInfo.url
+     $description = $pluginInfo.description
+-    $filename = if ($name.EndsWith(".jar")) { $name } else { "$name.jar" }
++    $filename = if ($name.EndsWith(".jar")) { $name } else { $name + ".jar" }
+     $outputPath = Join-Path $targetDir $filename
+ 
+-    Write-Host "📥 $name ($description) をダウンロード中..." -ForegroundColor Cyan
++    Write-Host ("📥 " + $name + " (" + $description + ") をダウンロード中...") -ForegroundColor Cyan
+ 
+     try {
+-        # Modrinth対応
+         if ($url -like "MODRINTH:*") {
+             $slug = $url -replace "MODRINTH:", ""
+-            Write-Host "   Modrinth APIから最新バージョンを検索中 ($slug)..." -ForegroundColor Gray
+-            $apiUrl = "https://api.modrinth.com/v2/project/$slug/version"
++            Write-Host ("   Modrinth APIから最新バージョンを検索中 (" + $slug + ")...") -ForegroundColor Gray
++            $apiUrl = "https://api.modrinth.com/v2/project/" + $slug + "/version"
+             $versions = Invoke-RestMethod -Uri $apiUrl -Method Get
+-            # 最新の安定版を探す（なければ最新）
+             $latestVersion = $versions | Where-Object { $_.version_type -eq "release" } | Select-Object -First 1
+             if (-not $latestVersion) {
+                 $latestVersion = $versions | Select-Object -First 1
+@@ -107,23 +105,20 @@ foreach ($name in $plugins.PSObject.Properties.Name) {
+             
+             if ($latestVersion) {
+                 $downloadUrl = $latestVersion.files[0].url
+-                # ファイル名は指定のもの($name.jar)に統一するか、元ファイル名を使うか。
+-                # ここでは管理しやすくするため $name.jar にリネームして保存する
+                 Invoke-WebRequest -Uri $downloadUrl -OutFile $outputPath
+-                Write-Host "✅ $name ダウンロード完了 (Version: $($latestVersion.version_number))" -ForegroundColor Green
++                Write-Host ("✅ " + $name + " ダウンロード完了 (Version: " + $latestVersion.version_number + ")") -ForegroundColor Green
+             }
+             else {
+-                Write-Host "❌ $name のバージョンが見つかりませんでした" -ForegroundColor Red
++                Write-Host ("❌ " + $name + " のバージョンが見つかりませんでした") -ForegroundColor Red
+             }
+         }
+         else {
+-            # 通常のURL
+             Invoke-WebRequest -Uri $url -OutFile $outputPath
+-            Write-Host "✅ $name ダウンロード完了" -ForegroundColor Green
++            Write-Host ("✅ " + $name + " ダウンロード完了") -ForegroundColor Green
+         }
+     }
+     catch {
+-        Write-Host "❌ $name のダウンロードに失敗しました: $($_.Exception.Message)" -ForegroundColor Red
++        Write-Host ("❌ " + $name + " のダウンロードに失敗しました: " + $_.Exception.Message) -ForegroundColor Red
+     }
+ }
+ 
+@@ -133,9 +128,9 @@ Write-Host "📊 更新結果 (Targetフォルダ):" -ForegroundColor Green
+ Write-Host "==================================" -ForegroundColor Green
+ Get-ChildItem -Path $targetDir -Filter "*.jar" | ForEach-Object {
+     $size = [math]::Round($_.Length / 1MB, 2)
+-    Write-Host "📦 $($_.Name) ($size MB)" -ForegroundColor White
++    Write-Host ("📦 " + $_.Name + " (" + $size + " MB)") -ForegroundColor White
+ }
+ 
+ Write-Host ""
+ Write-Host "🎉 処理完了！" -ForegroundColor Green
+-Write-Host "📁 出力先: $targetDir" -ForegroundColor Yellow
++Write-Host ("📁 出力先: " + $targetDir) -ForegroundColor Yellow

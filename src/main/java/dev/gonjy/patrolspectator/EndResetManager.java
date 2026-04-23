@@ -1,8 +1,7 @@
 package dev.gonjy.patrolspectator;
 
 import org.bukkit.Bukkit;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.EnderDragon;
@@ -137,11 +136,11 @@ public class EndResetManager implements Listener {
         scheduleResetTask(delayTicks);
 
         // アナウンス開始
-        Bukkit.broadcast(Component.text("========================================", NamedTextColor.RED));
-        Bukkit.broadcast(Component.text("🐉 " + reason, NamedTextColor.GOLD));
-        Bukkit.broadcast(Component.text("エンドワールドは " + resetDelayMinutes + "分後 にリセットされます。", NamedTextColor.YELLOW));
-        Bukkit.broadcast(Component.text("エリトラなどのアイテム回収はお早めにお願いします！", NamedTextColor.YELLOW));
-        Bukkit.broadcast(Component.text("========================================", NamedTextColor.RED));
+        Bukkit.broadcastMessage(ChatColor.RED + "========================================");
+        Bukkit.broadcastMessage(ChatColor.GOLD + "🐉 " + reason);
+        Bukkit.broadcastMessage(ChatColor.YELLOW + "エンドワールドは " + resetDelayMinutes + "分後 にリセットされます。");
+        Bukkit.broadcastMessage(ChatColor.YELLOW + "エリトラなどのアイテム回収はお早めにお願いします！");
+        Bukkit.broadcastMessage(ChatColor.RED + "========================================");
 
         // 定期的なアナウンス（残り時間を通知）
         scheduleAnnouncements();
@@ -168,8 +167,7 @@ public class EndResetManager implements Listener {
                 if (delay > 0) {
                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
                         if (scheduledResetTime > 0) {
-                            Bukkit.broadcast(Component.text("[EndReset] ", NamedTextColor.RED)
-                                    .append(Component.text("エンドリセットまで残り " + min + "分 です！", NamedTextColor.YELLOW)));
+                            Bukkit.broadcastMessage(ChatColor.RED + "[EndReset] " + ChatColor.YELLOW + "エンドリセットまで残り " + min + "分 です！");
                         }
                     }, delay);
                 }
@@ -181,8 +179,7 @@ public class EndResetManager implements Listener {
         if (delay30s > 0) {
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (scheduledResetTime > 0) {
-                    Bukkit.broadcast(Component.text("[EndReset] ", NamedTextColor.RED)
-                            .append(Component.text("エンドリセットまで残り 30秒 です！退避してください！", NamedTextColor.YELLOW)));
+                    Bukkit.broadcastMessage(ChatColor.RED + "[EndReset] " + ChatColor.YELLOW + "エンドリセットまで残り 30秒 です！退避してください！");
                 }
             }, delay30s);
         }
@@ -210,7 +207,7 @@ public class EndResetManager implements Listener {
 
         // 事前通知（ラグが発生する可能性があるため）
         String msg = "[EndReset] エンドワールドのリセット準備を開始します。一時的にサーバーが重くなる可能性があります。";
-        Bukkit.broadcast(Component.text(msg, NamedTextColor.RED));
+        Bukkit.broadcastMessage(ChatColor.RED + msg);
         if (plugin.getDiscordWebhookClient() != null) {
             plugin.getDiscordWebhookClient().send("🔄 **End Resetting...** World maintenance in progress.");
         }
@@ -219,13 +216,13 @@ public class EndResetManager implements Listener {
         Location safeSpawn = Bukkit.getWorlds().get(0).getSpawnLocation();
         for (Player p : endWorld.getPlayers()) {
             p.teleport(safeSpawn);
-            p.sendMessage(Component.text("エンドワールドがリセットされるため、メインワールドに移動しました。", NamedTextColor.YELLOW));
+            p.sendMessage(ChatColor.YELLOW + "エンドワールドがリセットされるため、メインワールドに移動しました。");
         }
 
         // 2. ワールドのアンロード
         if (!Bukkit.unloadWorld(endWorld, false)) {
             plugin.getLogger().severe("Failed to unload End world! Reset aborted.");
-            Bukkit.broadcast(Component.text("[EndReset] エンドワールドのアンロードに失敗しました。リセットを中止します。", NamedTextColor.DARK_RED));
+            Bukkit.broadcastMessage(ChatColor.DARK_RED + "[EndReset] エンドワールドのアンロードに失敗しました。リセットを中止します。");
             isResetting = false;
             return;
         }
@@ -296,16 +293,16 @@ public class EndResetManager implements Listener {
                 plugin.getConfig().set("end.lastResetTime", System.currentTimeMillis());
                 plugin.saveConfig();
 
-                Bukkit.broadcast(Component.text("[EndReset] エンドワールドのリセットが完了しました！", NamedTextColor.GREEN));
+                Bukkit.broadcastMessage(ChatColor.GREEN + "[EndReset] エンドワールドのリセットが完了しました！");
 
                 if (isHardMode) {
-                    Bukkit.broadcast(Component.text("⚠ エンドワールドから強大なエネルギー反応を検知しました... (HARD MODE)", NamedTextColor.RED));
+                    Bukkit.broadcastMessage(ChatColor.RED + "⚠ エンドワールドから強大なエネルギー反応を検知しました... (HARD MODE)");
                     if (plugin.getDiscordWebhookClient() != null) {
                         plugin.getDiscordWebhookClient()
                                 .send("🐉 **The Void Dragon** has appeared! (Difficulty: **HARD**)");
                     }
                 } else {
-                    Bukkit.broadcast(Component.text("エンドワールドのエネルギー反応は正常です。(NORMAL MODE)", NamedTextColor.GREEN));
+                    Bukkit.broadcastMessage(ChatColor.GREEN + "エンドワールドのエネルギー反応は正常です。(NORMAL MODE)");
                     if (plugin.getDiscordWebhookClient() != null) {
                         plugin.getDiscordWebhookClient()
                                 .send("🐉 **The Void Dragon** has appeared! (Difficulty: Normal)");

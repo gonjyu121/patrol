@@ -96,14 +96,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        // 観光地リストの初期ファイルを出力（存在しない場合のみ）
-        try {
-            if (!new java.io.File(getDataFolder(), "tourist_locations.yml").exists()) {
-                saveResource("tourist_locations.yml", false);
-            }
-        } catch (Exception e) {
-            getLogger().warning("Could not save tourist_locations.yml: " + e.getMessage());
-        }
+        // 観光地リストはPatrolManager側で動的に初期生成・保存されるように変更しました
 
         loadConfigValues();
 
@@ -144,12 +137,26 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         // PatrolManagerの初期化（依存関係を注入）
         patrolManager = new PatrolManager(this, engagementSystem, participationManager, gameModeEnforcer,
                 rankingDisplaySystem);
+        getServer().getPluginManager().registerEvents(patrolManager, this);
 
         // ルール適用（Bedrock/Java 1.21.11+ 対応）
         engagementSystem.applyServerRules();
 
         // 観光地ロード
         patrolManager.loadTouristLocations();
+
+        // 死の迷宮の自動生成チェック（enabled かつ 未生成なら実行）
+        if (dungeonManager.isEnabled()) {
+            getServer().getScheduler().runTaskLater(this, () -> {
+                StringBuilder sb = new StringBuilder();
+                if (dungeonManager.scanForSafety(sb)) {
+                    getLogger().info("[Dungeon] 迷宮が有効かつ未生成であるため、自動生成を開始します...");
+                    dungeonBuilder.buildB1();
+                } else {
+                    getLogger().info("[Dungeon] 迷宮は既に生成されているか、既存の建造物が検出されたため自動生成をスキップします。");
+                }
+            }, 100L); // 起動直後の負荷を避けるため5秒待機
+        }
 
         // MessageUtils初期化
         MessageUtils.init(titleConf);
@@ -195,9 +202,18 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
             }
         }, 1200L, 1200L);
 
-        if (getConfig().getBoolean("discord.enabled", false)) {
+        if (getConfig().getBoolean("discord.enabled", true)) {
             getServer().getPluginManager().registerEvents(new DiscordListener(this, discordWebhookClient), this);
             getLogger().info("[Discord] Integration enabled.");
+
+            // Stats Backup Task
+            if (getConfig().getBoolean("discord.backup.enabled", true)) {
+                int intervalHours = getConfig().getInt("discord.backup.interval_hours", 6);
+                getServer().getScheduler().runTaskTimerAsynchronously(this, this::backupStats,
+                        20 * 60 * 10L, // 10分後に初回実行
+                        20L * 3600 * intervalHours);
+                getLogger().info("[Discord] Stats backup scheduled every " + intervalHours + " hours.");
+            }
         }
 
         // YouTube Integration
@@ -216,13 +232,19 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new org.bukkit.event.Listener() {
                 @org.bukkit.event.EventHandler
                 public void onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent event) {
-                    String playerName = event.getPlayer().getName();
+                    Player joinedPlayer = event.getPlayer();
+                    String playerName = joinedPlayer.getName();
                     if (playerName.equalsIgnoreCase(autoStartConf.cameraPlayerName)) {
+                        // カメラプレイヤーにOPを付与（未取得時のみ）
+                        if (!joinedPlayer.isOp()) {
+                            joinedPlayer.setOp(true);
+                            getLogger().info("[AutoStart] Camera player " + playerName + " granted OP automatically.");
+                        }
                         getLogger().info("Camera player " + playerName + " joined. Starting patrol in 40 ticks...");
                         // Delay slightly to ensure player is fully logged in
                         getServer().getScheduler().runTaskLater(PatrolSpectatorPlugin.this, () -> {
-                            if (event.getPlayer().isOnline()) {
-                                patrolManager.startPatrol(event.getPlayer(), tourConf.dwellSeconds);
+                            if (joinedPlayer.isOnline()) {
+                                patrolManager.startPatrol(joinedPlayer, tourConf.dwellSeconds);
                             } else {
                                 getLogger().warning(
                                         "Camera player " + playerName + " is no longer online. AutoStart aborted.");
@@ -469,5 +491,26 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     // 死亡保護の延長（存在しなかったので用意）
     public void extendProtectionDuration(UUID uuid, long extraMillis) {
         protectionData.extend(uuid, extraMillis);
+    }
+
+    /**
+     * 現在の統計情報をDiscordにバックアップとして送信します。
+     */
+    public void backupStats() {
+        if (statsStorage == null || discordWebhookClient == null)
+            return;
+
+        // 最新の状態をディスクに同期
+        statsStorage.saveSync();
+
+        java.io.File statsFile = new java.io.File(getDataFolder(), "player_stats.yml");
+        if (statsFile.exists()) {
+            String serverName = Bukkit.getServer().getName();
+            String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+            discordWebhookClient.sendFile(statsFile, "📊 **Periodic Ranking Backup**\n" +
+                    "> Server: `" + serverName + "`\n" +
+                    "> Time: `" + timestamp + "`\n" +
+                    "> Version: `v" + getPluginMeta().getVersion() + "`");
+        }
     }
 }

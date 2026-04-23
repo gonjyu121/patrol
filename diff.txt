@@ -1,0 +1,148 @@
+diff --git a/DEVELOPMENT_LOG.md b/DEVELOPMENT_LOG.md
+index 758007d..813a0dd 100644
+--- a/DEVELOPMENT_LOG.md
++++ b/DEVELOPMENT_LOG.md
+@@ -7,11 +7,10 @@
+     - Harmonized version strings across `pom.xml`, `plugin_urls.json`, and `update_plugins.ps1`.
+     - Created `build_v2.ps1` for synchronized build processes.
+ - **Uncommitted Changes**:
+-    - Versions synchronized in configuration files.
+-    - `build_v2.ps1` added as an untracked/new script.
++    - None (Committed versions and `build_v2.ps1`)
+ 
+ ## Pending Tasks
+-- [ ] Commit version-sync changes and `build_v2.ps1`.
++- [x] Commit version-sync changes and `build_v2.ps1`.
+ - [ ] Implement Engagement visibility improvements (milestones, rank changes, daily stats).
+ - [ ] Verify build with `v1.9.58`.
+ 
+diff --git a/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java b/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java
+index 67bfec1..4d65525 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java
++++ b/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java
+@@ -153,22 +153,44 @@ public class PatrolManager {
+         boolean hasDungeon = touristLocations.stream()
+                 .anyMatch(l -> "auto_dungeon_entrance".equals(l.id));
+         if (!hasDungeon) {
+-            dev.gonjy.patrolspectator.dungeon.DungeonManager dungeon = plugin.getDungeonManager();
+-            if (dungeon != null && dungeon.isEnabled()) {
+-                org.bukkit.Location center = dungeon.getCenter();
+-                if (center != null) {
+-                    plugin.getLogger().info("死の迷宮が見つかりました。観光地に追加します。");
+-                    // 入口が見える位置に配置（北側に少し離れて、やや高い視点）
+-                    touristLocations.add(new TouristLocation(
+-                            "auto_dungeon_entrance",
+-                            "§4死の迷宮 - 入口",
+-                            center.getWorld().getName(),
+-                            center.getX(), center.getY() + 4.0, center.getZ() - 8.0,
+-                            0f, 20f,
+-                            "Death Dungeon Entrance",
+-                            "overworld"));
+-                }
+-            }
++            addDungeonLocations(plugin.getDungeonManager());
++        }
++    }
++
++    /**
++     * 強制的にダンジョンの場所（入口）を（再）登録します。
++     * 重複を避けるため、既存の auto_dungeon_entrance は削除します。
++     */
++    public void addDungeonLocations(dev.gonjy.patrolspectator.dungeon.DungeonManager dungeon) {
++        if (dungeon == null || !dungeon.isEnabled()) return;
++        org.bukkit.Location center = dungeon.getCenter();
++        if (center == null) return;
++
++        // 既存のダンジョン入口を削除
++        touristLocations.removeIf(l -> "auto_dungeon_entrance".equals(l.id));
++
++        // 入口を追加
++        touristLocations.add(new TouristLocation(
++                "auto_dungeon_entrance",
++                "§4死の迷宮 - 入口",
++                center.getWorld().getName(),
++                center.getX(), center.getY() + 4.0, center.getZ() - 8.0,
++                0f, 20f,
++                "Death Dungeon Entrance",
++                "overworld"));
++
++        plugin.getLogger().info("[Patrol] 観光案内リストに死の迷宮の入口を登録しました。");
++    }
++
++    /**
++     * 動的に観光地を追加します（作成完了時に呼ばれる想定）。
++     * 同じIDがあれば上書きします。
++     */
++    public void addTouristLocation(TouristLocation loc) {
++        if (loc != null) {
++            touristLocations.removeIf(l -> l.id.equals(loc.id));
++            touristLocations.add(loc);
++            plugin.getLogger().info("[Patrol] 観光案内リストに " + loc.name + " (" + loc.id + ") を追加しました。");
+         }
+     }
+ 
+diff --git a/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonBuilder.java b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonBuilder.java
+index 8f0ab39..d55041c 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonBuilder.java
++++ b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonBuilder.java
+@@ -140,6 +140,19 @@ public class DungeonBuilder {
+                                     new Location(finalWorld, finalStartX + 31, finalBaseY + 1, finalStartZ + 31));
+                             // 入口の案内掲示
+                             placeEntranceSigns(finalWorld, manager.getCenter());
++                            
++                            // 観光案内へダンジョン最下層を動的に登録
++                            Location bossLoc = new Location(finalWorld, finalStartX + 31, finalBaseY + 1, finalStartZ + 31);
++                            dev.gonjy.patrolspectator.TouristLocation bossTourLoc = new dev.gonjy.patrolspectator.TouristLocation(
++                                    "auto_dungeon_boss",
++                                    "§4死の迷宮 - 最下層(B1)",
++                                    finalWorld.getName(),
++                                    bossLoc.getX() - 5.0, bossLoc.getY() + 3.0, bossLoc.getZ() - 5.0,
++                                    -45f, 20f,
++                                    "Death Dungeon Boss Room",
++                                    "overworld"
++                            );
++                            plugin.getPatrolManager().addTouristLocation(bossTourLoc);
+                         });
+                     }
+                 }.runTask(plugin);
+diff --git a/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonCommand.java b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonCommand.java
+index 3ab76eb..df4e039 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonCommand.java
++++ b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonCommand.java
+@@ -42,11 +42,17 @@ public class DungeonCommand implements CommandExecutor, TabCompleter {
+                 Player p = (Player) sender;
+                 manager.setCenter(p.getLocation());
+                 sender.sendMessage(ChatColor.GREEN + "迷宮の中心を現在地に設定しました。");
++                if (manager.getPlugin() != null && manager.getPlugin().getPatrolManager() != null) {
++                    manager.getPlugin().getPatrolManager().addDungeonLocations(manager);
++                }
+                 break;
+ 
+             case "enable":
+                 manager.setEnabled(true);
+                 sender.sendMessage(ChatColor.GREEN + "迷宮を有効化しました。");
++                if (manager.getPlugin() != null && manager.getPlugin().getPatrolManager() != null) {
++                    manager.getPlugin().getPatrolManager().addDungeonLocations(manager);
++                }
+                 break;
+ 
+             case "disable":
+On branch feature/patrol-logic-update
+Your branch is ahead of 'origin/feature/patrol-logic-update' by 1 commit.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   DEVELOPMENT_LOG.md
+	modified:   src/main/java/dev/gonjy/patrolspectator/PatrolManager.java
+	modified:   src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonBuilder.java
+	modified:   src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonCommand.java
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	current_diff_head.txt
+	current_status.txt
+	diff.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")

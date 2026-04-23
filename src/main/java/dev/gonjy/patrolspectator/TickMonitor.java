@@ -1,8 +1,7 @@
 package dev.gonjy.patrolspectator;
 
 import org.bukkit.Bukkit;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -62,9 +61,7 @@ public class TickMonitor {
 
         Player camera = plugin.getPatrolManager().getCameraPlayer();
         if (camera != null) {
-            camera.sendMessage(
-                    Component.text("⚠️ サーバー負荷が高いため、パトロールを自動的に一時停止しました。 (MSPT: " + String.format("%.2f", mspt) + "ms)",
-                            NamedTextColor.RED));
+            camera.sendMessage(ChatColor.RED + "⚠️ サーバー負荷が高いため、パトロールを自動的に一時停止しました。 (MSPT: " + String.format("%.2f", mspt) + "ms)");
         }
 
         plugin.getPatrolManager().stopPatrol();

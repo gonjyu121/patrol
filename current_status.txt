@@ -1,0 +1,21 @@
+On branch feature/patrol-logic-update
+Your branch is up to date with 'origin/feature/patrol-logic-update'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   plugin_urls.json
+	modified:   pom.xml
+	modified:   src/main/java/dev/gonjy/patrolspectator/PatrolManager.java
+	modified:   src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java
+	modified:   src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonListener.java
+	modified:   src/main/java/dev/gonjy/patrolspectator/dungeon/TrapRunner.java
+	modified:   src/main/resources/plugin.yml
+	modified:   update_plugins.ps1
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	current_status.txt
+	src/main/resources/dungeon_config.yml
+
+no changes added to commit (use "git add" and/or "git commit -a")

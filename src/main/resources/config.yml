@@ -61,6 +61,10 @@ discord:
     crowd_alert: true
     # Forward in-game chat to Discord (Spam warning!)
     chat: false
+  # Automatic stats backup to Discord
+  backup:
+    enabled: true
+    interval_hours: 6
 
 # End World Reset Settings
 end:

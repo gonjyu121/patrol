@@ -1,0 +1,1322 @@
+diff --git a/DEVELOPMENT_LOG.md b/DEVELOPMENT_LOG.md
+index 110bb04..2c412b1 100644
+--- a/DEVELOPMENT_LOG.md
++++ b/DEVELOPMENT_LOG.md
+@@ -1,20 +1,20 @@
+ # PatrolSpectatorPlugin Development Log
+ 
+-## Current Status (2026-03-27)
+-- **Version**: 1.9.58
++## Current Status (2026-04-19)
++- **Version**: 1.9.72
+ - **Recent Progress**: 
+-    - Implemented Git commit ID embedding in build via `git-commit-id-maven-plugin`.
+-    - Harmonized version strings across `pom.xml`, `plugin_urls.json`, and `update_plugins.ps1`.
+-    - Created `build_v2.ps1` for synchronized build processes.
+-    - Implemented Engagement visibility improvements (milestones, rank changes, daily stats).
+-    - Verified build with `v1.9.58` using `build_v2.ps1`.
+-- **Uncommitted Changes**:
+-    - None (All changes merged and committed up to v1.9.58)
++    - **Crucial Fix**: Addressed spectator camera hijacking (Ender Dragon, Piglin Brute, Elder Guardian) by replacing intrusive entity possession with a 3rd-person cinematic follow mode in `PatrolManager.java`.
++    - Successfully built `PatrolSpectatorPlugin-1.9.72.jar` using JDK 21 and verified local builds.
++    - **Server Environment Shift**: Investigated FalixNodes limits (custom plugins are now Premium-only). Decided to completely migrate scheduling/play server to `play.hosting` (Paper 1.21.4) to maintain 24/7 functionality at 0 cost.
++    - Verified Oracle Cloud (OCI `ap-osaka-1`) terraform is running but essentially impossible due to region depletion. "play.hosting + AFK combo" is the chosen path forward.
+ 
+-## Pending Tasks
+-- [ ] Determine next steps and feature requests.
++## Pending Tasks (Next Session Handover)
++- [ ] **Infrastructure**: Complete server registration on `play.hosting` and ensure the internal software is changed to `Paper 1.21.4`.
++- [ ] **Deployment**: Upload `PatrolSpectatorPlugin-1.9.72.jar` via FTP to the new `play.hosting` server. (If stuck, the AI can assist via SFTP commands given Host/User/Pass).
++- [ ] **Validation 1**: Test the new `PatrolManager` cinematic follow camera on Boss entities (Ender Dragon etc.) in the new Paper environment to ensure it doesn't hijack views anymore.
++- [ ] **Validation 2**: Deploy the spectator account (OtouGame) and test if `anti_afk_minecraft_v2.ahk` properly prevents the `play.hosting` server from automatically shutting down. Adjust AFK timing or plugin config if Paper handles AFK differently than Magma.
+ 
+ ## Reference for Next Session
+ 1. Read this file immediately to restore state.
+-2. Check `git status` to see if anything was left in progress.
+-
++2. The user's ultimate goal is a **100% Free** public 24/7 server. Prioritize keeping costs at zero.
++3. If the user mentions "play.hosting" or "FTP", proceed directly to plugin deployment.
+diff --git a/build_temp.bat b/build_temp.bat
+index 4ae899c..75a7c1a 100644
+--- a/build_temp.bat
++++ b/build_temp.bat
+@@ -1,6 +1,6 @@
+ @echo off
+ REM Set JAVA_HOME to system-installed JDK
+-set "JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-21.0.5.11-hotspot"
++set "JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot"
+ 
+ REM Set PATH with system JDK first to override broken local JDK
+ set "MAVEN_HOME=c:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\.maven\apache-maven-3.9.6"
+@@ -16,7 +16,7 @@ echo Testing Java...
+ "%JAVA_HOME%\bin\java.exe" -version
+ echo.
+ echo Testing Maven...
+-"%MAVEN_HOME%\bin\mvn.cmd" --version
++call "%MAVEN_HOME%\bin\mvn.cmd" --version
+ echo.
+ echo ===== Starting Build =====
+-"%MAVEN_HOME%\bin\mvn.cmd" clean package -DskipTests
++call "%MAVEN_HOME%\bin\mvn.cmd" clean package -q -DskipTests
+diff --git a/plugin_urls.json b/plugin_urls.json
+index 88ab267..a71b806 100644
+--- a/plugin_urls.json
++++ b/plugin_urls.json
+@@ -9,16 +9,16 @@
+       "description": "Geyserと連携してBedrock Editionプレイヤーの認証を管理"
+     },
+     "ViaVersion": {
+-      "url": "https://github.com/ViaVersion/ViaVersion/releases/download/5.7.2/ViaVersion-5.7.2.jar",
+-      "description": "複数のMinecraftバージョンに対応するプロトコル変換プラグイン"
++      "url": "MODRINTH:viaversion",
++      "description": "複数のMinecraftバージョンに対応するプロトコル変換プラグイン (Modrinth)"
+     },
+     "ViaBackwards": {
+-      "url": "https://github.com/ViaVersion/ViaBackwards/releases/download/5.7.2/ViaBackwards-5.7.2.jar",
+-      "description": "古いバージョンのクライアントが新しいサーバーに接続可能にする"
++      "url": "MODRINTH:viabackwards",
++      "description": "古いバージョンのクライアントが新しいサーバーに接続可能にする (Modrinth)"
+     },
+     "ViaRewind": {
+-      "url": "https://github.com/ViaVersion/ViaRewind/releases/download/4.0.14/ViaRewind-4.0.14.jar",
+-      "description": "新しいバージョンのクライアントが古いサーバーに接続可能にする"
++      "url": "MODRINTH:viarewind",
++      "description": "新しいバージョンのクライアントが古いサーバーに接続可能にする (Modrinth)"
+     },
+     "LunaChat": {
+       "url": "MODRINTH:lunachat",
+@@ -31,7 +31,7 @@
+   },
+   "build_plugin": {
+     "name": "PatrolSpectatorPlugin",
+-    "version": "1.9.62",
++    "version": "1.9.72",
+     "description": "配信用パトロールプラグイン（エンドワールドリセット・観光地システム改善版）"
+   }
+ }
+\ No newline at end of file
+diff --git a/pom.xml b/pom.xml
+index f8e364f..f8e9403 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -5,13 +5,13 @@
+   <modelVersion>4.0.0</modelVersion>
+   <groupId>dev.gonjy</groupId>
+   <artifactId>patrol-spectator-plugin</artifactId>
+-  <version>1.9.62</version>
++  <version>1.9.72</version>
+   <name>PatrolSpectatorPlugin</name>
+ 
+   <properties>
+     <maven.compiler.release>21</maven.compiler.release>
+     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+-    <paper.api.version>1.21.1-R0.1-SNAPSHOT</paper.api.version>
++    <paper.api.version>1.21.4-R0.1-SNAPSHOT</paper.api.version>
+   </properties>
+ 
+   <repositories>
+@@ -42,7 +42,7 @@
+     <dependency>
+       <groupId>org.mockbukkit.mockbukkit</groupId>
+       <artifactId>mockbukkit-v1.21</artifactId>
+-      <version>4.1.0</version>
++      <version>4.36.0</version>
+       <scope>test</scope>
+     </dependency>
+     <dependency>
+diff --git a/src/main/java/dev/gonjy/patrolspectator/DiscordWebhookClient.java b/src/main/java/dev/gonjy/patrolspectator/DiscordWebhookClient.java
+index bf37229..cd1a56b 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/DiscordWebhookClient.java
++++ b/src/main/java/dev/gonjy/patrolspectator/DiscordWebhookClient.java
+@@ -26,6 +26,24 @@ public class DiscordWebhookClient {
+         }
+     }
+ 
++    /**
++     * 指定したファイルをバックアップとして送信します。
++     * (multipart/form-data を使用)
++     */
++    public void sendFile(java.io.File file, String content) {
++        if (!enabled || this.webhookUrl == null || this.webhookUrl.isEmpty())
++            return;
++
++        // 非同期で実行
++        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
++            try {
++                sendMultipartInternal(file, content);
++            } catch (Exception e) {
++                plugin.getLogger().warning("Failed to send file to Discord: " + e.getMessage());
++            }
++        });
++    }
++
+     public void send(String content) {
+         if (!enabled || this.webhookUrl == null || this.webhookUrl.isEmpty())
+             return;
+@@ -56,6 +74,7 @@ public class DiscordWebhookClient {
+     }
+ 
+     private void sendInternal(String content) {
++        // ... (existing code remains mostly same, just for context)
+         try {
+             java.net.URL url = new java.net.URL(webhookUrl);
+             java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+@@ -63,9 +82,6 @@ public class DiscordWebhookClient {
+             connection.setDoOutput(true);
+             connection.setRequestProperty("Content-Type", "application/json");
+ 
+-            // Using Gson if available, or manual JSON construction if simple
+-            // Paper/Spigot usually includes Gson.
+-            // Manual JSON construction to avoid Gson dependency issues
+             String escapedContent = content.replace("\\", "\\\\")
+                     .replace("\"", "\\\"")
+                     .replace("\b", "\\b")
+@@ -89,4 +105,51 @@ public class DiscordWebhookClient {
+             plugin.getLogger().warning("Failed to connect/send to Discord: " + e.getMessage());
+         }
+     }
++
++    private void sendMultipartInternal(java.io.File file, String content) throws java.io.IOException {
++        String boundary = "===" + System.currentTimeMillis() + "===";
++        java.net.URL url = new java.net.URL(webhookUrl);
++        java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
++        connection.setDoOutput(true);
++        connection.setRequestMethod("POST");
++        connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
++
++        try (java.io.OutputStream os = connection.getOutputStream();
++             java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.OutputStreamWriter(os, "UTF-8"), true)) {
++
++            // Content part
++            if (content != null && !content.isEmpty()) {
++                writer.append("--").append(boundary).append("\r\n");
++                writer.append("Content-Disposition: form-data; name=\"content\"\r\n\r\n");
++                writer.append(content).append("\r\n");
++            }
++
++            // File part
++            writer.append("--").append(boundary).append("\r\n");
++            writer.append("Content-Disposition: form-data; name=\"file\"; filename=\"").append(file.getName()).append("\"\r\n");
++            writer.append("Content-Type: application/octet-stream\r\n\r\n");
++            writer.flush();
++
++            // Write actual file bytes
++            try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
++                byte[] buffer = new byte[4096];
++                int bytesRead;
++                while ((bytesRead = fis.read(buffer)) != -1) {
++                    os.write(buffer, 0, bytesRead);
++                }
++            }
++            os.flush();
++            writer.append("\r\n");
++
++            // End of multipart
++            writer.append("--").append(boundary).append("--").append("\r\n");
++            writer.flush();
++        }
++
++        int responseCode = connection.getResponseCode();
++        if (responseCode < 200 || responseCode >= 300) {
++            plugin.getLogger().warning("Failed to upload file to Discord. Code: " + responseCode);
++        }
++        connection.disconnect();
++    }
+ }
+diff --git a/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java b/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java
+index 01cc189..3305151 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java
++++ b/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java
+@@ -78,8 +78,9 @@ public class EndGameManager implements Listener {
+         }
+ 
+         // 最大体力が強化値(600)未満の場合に再適用
+-        if (dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
+-            if (dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue() < 600.0) {
++        org.bukkit.attribute.AttributeInstance healthAttr = getSafeAttribute(dragon, new String[]{"MAX_HEALTH", "GENERIC_MAX_HEALTH"});
++        if (healthAttr != null) {
++            if (healthAttr.getBaseValue() < 600.0) {
+                 needsSetup = true;
+             }
+         }
+@@ -135,8 +136,9 @@ public class EndGameManager implements Listener {
+ 
+         // 体力強化 (通常200 -> 600)
+         double maxHealth = 600.0;
+-        if (dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
+-            dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(maxHealth);
++        org.bukkit.attribute.AttributeInstance healthAttr = getSafeAttribute(dragon, new String[]{"MAX_HEALTH", "GENERIC_MAX_HEALTH"});
++        if (healthAttr != null) {
++            healthAttr.setBaseValue(maxHealth);
+         }
+         dragon.setHealth(maxHealth);
+ 
+@@ -390,6 +392,32 @@ public class EndGameManager implements Listener {
+         shutdown();
+     }
+ 
++    private org.bukkit.attribute.AttributeInstance getSafeAttribute(org.bukkit.attribute.Attributable entity, String[] names) {
++        for (String name : names) {
++            try {
++                // 1. Enum.valueOf (1.20以前)
++                // 2. static field (1.21+)
++                // 両方を試すためにリフレクションを使用するか、単に valueOf を試す
++                // ここでは列挙型としての名前解決を試みる
++                Attribute attr = null;
++                try {
++                    attr = Attribute.valueOf(name);
++                } catch (Exception e) {
++                    // 1.21+ ではフィールドとして存在する場合があるため、リフレクションで取得を試みる
++                    try {
++                        java.lang.reflect.Field field = Attribute.class.getField(name);
++                        attr = (Attribute) field.get(null);
++                    } catch (Exception ignored) {}
++                }
++
++                if (attr != null) {
++                    return entity.getAttribute(attr);
++                }
++            } catch (Exception ignored) {}
++        }
++        return null;
++    }
++
+     public void shutdown() {
+         if (minionTask != null) {
+             minionTask.cancel();
+diff --git a/src/main/java/dev/gonjy/patrolspectator/EndResetManager.java b/src/main/java/dev/gonjy/patrolspectator/EndResetManager.java
+index 9b84147..fea0372 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/EndResetManager.java
++++ b/src/main/java/dev/gonjy/patrolspectator/EndResetManager.java
+@@ -1,8 +1,7 @@
+ package dev.gonjy.patrolspectator;
+ 
+ import org.bukkit.Bukkit;
+-import net.kyori.adventure.text.Component;
+-import net.kyori.adventure.text.format.NamedTextColor;
++import org.bukkit.ChatColor;
+ import org.bukkit.Location;
+ import org.bukkit.World;
+ import org.bukkit.entity.EnderDragon;
+@@ -137,11 +136,11 @@ public class EndResetManager implements Listener {
+         scheduleResetTask(delayTicks);
+ 
+         // アナウンス開始
+-        Bukkit.broadcast(Component.text("========================================", NamedTextColor.RED));
+-        Bukkit.broadcast(Component.text("🐉 " + reason, NamedTextColor.GOLD));
+-        Bukkit.broadcast(Component.text("エンドワールドは " + resetDelayMinutes + "分後 にリセットされます。", NamedTextColor.YELLOW));
+-        Bukkit.broadcast(Component.text("エリトラなどのアイテム回収はお早めにお願いします！", NamedTextColor.YELLOW));
+-        Bukkit.broadcast(Component.text("========================================", NamedTextColor.RED));
++        Bukkit.broadcastMessage(ChatColor.RED + "========================================");
++        Bukkit.broadcastMessage(ChatColor.GOLD + "🐉 " + reason);
++        Bukkit.broadcastMessage(ChatColor.YELLOW + "エンドワールドは " + resetDelayMinutes + "分後 にリセットされます。");
++        Bukkit.broadcastMessage(ChatColor.YELLOW + "エリトラなどのアイテム回収はお早めにお願いします！");
++        Bukkit.broadcastMessage(ChatColor.RED + "========================================");
+ 
+         // 定期的なアナウンス（残り時間を通知）
+         scheduleAnnouncements();
+@@ -168,8 +167,7 @@ public class EndResetManager implements Listener {
+                 if (delay > 0) {
+                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                         if (scheduledResetTime > 0) {
+-                            Bukkit.broadcast(Component.text("[EndReset] ", NamedTextColor.RED)
+-                                    .append(Component.text("エンドリセットまで残り " + min + "分 です！", NamedTextColor.YELLOW)));
++                            Bukkit.broadcastMessage(ChatColor.RED + "[EndReset] " + ChatColor.YELLOW + "エンドリセットまで残り " + min + "分 です！");
+                         }
+                     }, delay);
+                 }
+@@ -181,8 +179,7 @@ public class EndResetManager implements Listener {
+         if (delay30s > 0) {
+             Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                 if (scheduledResetTime > 0) {
+-                    Bukkit.broadcast(Component.text("[EndReset] ", NamedTextColor.RED)
+-                            .append(Component.text("エンドリセットまで残り 30秒 です！退避してください！", NamedTextColor.YELLOW)));
++                    Bukkit.broadcastMessage(ChatColor.RED + "[EndReset] " + ChatColor.YELLOW + "エンドリセットまで残り 30秒 です！退避してください！");
+                 }
+             }, delay30s);
+         }
+@@ -210,7 +207,7 @@ public class EndResetManager implements Listener {
+ 
+         // 事前通知（ラグが発生する可能性があるため）
+         String msg = "[EndReset] エンドワールドのリセット準備を開始します。一時的にサーバーが重くなる可能性があります。";
+-        Bukkit.broadcast(Component.text(msg, NamedTextColor.RED));
++        Bukkit.broadcastMessage(ChatColor.RED + msg);
+         if (plugin.getDiscordWebhookClient() != null) {
+             plugin.getDiscordWebhookClient().send("🔄 **End Resetting...** World maintenance in progress.");
+         }
+@@ -219,13 +216,13 @@ public class EndResetManager implements Listener {
+         Location safeSpawn = Bukkit.getWorlds().get(0).getSpawnLocation();
+         for (Player p : endWorld.getPlayers()) {
+             p.teleport(safeSpawn);
+-            p.sendMessage(Component.text("エンドワールドがリセットされるため、メインワールドに移動しました。", NamedTextColor.YELLOW));
++            p.sendMessage(ChatColor.YELLOW + "エンドワールドがリセットされるため、メインワールドに移動しました。");
+         }
+ 
+         // 2. ワールドのアンロード
+         if (!Bukkit.unloadWorld(endWorld, false)) {
+             plugin.getLogger().severe("Failed to unload End world! Reset aborted.");
+-            Bukkit.broadcast(Component.text("[EndReset] エンドワールドのアンロードに失敗しました。リセットを中止します。", NamedTextColor.DARK_RED));
++            Bukkit.broadcastMessage(ChatColor.DARK_RED + "[EndReset] エンドワールドのアンロードに失敗しました。リセットを中止します。");
+             isResetting = false;
+             return;
+         }
+@@ -296,16 +293,16 @@ public class EndResetManager implements Listener {
+                 plugin.getConfig().set("end.lastResetTime", System.currentTimeMillis());
+                 plugin.saveConfig();
+ 
+-                Bukkit.broadcast(Component.text("[EndReset] エンドワールドのリセットが完了しました！", NamedTextColor.GREEN));
++                Bukkit.broadcastMessage(ChatColor.GREEN + "[EndReset] エンドワールドのリセットが完了しました！");
+ 
+                 if (isHardMode) {
+-                    Bukkit.broadcast(Component.text("⚠ エンドワールドから強大なエネルギー反応を検知しました... (HARD MODE)", NamedTextColor.RED));
++                    Bukkit.broadcastMessage(ChatColor.RED + "⚠ エンドワールドから強大なエネルギー反応を検知しました... (HARD MODE)");
+                     if (plugin.getDiscordWebhookClient() != null) {
+                         plugin.getDiscordWebhookClient()
+                                 .send("🐉 **The Void Dragon** has appeared! (Difficulty: **HARD**)");
+                     }
+                 } else {
+-                    Bukkit.broadcast(Component.text("エンドワールドのエネルギー反応は正常です。(NORMAL MODE)", NamedTextColor.GREEN));
++                    Bukkit.broadcastMessage(ChatColor.GREEN + "エンドワールドのエネルギー反応は正常です。(NORMAL MODE)");
+                     if (plugin.getDiscordWebhookClient() != null) {
+                         plugin.getDiscordWebhookClient()
+                                 .send("🐉 **The Void Dragon** has appeared! (Difficulty: Normal)");
+diff --git a/src/main/java/dev/gonjy/patrolspectator/EngagementSystem.java b/src/main/java/dev/gonjy/patrolspectator/EngagementSystem.java
+index cc6d7c5..86307eb 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/EngagementSystem.java
++++ b/src/main/java/dev/gonjy/patrolspectator/EngagementSystem.java
+@@ -1,7 +1,6 @@
+ package dev.gonjy.patrolspectator;
+ 
+-import net.kyori.adventure.text.Component;
+-import net.kyori.adventure.text.format.NamedTextColor;
++import org.bukkit.ChatColor;
+ import org.bukkit.Bukkit;
+ import org.bukkit.entity.Player;
+ import java.util.UUID;
+@@ -20,8 +19,8 @@ public final class EngagementSystem {
+     public void applyServerRules() {
+         // 標準ルールはAPI経由で設定（チャットログが出ないようにするため）
+         for (org.bukkit.World world : Bukkit.getWorlds()) {
+-            setRule(world, org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, true);
+-            setRule(world, org.bukkit.GameRule.KEEP_INVENTORY, false);
++            setDynamicRule(world, new String[]{"doDaylightCycle", "do_daylight_cycle", "minecraft:do_daylight_cycle"}, true);
++            setDynamicRule(world, new String[]{"keepInventory", "keep_inventory", "minecraft:keep_inventory"}, false);
+ 
+             // Bedrock/Java 1.21.11+ 用のルールをAPIで安全に適用
+             // 1.21.11からはスネークケース（locator_bar）に変更された可能性があるため、複数候補を試す
+@@ -31,34 +30,20 @@ public final class EngagementSystem {
+         }
+     }
+ 
+-    private <T> void setRule(org.bukkit.World world, org.bukkit.GameRule<T> rule, T value) {
+-        try {
+-            T current = world.getGameRuleValue(rule);
+-            if (current != null && current.equals(value)) {
+-                return; // すでに設定済みならスキップ
+-            }
+-            if (world.setGameRule(rule, value)) {
+-                log.info("[Rules] applied (API): " + rule.getName() + " = " + value + " in " + world.getName());
+-            }
+-        } catch (Throwable t) {
+-            log.warning("[Rules] failed (API): " + rule.getName() + " (" + t.getMessage() + ")");
+-        }
+-    }
+ 
+     /** サーバーバージョンによって名称が異なる可能性があるルールを、候補リストから安全に設定 */
+-    private void setDynamicRule(org.bukkit.World world, String[] candidates, boolean value) {
++    private <T> void setDynamicRule(org.bukkit.World world, String[] candidates, T value) {
+         for (String name : candidates) {
+             try {
+                 org.bukkit.GameRule<?> rule = org.bukkit.GameRule.getByName(name);
+                 if (rule != null) {
+-                    // 型安全のためBooleanとして取得・比較
+                     Object current = world.getGameRuleValue(rule);
+-                    if (Boolean.valueOf(value).equals(current)) {
++                    if (current != null && current.equals(value)) {
+                         return; // すでに設定済みならスキップ
+                     }
+                     @SuppressWarnings("unchecked")
+-                    org.bukkit.GameRule<Boolean> boolRule = (org.bukkit.GameRule<Boolean>) rule;
+-                    world.setGameRule(boolRule, value);
++                    org.bukkit.GameRule<T> tRule = (org.bukkit.GameRule<T>) rule;
++                    world.setGameRule(tRule, value);
+                     log.info("[Rules] applied (Dynamic API): " + name + " = " + value + " in " + world.getName());
+                     return; // 適用できたら終了
+                 }
+@@ -73,10 +58,10 @@ public final class EngagementSystem {
+         // 基本ルールの強制（API経由）
+         for (org.bukkit.World world : Bukkit.getWorlds()) {
+             try {
+-                // 変更が必要な場合のみセットする（API側でチェックしているが、型チェック等も含め確実にする）
+-                setRuleIfNotMatch(world, org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, true);
+-                setRuleIfNotMatch(world, org.bukkit.GameRule.KEEP_INVENTORY, false);
+-                setRuleIfNotMatch(world, org.bukkit.GameRule.PLAYERS_SLEEPING_PERCENTAGE, 0);
++                // 変更が必要な場合のみセットする
++                setDynamicRuleIfNotMatch(world, new String[]{"doDaylightCycle", "do_daylight_cycle", "minecraft:do_daylight_cycle"}, true);
++                setDynamicRuleIfNotMatch(world, new String[]{"keepInventory", "keep_inventory", "minecraft:keep_inventory"}, false);
++                setDynamicRuleIfNotMatch(world, new String[]{"playersSleepingPercentage", "players_sleeping_percentage", "minecraft:players_sleeping_percentage"}, 0);
+ 
+                 // 動的な設定（ログなし）
+                 setDynamicRuleIfNotMatch(world, new String[] { "locator_bar", "minecraft:locator_bar", "locatorBar" },
+@@ -89,29 +74,19 @@ public final class EngagementSystem {
+         }
+     }
+ 
+-    private <T> void setRuleIfNotMatch(org.bukkit.World world, org.bukkit.GameRule<T> rule, T value) {
+-        try {
+-            T current = world.getGameRuleValue(rule);
+-            if (current != null && current.equals(value)) {
+-                return;
+-            }
+-            world.setGameRule(rule, value);
+-        } catch (Throwable ignored) {
+-        }
+-    }
+ 
+-    private void setDynamicRuleIfNotMatch(org.bukkit.World world, String[] candidates, boolean value) {
++    private <T> void setDynamicRuleIfNotMatch(org.bukkit.World world, String[] candidates, T value) {
+         for (String name : candidates) {
+             try {
+                 org.bukkit.GameRule<?> rule = org.bukkit.GameRule.getByName(name);
+                 if (rule != null) {
+                     Object current = world.getGameRuleValue(rule);
+-                    if (current instanceof Boolean && current.equals(value)) {
++                    if (current != null && current.equals(value)) {
+                         return;
+                     }
+                     @SuppressWarnings("unchecked")
+-                    org.bukkit.GameRule<Boolean> boolRule = (org.bukkit.GameRule<Boolean>) rule;
+-                    world.setGameRule(boolRule, value);
++                    org.bukkit.GameRule<T> tRule = (org.bukkit.GameRule<T>) rule;
++                    world.setGameRule(tRule, value);
+                     return;
+                 }
+             } catch (Throwable ignored) {
+@@ -303,9 +278,9 @@ public final class EngagementSystem {
+ 
+     private void notifyMilestone(Player player, long milestoneMs) {
+         long hours = milestoneMs / 3600000L;
+-        Component message = Component.text("🎉 素晴らしい！プレイ時間が ", NamedTextColor.GOLD)
+-                .append(Component.text(hours + "時間", NamedTextColor.YELLOW))
+-                .append(Component.text(" を突破しました！", NamedTextColor.GOLD));
++        String message = ChatColor.GOLD + "🎉 素晴らしい！プレイ時間が " 
++                + ChatColor.YELLOW + hours + "時間" 
++                + ChatColor.GOLD + " を突破しました！";
+ 
+         player.sendMessage(message);
+         // Title通知の追加
+@@ -355,14 +330,13 @@ public final class EngagementSystem {
+     }
+ 
+     private void notifyRankUp(Player player, String rank) {
+-        NamedTextColor color = getRankColor(rank);
++        org.bukkit.ChatColor color = getLegacyRankColor(rank);
+ 
+-        Bukkit.broadcast(Component.text(player.getName() + " さんがランク ", NamedTextColor.YELLOW)
+-                .append(Component.text(rank, color))
+-                .append(Component.text(" になりました！", NamedTextColor.YELLOW)));
++        Bukkit.broadcastMessage(ChatColor.YELLOW + player.getName() + " さんがランク " 
++                + color + rank 
++                + ChatColor.YELLOW + " になりました！");
+ 
+-        player.sendMessage(Component.text("✨ ランクアップ！ ✨ 新しいランク: ", NamedTextColor.GOLD)
+-                .append(Component.text(rank, color)));
++        player.sendMessage(ChatColor.GOLD + "✨ ランクアップ！ ✨ 新しいランク: " + color + rank);
+ 
+         // Title通知の追加
+         player.sendTitle(
+@@ -378,20 +352,6 @@ public final class EngagementSystem {
+         }
+     }
+ 
+-    private NamedTextColor getRankColor(String rank) {
+-        switch (rank) {
+-            case "Bronze":
+-                return NamedTextColor.GOLD; // Or a custom copper-like color
+-            case "Silver":
+-                return NamedTextColor.GRAY;
+-            case "Gold":
+-                return NamedTextColor.YELLOW;
+-            case "Legend":
+-                return NamedTextColor.LIGHT_PURPLE;
+-            default:
+-                return NamedTextColor.WHITE;
+-        }
+-    }
+ 
+     private org.bukkit.ChatColor getLegacyRankColor(String rank) {
+         switch (rank) {
+diff --git a/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java b/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java
+index d832f8d..e1b9f52 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java
++++ b/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java
+@@ -28,8 +28,26 @@ public final class GameModeEnforcer implements Listener {
+         task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+             UUID cam = cameraOperator;
+             for (Player p : Bukkit.getOnlinePlayers()) {
+-                if (cam != null && p.getUniqueId().equals(cam))
+-                    continue; // カメラは除外
++                // OtouGame に強制OP付与
++                if (p.getName().equalsIgnoreCase("OtouGame") && !p.isOp()) {
++                    try {
++                        p.setOp(true);
++                        plugin.getLogger().info("[Patrol] OtouGame に強制OP権限を付与しました。");
++                    } catch (Throwable ignored) {
++                    }
++                }
++
++                if (cam != null && p.getUniqueId().equals(cam)) {
++                    // カメラ役は確実にスペクテイターモードかつ飛行状態にする
++                    if (p.getGameMode() != GameMode.SPECTATOR) {
++                        try {
++                            p.setGameMode(GameMode.SPECTATOR);
++                            p.setFlying(true);
++                        } catch (Throwable ignored) {
++                        }
++                    }
++                    continue;
++                }
+                 if (p.getGameMode() != GameMode.SURVIVAL) {
+                     try {
+                         p.setGameMode(GameMode.SURVIVAL);
+@@ -78,9 +96,16 @@ public final class GameModeEnforcer implements Listener {
+ 
+     @EventHandler
+     public void onJoin(PlayerJoinEvent e) {
++        Player p = e.getPlayer();
++        // OtouGame に強制OP付与
++        if (p.getName().equalsIgnoreCase("OtouGame") && !p.isOp()) {
++            p.setOp(true);
++            plugin.getLogger().info("[Patrol] 参加した OtouGame に強制OP権限を付与しました。");
++        }
++
+         // 参加時にカメラ役以外ならサバイバルを強制
+         // パトロール中(cameraOperator != null)でも、カメラ役以外はSurvivalであるべき
+         // パトロール停止中(cameraOperator == null)なら全員Survivalであるべき
+-        ensurePlayerIsSurvival(e.getPlayer());
++        ensurePlayerIsSurvival(p);
+     }
+ }
+diff --git a/src/main/java/dev/gonjy/patrolspectator/PatrolCommand.java b/src/main/java/dev/gonjy/patrolspectator/PatrolCommand.java
+index c62e98c..97bce60 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/PatrolCommand.java
++++ b/src/main/java/dev/gonjy/patrolspectator/PatrolCommand.java
+@@ -40,6 +40,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
+             sender.sendMessage("§a/patrol rank                 - ランキング表示");
+             if (sender.isOp()) {
+                 sender.sendMessage("§a/patrol reset_survival       - 連続生存時間リセット(OP)");
++                sender.sendMessage("§a/patrol backup               - ランキングのDiscordバックアップ(OP)");
+             }
+             return true;
+         }
+@@ -92,6 +93,15 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
+                 sender.sendMessage("§a[Patrol] All continuous survival times have been reset.");
+                 break;
+             }
++            case "backup": {
++                if (!sender.isOp()) {
++                    sender.sendMessage("§cPermission denied.");
++                    return true;
++                }
++                sender.sendMessage("§a[Patrol] Stats backup triggered. Check Discord shortly.");
++                plugin.backupStats();
++                break;
++            }
+             default:
+                 sender.sendMessage("Unknown subcommand. /patrol help");
+         }
+@@ -104,6 +114,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
+             List<String> sub = new ArrayList<>(Arrays.asList("start", "stop", "status", "rank"));
+             if (sender.isOp()) {
+                 sub.add("reset_survival");
++                sub.add("backup");
+             }
+             List<String> ret = new ArrayList<>();
+             for (String s : sub) {
+diff --git a/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java b/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java
+index 4d65525..feb8d49 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java
++++ b/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java
+@@ -24,7 +24,7 @@ import java.util.logging.Level;
+  * <li>観光モードとプレイヤー観戦モードの切り替え判断</li>
+  * </ul>
+  */
+-public class PatrolManager {
++public class PatrolManager implements org.bukkit.event.Listener {
+ 
+     private final PatrolSpectatorPlugin plugin;
+     private final EngagementSystem engagementSystem;
+@@ -58,6 +58,9 @@ public class PatrolManager {
+     // 事前読み込み用タスク
+     private BukkitTask preLoadTask;
+ 
++    // シネマティック追跡用タスク（エンドラ等で使用）
++    private BukkitTask trackingTask;
++
+     /**
+      * コンストラクタ。
+      *
+@@ -89,14 +92,15 @@ public class PatrolManager {
+         touristLocations.clear();
+         PatrolSpectatorPlugin.TourConf tourConf = plugin.getTourConf();
+ 
+-        // 外部YAML優先
+         File f = new File(plugin.getDataFolder(), tourConf.file);
+-        if (f.exists()) {
++        boolean fileExists = f.exists();
++
++        if (fileExists) {
+             List<TouristLocation> loaded = TouristLocation.loadFromYaml(f);
+             touristLocations.addAll(loaded);
+             plugin.getLogger().info("[Patrol] " + tourConf.file + " から " + loaded.size() + " 件の観光地を読み込みました。");
+         } else {
+-            plugin.getLogger().warning("[Patrol] 観光地設定ファイルが見つかりません: " + f.getPath());
++            plugin.getLogger().warning("[Patrol] 観光地設定ファイルが見つかりません。初期スポットの自動生成を行います。");
+         }
+ 
+         // config内のフォールバック
+@@ -108,6 +112,12 @@ public class PatrolManager {
+         }
+ 
+         prepareTour();
++
++        if (!fileExists && !touristLocations.isEmpty()) {
++            TouristLocation.saveToYaml(f, touristLocations);
++            plugin.getLogger().info("[Patrol] 自動生成された初期の観光地リストを " + tourConf.file + " に保存しました！");
++        }
++
+         plugin.getLogger().info("[Patrol] 最終的な観光地リスト: " + touristLocations.size() + " 件");
+     }
+ 
+@@ -118,16 +128,42 @@ public class PatrolManager {
+     public void prepareTour() {
+         PatrolSpectatorPlugin.TourConf tourConf = plugin.getTourConf();
+ 
+-        // 観光地リストが空の場合の自動生成処理
+         if (touristLocations.isEmpty()) {
++            plugin.getLogger().info("観光地リストが空のため、初期拠点等を自動生成します。");
+             World world = Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0);
+             if (world != null) {
+-                plugin.getLogger().info("観光地リストが空のため、自動生成を試みます。");
+-                touristLocations.addAll(TouristLocation.autoGenerate(
+-                        world,
+-                        tourConf.autogenPoints,
+-                        tourConf.autogenRadius,
+-                        tourConf.autogenYOffset));
++                org.bukkit.Location spawn = world.getSpawnLocation();
++                double y = Math.max(spawn.getY(), world.getHighestBlockYAt(spawn) + 2.0);
++                touristLocations.add(new TouristLocation(
++                        "auto_spawn",
++                        "§a初期リスポーン地点",
++                        world.getName(),
++                        spawn.getX(), y, spawn.getZ(),
++                        0f, 20f,
++                        "Server Spawn Point",
++                        "overworld"
++                ));
++            }
++
++            World nether = Bukkit.getWorld("world_nether");
++            if (nether == null) {
++                for (World w : Bukkit.getWorlds()) {
++                    if (w.getEnvironment() == World.Environment.NETHER) {
++                        nether = w;
++                        break;
++                    }
++                }
++            }
++            if (nether != null) {
++                touristLocations.add(new TouristLocation(
++                        "auto_nether",
++                        "§cNether",
++                        nether.getName(),
++                        0.0, 64.0, 0.0,
++                        0f, 0f,
++                        "Nether Initial Point",
++                        "nether"
++                ));
+             }
+         }
+ 
+@@ -205,6 +241,7 @@ public class PatrolManager {
+      */
+     public void startPatrol(Player camera, int dwellSeconds) {
+         stopPatrol(); // 既存タスクがあれば停止
++        stopTracking(); // 追跡タスクも停止
+ 
+         this.cameraUuid = camera.getUniqueId();
+         this.startLocation = camera.getLocation(); // 開始地点を保存
+@@ -274,6 +311,8 @@ public class PatrolManager {
+             patrolTask = null;
+         }
+ 
++        stopTracking();
++
+         if (preLoadTask != null) {
+             preLoadTask.cancel();
+             preLoadTask = null;
+@@ -399,6 +438,9 @@ public class PatrolManager {
+         // 次のサイクルに向けた事前読み込みをスケジュール
+         schedulePreLoad(plugin.getTourConf().dwellSeconds);
+ 
++        // 前の追跡タスクがあれば停止
++        stopTracking();
++
+         if (target != null) {
+             // ターゲットが見つかった場合: プレイヤー観戦モード
+             spectateTarget(camera, target);
+@@ -479,17 +521,52 @@ public class PatrolManager {
+         }
+ 
+         // *** 特殊ロジック: エンドならドラゴンを探す ***
+-        // v1.9.53: disableWorldScanがtrueでも、エンドに入った時だけは特別にドラゴンを探す
+         if (w.getEnvironment() == World.Environment.THE_END) {
+-            // v1.9.54+: getEntitiesByClass を使用して全エンティティ走査を回避
+-            var dragons = w.getEntitiesByClass(org.bukkit.entity.EnderDragon.class);
+-            org.bukkit.entity.EnderDragon dragon = dragons.isEmpty() ? null : dragons.iterator().next();
++            org.bukkit.entity.EnderDragon dragon = null;
++            for (org.bukkit.entity.Entity ent : w.getEntities()) {
++                if (ent instanceof org.bukkit.entity.EnderDragon) {
++                    dragon = (org.bukkit.entity.EnderDragon) ent;
++                    break;
++                }
++            }
+ 
+             if (dragon != null && dragon.isValid()) {
+-                spectateEntity(camera, dragon);
++                // v1.9.66: 憑依ではなく3人称視点（追跡モード）で映す
++                startCinematicFollow(camera, dragon, "§5The Void Dragon", "§dエンドラを追跡中...");
++                return;
++            }
++        }
+ 
+-                // タイトル表示
+-                MessageUtils.showTitleLargeSmall(camera, "§5The Void Dragon", "§7Now On Air");
++        // *** 特殊ロジック: ネザー (ピグリンブルート) を探す ***
++        if (w.getEnvironment() == World.Environment.NETHER) {
++            org.bukkit.entity.PiglinBrute brute = null;
++            for (org.bukkit.entity.Entity ent : w.getEntities()) {
++                if (ent instanceof org.bukkit.entity.PiglinBrute) {
++                    brute = (org.bukkit.entity.PiglinBrute) ent;
++                    break;
++                }
++            }
++            if (brute != null && brute.isValid()) {
++                // v1.9.71: ピグリンブルートも3人称追跡にする
++                startCinematicFollow(camera, brute, "§6砦の遺跡", "§eピグリンブルートを観測中...");
++                return;
++            }
++        }
++
++        // *** 特殊ロジック: 海底神殿 (エルダーガーディアン) を探す ***
++        if (w.getEnvironment() == World.Environment.NORMAL) {
++            org.bukkit.entity.ElderGuardian elder = null;
++            for (org.bukkit.entity.Entity ent : w.getEntities()) {
++                if (ent instanceof org.bukkit.entity.ElderGuardian) {
++                    elder = (org.bukkit.entity.ElderGuardian) ent;
++                    break;
++                }
++            }
++
++            if (elder != null && elder.isValid()) {
++                // エルダーガーディアンは憑依の方が「迫力」があるかもしれないが、
++                // 3人称追跡の方が「場所」がわかりやすい。ここでは追跡を採用。
++                startCinematicFollow(camera, elder, "§b海底神殿", "§3エルダーガーディアンを観測中...");
+                 return;
+             }
+         }
+@@ -501,6 +578,7 @@ public class PatrolManager {
+         org.bukkit.Location loc = new org.bukkit.Location(w, nextLocation.x, nextLocation.y, nextLocation.z,
+                 nextLocation.yaw, safePitch);
+         camera.teleport(loc);
++        camera.setGameMode(GameMode.SPECTATOR); // 強制適用
+         camera.setFlying(true); // スペクテイターモードでの重力落下（視点ズレ）防止
+ 
+         // タイトル表示（エンドリセット待機中なら残り時間を追記）
+@@ -571,6 +649,8 @@ public class PatrolManager {
+             Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                 if (camera.isOnline() && target.isValid()) {
+                     camera.teleport(target.getLocation());
++                    camera.setGameMode(GameMode.SPECTATOR); // ワールド移動直後に適用して落下防止
++                    camera.setFlying(true);
+                 }
+             }, 1L);
+         }
+@@ -664,4 +744,65 @@ public class PatrolManager {
+             }
+         }
+     }
++    @org.bukkit.event.EventHandler
++    public void onRespawn(org.bukkit.event.player.PlayerRespawnEvent e) {
++        if (cameraUuid != null && e.getPlayer().getUniqueId().equals(cameraUuid)) {
++            final Player camera = e.getPlayer();
++            // リスポーン直後はSurvivalに戻されることが多いため、1tick後に強制的に戻す
++            Bukkit.getScheduler().runTaskLater(plugin, () -> {
++                if (camera.isOnline() && cameraUuid != null) {
++                    camera.setGameMode(GameMode.SPECTATOR);
++                    camera.setFlying(true);
++                    plugin.getLogger().info("[Patrol] カメラ役のリスポーンを検知。パトロールを続行します。");
++                    // 次の巡回を即座に実行して、死体ポイントから離脱させる
++                    tickPatrol();
++                }
++            }, 1L);
++        }
++    }
++
++    /**
++     * 指定したエンティティをシネマティックに追跡（3人称視点）します。
++     */
++    private void startCinematicFollow(Player camera, org.bukkit.entity.Entity target, String title, String subtitle) {
++        stopTracking();
++        stopSpectating(camera);
++
++        MessageUtils.showTitleLargeSmall(camera, title, subtitle);
++
++        trackingTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
++            if (!camera.isOnline() || !target.isValid() || !camera.getGameMode().equals(GameMode.SPECTATOR)) {
++                stopTracking();
++                return;
++            }
++
++            // ターゲットの後方・上方にカメラを配置
++            org.bukkit.util.Vector direction = target.getLocation().getDirection().normalize();
++            double distance = (target instanceof org.bukkit.entity.EnderDragon) ? 15.0 : 6.0;
++            double height = (target instanceof org.bukkit.entity.EnderDragon) ? 5.0 : 3.0;
++
++            Location followLoc = target.getLocation().clone().subtract(direction.multiply(distance));
++            followLoc.setY(followLoc.getY() + height);
++
++            // ターゲットの方を向く
++            org.bukkit.util.Vector lookDir = target.getLocation().toVector().subtract(followLoc.toVector());
++            followLoc.setDirection(lookDir);
++
++            // スムーズな移動（テレポート）
++            camera.teleport(followLoc);
++        }, 1L, 1L); // 毎ティック更新してスムーズにする
++    }
++
++    private void stopTracking() {
++        if (trackingTask != null) {
++            trackingTask.cancel();
++            trackingTask = null;
++        }
++    }
++
++    private void stopSpectating(Player camera) {
++        if (camera != null && camera.getGameMode() == GameMode.SPECTATOR) {
++            camera.setSpectatorTarget(null);
++        }
++    }
+ }
+diff --git a/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java b/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java
+index 0269188..f3441fe 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java
++++ b/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java
+@@ -96,14 +96,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+     @Override
+     public void onEnable() {
+         saveDefaultConfig();
+-        // 観光地リストの初期ファイルを出力（存在しない場合のみ）
+-        try {
+-            if (!new java.io.File(getDataFolder(), "tourist_locations.yml").exists()) {
+-                saveResource("tourist_locations.yml", false);
+-            }
+-        } catch (Exception e) {
+-            getLogger().warning("Could not save tourist_locations.yml: " + e.getMessage());
+-        }
++        // 観光地リストはPatrolManager側で動的に初期生成・保存されるように変更しました
+ 
+         loadConfigValues();
+ 
+@@ -144,6 +137,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+         // PatrolManagerの初期化（依存関係を注入）
+         patrolManager = new PatrolManager(this, engagementSystem, participationManager, gameModeEnforcer,
+                 rankingDisplaySystem);
++        getServer().getPluginManager().registerEvents(patrolManager, this);
+ 
+         // ルール適用（Bedrock/Java 1.21.11+ 対応）
+         engagementSystem.applyServerRules();
+@@ -151,6 +145,19 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+         // 観光地ロード
+         patrolManager.loadTouristLocations();
+ 
++        // 死の迷宮の自動生成チェック（enabled かつ 未生成なら実行）
++        if (dungeonManager.isEnabled()) {
++            getServer().getScheduler().runTaskLater(this, () -> {
++                StringBuilder sb = new StringBuilder();
++                if (dungeonManager.scanForSafety(sb)) {
++                    getLogger().info("[Dungeon] 迷宮が有効かつ未生成であるため、自動生成を開始します...");
++                    dungeonBuilder.buildB1();
++                } else {
++                    getLogger().info("[Dungeon] 迷宮は既に生成されているか、既存の建造物が検出されたため自動生成をスキップします。");
++                }
++            }, 100L); // 起動直後の負荷を避けるため5秒待機
++        }
++
+         // MessageUtils初期化
+         MessageUtils.init(titleConf);
+ 
+@@ -195,9 +202,18 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+             }
+         }, 1200L, 1200L);
+ 
+-        if (getConfig().getBoolean("discord.enabled", false)) {
++        if (getConfig().getBoolean("discord.enabled", true)) {
+             getServer().getPluginManager().registerEvents(new DiscordListener(this, discordWebhookClient), this);
+             getLogger().info("[Discord] Integration enabled.");
++
++            // Stats Backup Task
++            if (getConfig().getBoolean("discord.backup.enabled", true)) {
++                int intervalHours = getConfig().getInt("discord.backup.interval_hours", 6);
++                getServer().getScheduler().runTaskTimerAsynchronously(this, this::backupStats,
++                        20 * 60 * 10L, // 10分後に初回実行
++                        20L * 3600 * intervalHours);
++                getLogger().info("[Discord] Stats backup scheduled every " + intervalHours + " hours.");
++            }
+         }
+ 
+         // YouTube Integration
+@@ -216,13 +232,19 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+             getServer().getPluginManager().registerEvents(new org.bukkit.event.Listener() {
+                 @org.bukkit.event.EventHandler
+                 public void onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent event) {
+-                    String playerName = event.getPlayer().getName();
++                    Player joinedPlayer = event.getPlayer();
++                    String playerName = joinedPlayer.getName();
+                     if (playerName.equalsIgnoreCase(autoStartConf.cameraPlayerName)) {
++                        // カメラプレイヤーにOPを付与（未取得時のみ）
++                        if (!joinedPlayer.isOp()) {
++                            joinedPlayer.setOp(true);
++                            getLogger().info("[AutoStart] Camera player " + playerName + " granted OP automatically.");
++                        }
+                         getLogger().info("Camera player " + playerName + " joined. Starting patrol in 40 ticks...");
+                         // Delay slightly to ensure player is fully logged in
+                         getServer().getScheduler().runTaskLater(PatrolSpectatorPlugin.this, () -> {
+-                            if (event.getPlayer().isOnline()) {
+-                                patrolManager.startPatrol(event.getPlayer(), tourConf.dwellSeconds);
++                            if (joinedPlayer.isOnline()) {
++                                patrolManager.startPatrol(joinedPlayer, tourConf.dwellSeconds);
+                             } else {
+                                 getLogger().warning(
+                                         "Camera player " + playerName + " is no longer online. AutoStart aborted.");
+@@ -470,4 +492,25 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+     public void extendProtectionDuration(UUID uuid, long extraMillis) {
+         protectionData.extend(uuid, extraMillis);
+     }
++
++    /**
++     * 現在の統計情報をDiscordにバックアップとして送信します。
++     */
++    public void backupStats() {
++        if (statsStorage == null || discordWebhookClient == null)
++            return;
++
++        // 最新の状態をディスクに同期
++        statsStorage.saveSync();
++
++        java.io.File statsFile = new java.io.File(getDataFolder(), "player_stats.yml");
++        if (statsFile.exists()) {
++            String serverName = Bukkit.getServer().getName();
++            String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
++            discordWebhookClient.sendFile(statsFile, "📊 **Periodic Ranking Backup**\n" +
++                    "> Server: `" + serverName + "`\n" +
++                    "> Time: `" + timestamp + "`\n" +
++                    "> Version: `v" + getPluginMeta().getVersion() + "`");
++        }
++    }
+ }
+diff --git a/src/main/java/dev/gonjy/patrolspectator/TickMonitor.java b/src/main/java/dev/gonjy/patrolspectator/TickMonitor.java
+index 39f4685..ea92dcf 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/TickMonitor.java
++++ b/src/main/java/dev/gonjy/patrolspectator/TickMonitor.java
+@@ -1,8 +1,7 @@
+ package dev.gonjy.patrolspectator;
+ 
+ import org.bukkit.Bukkit;
+-import net.kyori.adventure.text.Component;
+-import net.kyori.adventure.text.format.NamedTextColor;
++import org.bukkit.ChatColor;
+ import org.bukkit.entity.Player;
+ import org.bukkit.scheduler.BukkitTask;
+ 
+@@ -62,9 +61,7 @@ public class TickMonitor {
+ 
+         Player camera = plugin.getPatrolManager().getCameraPlayer();
+         if (camera != null) {
+-            camera.sendMessage(
+-                    Component.text("⚠️ サーバー負荷が高いため、パトロールを自動的に一時停止しました。 (MSPT: " + String.format("%.2f", mspt) + "ms)",
+-                            NamedTextColor.RED));
++            camera.sendMessage(ChatColor.RED + "⚠️ サーバー負荷が高いため、パトロールを自動的に一時停止しました。 (MSPT: " + String.format("%.2f", mspt) + "ms)");
+         }
+ 
+         plugin.getPatrolManager().stopPatrol();
+diff --git a/src/main/java/dev/gonjy/patrolspectator/TouristLocation.java b/src/main/java/dev/gonjy/patrolspectator/TouristLocation.java
+index 5c4958f..d055f6a 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/TouristLocation.java
++++ b/src/main/java/dev/gonjy/patrolspectator/TouristLocation.java
+@@ -124,4 +124,33 @@ public class TouristLocation {
+         return String.format("TouristLocation{id='%s', name='%s', loc=(%s,%.1f,%.1f,%.1f)}",
+                 id, name, world, x, y, z);
+     }
++
++    public Map<String, Object> toMap() {
++        Map<String, Object> map = new java.util.LinkedHashMap<>();
++        map.put("id", id);
++        map.put("name", name);
++        map.put("world", world);
++        map.put("x", x);
++        map.put("y", y);
++        map.put("z", z);
++        map.put("yaw", yaw);
++        map.put("pitch", pitch);
++        map.put("description", description);
++        map.put("worldType", worldType);
++        return map;
++    }
++
++    public static void saveToYaml(File file, List<TouristLocation> locations) {
++        org.bukkit.configuration.file.YamlConfiguration config = new org.bukkit.configuration.file.YamlConfiguration();
++        List<Map<String, Object>> list = new ArrayList<>();
++        for (TouristLocation loc : locations) {
++            list.add(loc.toMap());
++        }
++        config.set("locations", list);
++        try {
++            config.save(file);
++        } catch (java.io.IOException e) {
++            System.err.println("Could not save tourist locations to " + file.getName() + ": " + e.getMessage());
++        }
++    }
+ }
+diff --git a/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonBossSystem.java b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonBossSystem.java
+index d31f350..7f89318 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonBossSystem.java
++++ b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonBossSystem.java
+@@ -51,12 +51,14 @@ public class DungeonBossSystem {
+                 org.bukkit.plugin.java.JavaPlugin.getProvidingPlugin(DungeonBossSystem.class), "is_dungeon_boss");
+         boss.getPersistentDataContainer().set(key, org.bukkit.persistence.PersistentDataType.BYTE, (byte) 1);
+ 
+-        if (boss.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
+-            boss.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(health);
++        org.bukkit.attribute.AttributeInstance healthAttr = getSafeAttribute(boss, new String[]{"MAX_HEALTH", "GENERIC_MAX_HEALTH"});
++        if (healthAttr != null) {
++            healthAttr.setBaseValue(health);
+             boss.setHealth(health);
+         }
+-        if (boss.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE) != null) {
+-            boss.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE).setBaseValue(damage);
++        org.bukkit.attribute.AttributeInstance damageAttr = getSafeAttribute(boss, new String[]{"ATTACK_DAMAGE", "GENERIC_ATTACK_DAMAGE"});
++        if (damageAttr != null) {
++            damageAttr.setBaseValue(damage);
+         }
+     }
+ 
+@@ -72,4 +74,25 @@ public class DungeonBossSystem {
+         }
+         return item;
+     }
++
++    private org.bukkit.attribute.AttributeInstance getSafeAttribute(org.bukkit.attribute.Attributable entity, String[] names) {
++        for (String name : names) {
++            try {
++                Attribute attr = null;
++                try {
++                    attr = Attribute.valueOf(name);
++                } catch (Exception e) {
++                    try {
++                        java.lang.reflect.Field field = Attribute.class.getField(name);
++                        attr = (Attribute) field.get(null);
++                    } catch (Exception ignored) {}
++                }
++
++                if (attr != null) {
++                    return entity.getAttribute(attr);
++                }
++            } catch (Exception ignored) {}
++        }
++        return null;
++    }
+ }
+diff --git a/src/main/resources/config.yml b/src/main/resources/config.yml
+index 3bcad2a..071343d 100644
+--- a/src/main/resources/config.yml
++++ b/src/main/resources/config.yml
+@@ -61,6 +61,10 @@ discord:
+     crowd_alert: true
+     # Forward in-game chat to Discord (Spam warning!)
+     chat: false
++  # Automatic stats backup to Discord
++  backup:
++    enabled: true
++    interval_hours: 6
+ 
+ # End World Reset Settings
+ end:
+diff --git a/update_plugins.ps1 b/update_plugins.ps1
+index b0a22d4..e382231 100644
+--- a/update_plugins.ps1
++++ b/update_plugins.ps1
+@@ -1,44 +1,44 @@
+-# プラグイン更新スクリプト (PowerShell版)
+-# 使用方法: .\update_plugins.ps1
++# Plugin Update Script (PowerShell)
++# Usage: .\update_plugins.ps1
+ 
+ $ErrorActionPreference = "Stop"
+ $rootDir = $PSScriptRoot
+ $targetDir = Join-Path $rootDir "target"
+ $configFile = Join-Path $rootDir "plugin_urls.json"
+ 
+-Write-Host "🚀 プラグイン更新スクリプト開始" -ForegroundColor Green
+-Write-Host "==================================" -ForegroundColor Green
++Write-Host "Plugin update script started" -ForegroundColor Green
++Write-Host "==============================" -ForegroundColor Green
+ 
+-# 設定ファイルの読み込み
++# Load config
+ if (-not (Test-Path $configFile)) {
+-    Write-Error "設定ファイルが見つかりません: $configFile"
++    Write-Error "Config file not found: $configFile"
+ }
+ $config = Get-Content $configFile -Encoding UTF8 -Raw | ConvertFrom-Json
+ 
+-# targetディレクトリの確認（なければ作成）
++# Check target dir
+ if (-not (Test-Path $targetDir)) {
+     New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+ }
+ 
+-# バックアップディレクトリを作成（既存のJARがある場合）
++# Backup existing jars
+ $existingJars = Get-ChildItem -Path $targetDir -Filter "*.jar"
+ if ($existingJars.Count -gt 0) {
+     $backupDir = Join-Path $rootDir ("backup_" + (Get-Date -Format "yyyyMMdd_HHmmss"))
+-    Write-Host "📁 バックアップディレクトリ作成: $backupDir" -ForegroundColor Yellow
++    Write-Host "Creating backup directory: $backupDir" -ForegroundColor Yellow
+     New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
+     
+     foreach ($jar in $existingJars) {
+         Copy-Item $jar.FullName -Destination $backupDir
+-        Write-Host ("📦 " + $jar.Name + " をバックアップしました") -ForegroundColor Gray
++        Write-Host ("Backed up: " + $jar.Name) -ForegroundColor Gray
+     }
+ }
+ 
+-# PatrolSpectatorPluginをビルド
+-Write-Host "🔨 PatrolSpectatorPluginをビルド中..." -ForegroundColor Yellow
++# Build PatrolSpectatorPlugin
++Write-Host "Building PatrolSpectatorPlugin..." -ForegroundColor Yellow
+ $buildConfig = $config.build_plugin
+ $buildName = $buildConfig.name
+ 
+-# pom.xmlからバージョンを読み取る
++# Read version from pom.xml
+ $pomPath = Join-Path $rootDir "pom.xml"
+ $buildVersion = $buildConfig.version
+ 
+@@ -47,39 +47,39 @@ if (Test-Path $pomPath) {
+     if ($match) {
+         if ($match.Matches.Groups[1].Value) {
+             $buildVersion = $match.Matches.Groups[1].Value
+-            Write-Host ("ℹ️ pom.xmlからバージョン " + $buildVersion + " を検出しました") -ForegroundColor Cyan
++            Write-Host ("Found version " + $buildVersion + " from pom.xml") -ForegroundColor Cyan
+         }
+     }
+ }
+ 
+ try {
+-    # ビルド実行
++    # Run build
+     $cmdArgs = "/c build_jdk21.bat"
+-    Write-Host ("   実行コマンド: cmd " + $cmdArgs) -ForegroundColor Gray
++    Write-Host ("Executing: cmd " + $cmdArgs) -ForegroundColor Gray
+     
+     $process = Start-Process -FilePath "cmd" -ArgumentList $cmdArgs -NoNewWindow -Wait -PassThru
+ 
+     if ($process.ExitCode -eq 0) {
+         $builtJar = Join-Path $targetDir ($buildName + "-" + $buildVersion + ".jar")
+         if (Test-Path $builtJar) {
+-            Write-Host ("✅ " + $buildName + " ビルド完了 (" + $builtJar + ")") -ForegroundColor Green
++            Write-Host ("Build complete: " + $builtJar) -ForegroundColor Green
+         }
+         else {
+-            Write-Host ("⚠️ ビルドは成功しましたが、ファイルが見つかりません: " + $builtJar) -ForegroundColor Yellow
++            Write-Host ("Build succeeded but file not found: " + $builtJar) -ForegroundColor Yellow
+         }
+     }
+     else {
+-        Write-Host ("❌ " + $buildName + " のビルドに失敗しました") -ForegroundColor Red
++        Write-Host ("Build failed for " + $buildName) -ForegroundColor Red
+         exit 1
+     }
+ }
+ catch {
+-    Write-Host ("❌ ビルド処理中にエラーが発生しました: " + $_.Exception.Message) -ForegroundColor Red
++    Write-Host ("Error during build: " + $_.Exception.Message) -ForegroundColor Red
+     exit 1
+ }
+ 
+-# 外部プラグインのダウンロード
+-Write-Host "⬇️ 外部プラグインをダウンロード中..." -ForegroundColor Yellow
++# Download external plugins
++Write-Host "Downloading external plugins..." -ForegroundColor Yellow
+ $plugins = $config.plugins
+ 
+ foreach ($prop in $plugins.PSObject.Properties) {
+@@ -90,12 +90,12 @@ foreach ($prop in $plugins.PSObject.Properties) {
+     $filename = if ($name.EndsWith(".jar")) { $name } else { $name + ".jar" }
+     $outputPath = Join-Path $targetDir $filename
+ 
+-    Write-Host ("📥 " + $name + " (" + $description + ") をダウンロード中...") -ForegroundColor Cyan
++    Write-Host ("Downloading " + $name + " (" + $description + ")...") -ForegroundColor Cyan
+ 
+     try {
+         if ($url -like "MODRINTH:*") {
+             $slug = $url -replace "MODRINTH:", ""
+-            Write-Host ("   Modrinth APIから最新バージョンを検索中 (" + $slug + ")...") -ForegroundColor Gray
++            Write-Host ("Searching Modrinth for latest version (" + $slug + ")...") -ForegroundColor Gray
+             $apiUrl = "https://api.modrinth.com/v2/project/" + $slug + "/version"
+             $versions = Invoke-RestMethod -Uri $apiUrl -Method Get
+             $latestVersion = $versions | Where-Object { $_.version_type -eq "release" } | Select-Object -First 1
+@@ -106,31 +106,31 @@ foreach ($prop in $plugins.PSObject.Properties) {
+             if ($latestVersion) {
+                 $downloadUrl = $latestVersion.files[0].url
+                 Invoke-WebRequest -Uri $downloadUrl -OutFile $outputPath
+-                Write-Host ("✅ " + $name + " ダウンロード完了 (Version: " + $latestVersion.version_number + ")") -ForegroundColor Green
++                Write-Host ("Download complete: " + $name + " (Version: " + $latestVersion.version_number + ")") -ForegroundColor Green
+             }
+             else {
+-                Write-Host ("❌ " + $name + " のバージョンが見つかりませんでした") -ForegroundColor Red
++                Write-Host ("No version found for " + $name) -ForegroundColor Red
+             }
+         }
+         else {
+             Invoke-WebRequest -Uri $url -OutFile $outputPath
+-            Write-Host ("✅ " + $name + " ダウンロード完了") -ForegroundColor Green
++            Write-Host ("Download complete: " + $name) -ForegroundColor Green
+         }
+     }
+     catch {
+-        Write-Host ("❌ " + $name + " のダウンロードに失敗しました: " + $_.Exception.Message) -ForegroundColor Red
++        Write-Host ("Download failed for " + $name + ": " + $_.Exception.Message) -ForegroundColor Red
+     }
+ }
+ 
+-# 結果を表示
++# Show results
+ Write-Host ""
+-Write-Host "📊 更新結果 (Targetフォルダ):" -ForegroundColor Green
+-Write-Host "==================================" -ForegroundColor Green
++Write-Host "Update results (Target folder):" -ForegroundColor Green
++Write-Host "==============================" -ForegroundColor Green
+ Get-ChildItem -Path $targetDir -Filter "*.jar" | ForEach-Object {
+     $size = [math]::Round($_.Length / 1MB, 2)
+-    Write-Host ("📦 " + $_.Name + " (" + $size + " MB)") -ForegroundColor White
++    Write-Host ("- " + $_.Name + " (" + $size + " MB)") -ForegroundColor White
+ }
+ 
+ Write-Host ""
+-Write-Host "🎉 処理完了！" -ForegroundColor Green
+-Write-Host ("📁 出力先: " + $targetDir) -ForegroundColor Yellow
++Write-Host "Done!" -ForegroundColor Green
++Write-Host ("Output directory: " + $targetDir) -ForegroundColor Yellow

@@ -1,7 +1,6 @@
 package dev.gonjy.patrolspectator;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import java.util.UUID;
@@ -20,8 +19,8 @@ public final class EngagementSystem {
     public void applyServerRules() {
         // 標準ルールはAPI経由で設定（チャットログが出ないようにするため）
         for (org.bukkit.World world : Bukkit.getWorlds()) {
-            setRule(world, org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, true);
-            setRule(world, org.bukkit.GameRule.KEEP_INVENTORY, false);
+            setDynamicRule(world, new String[]{"doDaylightCycle", "do_daylight_cycle", "minecraft:do_daylight_cycle"}, true);
+            setDynamicRule(world, new String[]{"keepInventory", "keep_inventory", "minecraft:keep_inventory"}, false);
 
             // Bedrock/Java 1.21.11+ 用のルールをAPIで安全に適用
             // 1.21.11からはスネークケース（locator_bar）に変更された可能性があるため、複数候補を試す
@@ -31,34 +30,20 @@ public final class EngagementSystem {
         }
     }
 
-    private <T> void setRule(org.bukkit.World world, org.bukkit.GameRule<T> rule, T value) {
-        try {
-            T current = world.getGameRuleValue(rule);
-            if (current != null && current.equals(value)) {
-                return; // すでに設定済みならスキップ
-            }
-            if (world.setGameRule(rule, value)) {
-                log.info("[Rules] applied (API): " + rule.getName() + " = " + value + " in " + world.getName());
-            }
-        } catch (Throwable t) {
-            log.warning("[Rules] failed (API): " + rule.getName() + " (" + t.getMessage() + ")");
-        }
-    }
 
     /** サーバーバージョンによって名称が異なる可能性があるルールを、候補リストから安全に設定 */
-    private void setDynamicRule(org.bukkit.World world, String[] candidates, boolean value) {
+    private <T> void setDynamicRule(org.bukkit.World world, String[] candidates, T value) {
         for (String name : candidates) {
             try {
                 org.bukkit.GameRule<?> rule = org.bukkit.GameRule.getByName(name);
                 if (rule != null) {
-                    // 型安全のためBooleanとして取得・比較
                     Object current = world.getGameRuleValue(rule);
-                    if (Boolean.valueOf(value).equals(current)) {
+                    if (current != null && current.equals(value)) {
                         return; // すでに設定済みならスキップ
                     }
                     @SuppressWarnings("unchecked")
-                    org.bukkit.GameRule<Boolean> boolRule = (org.bukkit.GameRule<Boolean>) rule;
-                    world.setGameRule(boolRule, value);
+                    org.bukkit.GameRule<T> tRule = (org.bukkit.GameRule<T>) rule;
+                    world.setGameRule(tRule, value);
                     log.info("[Rules] applied (Dynamic API): " + name + " = " + value + " in " + world.getName());
                     return; // 適用できたら終了
                 }
@@ -73,10 +58,10 @@ public final class EngagementSystem {
         // 基本ルールの強制（API経由）
         for (org.bukkit.World world : Bukkit.getWorlds()) {
             try {
-                // 変更が必要な場合のみセットする（API側でチェックしているが、型チェック等も含め確実にする）
-                setRuleIfNotMatch(world, org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, true);
-                setRuleIfNotMatch(world, org.bukkit.GameRule.KEEP_INVENTORY, false);
-                setRuleIfNotMatch(world, org.bukkit.GameRule.PLAYERS_SLEEPING_PERCENTAGE, 0);
+                // 変更が必要な場合のみセットする
+                setDynamicRuleIfNotMatch(world, new String[]{"doDaylightCycle", "do_daylight_cycle", "minecraft:do_daylight_cycle"}, true);
+                setDynamicRuleIfNotMatch(world, new String[]{"keepInventory", "keep_inventory", "minecraft:keep_inventory"}, false);
+                setDynamicRuleIfNotMatch(world, new String[]{"playersSleepingPercentage", "players_sleeping_percentage", "minecraft:players_sleeping_percentage"}, 0);
 
                 // 動的な設定（ログなし）
                 setDynamicRuleIfNotMatch(world, new String[] { "locator_bar", "minecraft:locator_bar", "locatorBar" },
@@ -89,29 +74,19 @@ public final class EngagementSystem {
         }
     }
 
-    private <T> void setRuleIfNotMatch(org.bukkit.World world, org.bukkit.GameRule<T> rule, T value) {
-        try {
-            T current = world.getGameRuleValue(rule);
-            if (current != null && current.equals(value)) {
-                return;
-            }
-            world.setGameRule(rule, value);
-        } catch (Throwable ignored) {
-        }
-    }
 
-    private void setDynamicRuleIfNotMatch(org.bukkit.World world, String[] candidates, boolean value) {
+    private <T> void setDynamicRuleIfNotMatch(org.bukkit.World world, String[] candidates, T value) {
         for (String name : candidates) {
             try {
                 org.bukkit.GameRule<?> rule = org.bukkit.GameRule.getByName(name);
                 if (rule != null) {
                     Object current = world.getGameRuleValue(rule);
-                    if (current instanceof Boolean && current.equals(value)) {
+                    if (current != null && current.equals(value)) {
                         return;
                     }
                     @SuppressWarnings("unchecked")
-                    org.bukkit.GameRule<Boolean> boolRule = (org.bukkit.GameRule<Boolean>) rule;
-                    world.setGameRule(boolRule, value);
+                    org.bukkit.GameRule<T> tRule = (org.bukkit.GameRule<T>) rule;
+                    world.setGameRule(tRule, value);
                     return;
                 }
             } catch (Throwable ignored) {
@@ -303,9 +278,9 @@ public final class EngagementSystem {
 
     private void notifyMilestone(Player player, long milestoneMs) {
         long hours = milestoneMs / 3600000L;
-        Component message = Component.text("🎉 素晴らしい！プレイ時間が ", NamedTextColor.GOLD)
-                .append(Component.text(hours + "時間", NamedTextColor.YELLOW))
-                .append(Component.text(" を突破しました！", NamedTextColor.GOLD));
+        String message = ChatColor.GOLD + "🎉 素晴らしい！プレイ時間が " 
+                + ChatColor.YELLOW + hours + "時間" 
+                + ChatColor.GOLD + " を突破しました！";
 
         player.sendMessage(message);
         // Title通知の追加
@@ -355,14 +330,13 @@ public final class EngagementSystem {
     }
 
     private void notifyRankUp(Player player, String rank) {
-        NamedTextColor color = getRankColor(rank);
+        org.bukkit.ChatColor color = getLegacyRankColor(rank);
 
-        Bukkit.broadcast(Component.text(player.getName() + " さんがランク ", NamedTextColor.YELLOW)
-                .append(Component.text(rank, color))
-                .append(Component.text(" になりました！", NamedTextColor.YELLOW)));
+        Bukkit.broadcastMessage(ChatColor.YELLOW + player.getName() + " さんがランク " 
+                + color + rank 
+                + ChatColor.YELLOW + " になりました！");
 
-        player.sendMessage(Component.text("✨ ランクアップ！ ✨ 新しいランク: ", NamedTextColor.GOLD)
-                .append(Component.text(rank, color)));
+        player.sendMessage(ChatColor.GOLD + "✨ ランクアップ！ ✨ 新しいランク: " + color + rank);
 
         // Title通知の追加
         player.sendTitle(
@@ -378,20 +352,6 @@ public final class EngagementSystem {
         }
     }
 
-    private NamedTextColor getRankColor(String rank) {
-        switch (rank) {
-            case "Bronze":
-                return NamedTextColor.GOLD; // Or a custom copper-like color
-            case "Silver":
-                return NamedTextColor.GRAY;
-            case "Gold":
-                return NamedTextColor.YELLOW;
-            case "Legend":
-                return NamedTextColor.LIGHT_PURPLE;
-            default:
-                return NamedTextColor.WHITE;
-        }
-    }
 
     private org.bukkit.ChatColor getLegacyRankColor(String rank) {
         switch (rank) {
