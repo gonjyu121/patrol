@@ -1,6 +1,6 @@
 # src/main/resources/config.yml（差し替え）
 patrol:
-  intervalSeconds: 7
+  intervalSeconds: 5
   announce: true
   titles:
     enabled: true
@@ -15,7 +15,7 @@ patrol:
       pitch: 1.2
   tour:
     enabled: true
-    dwellSeconds: 7
+    dwellSeconds: 5
     # 外部ファイルの相対パス（プラグインデータフォルダ直下）
     file: tourist_locations.yml
     # 既存の内蔵リスト（外部ファイルが無い時のフォールバック）
@@ -36,6 +36,9 @@ patrol:
   chunkPreLoading:
     enabled: true
     secondsBefore: 3 # 移動の3秒前に事前読み込みを開始
+  # シネマティック追跡の更新間隔（ticks）: 1=最速(20fps), 2=標準(10fps), 4=軽量(5fps)
+  # 数値を大きくするとネットワーク負荷が下がります
+  trackingUpdateIntervalTicks: 2
 
 # YouTube Chat Integration (Safe Mode)
 youtube:
@@ -59,11 +62,13 @@ discord:
     events: true
     # Notify when player count reaches specific numbers (e.g. 3, 5, 10)
     crowd_alert: true
-    # Forward in-game chat to Discord (Spam warning!)
-    chat: false
+    # Forward in-game chat to Discord (Optimized for OneComme)
+    chat: true
+    # カメラ役が切断した時にDiscordに通知する
+    quit: true
   # Automatic stats backup to Discord
   backup:
-    enabled: true
+    enabled: false
     interval_hours: 6
 
 # End World Reset Settings
@@ -73,9 +78,53 @@ end:
 
 # Performance / Low-Spec Optimization
 performance:
-  lowSpecMode: true
-  minIntervalSeconds: 60
+  lowSpecMode: false
+  minIntervalSeconds: 5
   maxCameraMovesPerMinute: 3
-  disableWorldScan: true
-  disableAutoEventWhilePatrol: true
+  disableWorldScan: false
+  disableAutoEventWhilePatrol: false
   debugLog: false
+
+# Cloud Sync (GitHub Gist)
+# 複数のサーバー間でランキングデータを同期するための設定です。
+# 手順: GitHubアカウント作成 -> Gist作成 -> PAT(トークン)発行
+github:
+  enabled: true
+  token: "YOUR_GITHUB_TOKEN_HERE"
+  gistId: "74ed4196a9eaf6cef18a7079c080fa5e"
+  # 同期するファイル名（通常は player_stats.yml）
+  fileName: "player_stats.yml"
+  # サーバー終了時だけでなく、定期的に保存するか（時間単位, 0で無効）
+  syncIntervalHours: 1
+
+# 過去サーバーからの引き継ぎデータ（自動反映用）
+# ここに記載されたプレイヤーが参加するか、起動時にUUIDが一致すれば、自動で実績を合算します。
+legacy_stats:
+  - name: "minato20131201"
+    totalPlayMs: 3163260000 # 878時間41分
+  - name: "gjtx"
+    totalPlayMs: 3153240000 # 875時間54分
+  - name: "banto2008"
+    totalPlayMs: 3141600000 # 872時間40分
+  - name: "TOWA2006"
+    enderDragonKills: 3
+    hasKilledHardDragon: true
+  - name: "miya2012"
+    enderDragonKills: 1
+    hasKilledHardDragon: false
+  - name: "Hopedguide89503"
+    enderDragonKills: 1
+    hasKilledHardDragon: true
+
+# Engagement / YouTube Strategy
+engagement:
+  enabled: true
+  # Interval in minutes between automated broadcasts
+  interval_minutes: 15
+  # Random messages to encourage YouTube participation
+  messages:
+    - "§b[YouTube] §f24時間配信中！高評価とチャンネル登録お願いします！"
+    - "§b[YouTube] §fこのサーバーが面白いと思ったら、ぜひYouTubeの配信も覗いてみてね！"
+    - "§b[YouTube] §fYouTubeのライブチャットでの発言も、マイクラ内に読み上げられますよ！"
+    - "§b[YouTube] §fチャンネル登録者が増えると、サーバーに新しい機能が追加されるかも...？"
+

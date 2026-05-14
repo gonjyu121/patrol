@@ -163,8 +163,7 @@ public class AutoEventSystem implements Listener {
         Bukkit.broadcastMessage(ChatColor.GOLD + "🎊 自動イベント開始！ 🎊");
         Bukkit.broadcastMessage(ChatColor.YELLOW + "🎮 " + eventName);
         Bukkit.broadcastMessage(ChatColor.GREEN + "⏰ 制限時間: 15分間");
-        Bukkit.broadcastMessage(ChatColor.AQUA + "🏆 上位3位に特別報酬！");
-        Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "💎 参加者全員に報酬配布！");
+        Bukkit.broadcastMessage(ChatColor.AQUA + "🏆 上位3位にはランキングポイントと保護時間ボーナス！");
         Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         // Discord通知
@@ -176,9 +175,6 @@ public class AutoEventSystem implements Listener {
                 mainPlugin.getDiscordWebhookClient().send(discordMsg);
             }
         }
-
-        // イベント開始時の報酬配布
-        giveEventStartRewards(eventType);
 
         // 15分後に自動終了
         Bukkit.getScheduler().runTaskLater(plugin, this::endEvent, 15 * 60 * 20L);
@@ -235,58 +231,7 @@ public class AutoEventSystem implements Listener {
         playerPoints.clear();
     }
 
-    private ItemStack[] getEventRewards(String eventType) {
-        switch (eventType) {
-            case "mob_hunt":
-                return new ItemStack[] {
-                        new ItemStack(Material.ARROW, 32),
-                        new ItemStack(Material.BOW, 1),
-                        new ItemStack(Material.COOKED_BEEF, 16)
-                };
-            case "mining_contest":
-                return new ItemStack[] {
-                        new ItemStack(Material.IRON_PICKAXE, 1),
-                        new ItemStack(Material.TORCH, 64),
-                        new ItemStack(Material.BREAD, 16)
-                };
-            case "survival_challenge":
-                return new ItemStack[] {
-                        new ItemStack(Material.GOLDEN_APPLE, 8),
-                        new ItemStack(Material.IRON_CHESTPLATE, 1),
-                        new ItemStack(Material.SHIELD, 1)
-                };
-            case "speed_contest":
-                return new ItemStack[] {
-                        createPotion(org.bukkit.potion.PotionType.SWIFTNESS),
-                        new ItemStack(Material.LEATHER_BOOTS, 1),
-                        new ItemStack(Material.COOKED_BEEF, 8)
-                };
-            default:
-                return new ItemStack[] {
-                        new ItemStack(Material.BREAD, 8)
-                };
-        }
-    }
 
-    private ItemStack createPotion(org.bukkit.potion.PotionType type) {
-        ItemStack potion = new ItemStack(Material.POTION);
-        org.bukkit.inventory.meta.PotionMeta meta = (org.bukkit.inventory.meta.PotionMeta) potion.getItemMeta();
-        if (meta != null) {
-            meta.setBasePotionType(type);
-            potion.setItemMeta(meta);
-        }
-        return potion;
-    }
-
-    private void giveEventStartRewards(String eventType) {
-        ItemStack[] rewards = getEventRewards(eventType);
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            for (ItemStack item : rewards) {
-                player.getInventory().addItem(item);
-            }
-            player.sendMessage(ChatColor.GREEN + "📦 イベント参加報酬を配布しました！");
-        }
-    }
 
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
@@ -577,13 +522,6 @@ public class AutoEventSystem implements Listener {
     }
 
     private void giveTopPlayerReward(Player player, int rank) {
-        ItemStack[] rewards = getTopPlayerRewards(rank);
-        for (ItemStack item : rewards) {
-            player.getInventory().addItem(item);
-        }
-
-        String rankMessage = getRankString(rank);
-        player.sendMessage(ChatColor.GOLD + "🏆 " + rankMessage + " 特別報酬を配布しました！");
         giveProtectionReward(player, rank);
     }
 
@@ -612,30 +550,7 @@ public class AutoEventSystem implements Listener {
         }
     }
 
-    private ItemStack[] getTopPlayerRewards(int rank) {
-        switch (rank) {
-            case 1:
-                return new ItemStack[] {
-                        new ItemStack(Material.DIAMOND, 2),
-                        new ItemStack(Material.GOLDEN_APPLE, 4),
-                        new ItemStack(Material.EXPERIENCE_BOTTLE, 16)
-                };
-            case 2:
-                return new ItemStack[] {
-                        new ItemStack(Material.DIAMOND, 1),
-                        new ItemStack(Material.GOLDEN_APPLE, 2),
-                        new ItemStack(Material.EXPERIENCE_BOTTLE, 8)
-                };
-            case 3:
-                return new ItemStack[] {
-                        new ItemStack(Material.IRON_INGOT, 3),
-                        new ItemStack(Material.GOLDEN_APPLE, 1),
-                        new ItemStack(Material.EXPERIENCE_BOTTLE, 4)
-                };
-            default:
-                return new ItemStack[] {};
-        }
-    }
+
 
     private String getRankString(int rank) {
         switch (rank) {

@@ -21,6 +21,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     private DiscordWebhookClient discordWebhookClient;
     private BountyManager bountyManager;
     private EndGameManager endGameManager;
+    private GistSyncManager gistSyncManager;
+    private EngagementBroadcaster engagementBroadcaster;
 
     // タイトル/音の設定
     public static class TitleConf {
@@ -59,6 +61,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         public boolean disableWorldScan;
         public boolean disableAutoEventWhilePatrol;
         public boolean debugLog;
+        public int trackingUpdateIntervalTicks;
     }
 
     public static class AutoStartConf {
@@ -103,6 +106,12 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         // 保護データの初期化
         protectionData = new ProtectionData(this);
 
+        // クラウド同期 (GitHub Gist)
+        gistSyncManager = new GistSyncManager(this);
+        if (gistSyncManager.isConfigured()) {
+            gistSyncManager.pull();
+        }
+
         // ストレージ
         statsStorage = new PlayerStatsStorage(this);
 
@@ -126,6 +135,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         dungeonBuilder = new dev.gonjy.patrolspectator.dungeon.DungeonBuilder(this, dungeonManager);
         dungeonLootSystem = new dev.gonjy.patrolspectator.dungeon.DungeonLootSystem();
         dungeonBossSystem = new dev.gonjy.patrolspectator.dungeon.DungeonBossSystem();
+
+        // Engagement Broadcaster
+        engagementBroadcaster = new EngagementBroadcaster(this);
+        engagementBroadcaster.start();
 
         // イベントリスナーの登録
         getServer().getPluginManager().registerEvents(new RankingEventListener(statsStorage, engagementSystem), this);
@@ -190,6 +203,9 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         // 自動イベントシステムの開始
         autoEventSystem.startAutoEvents();
 
+        // ゲームモード強制システムの開始 (パトロール外でもサバイバルを維持)
+        gameModeEnforcer.start();
+
         // ルール定期適用タスク（3分間隔に緩和）
         getServer().getScheduler().runTaskTimer(this, () -> {
             engagementSystem.applyServerRulesQuietly();
@@ -212,7 +228,16 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
                 getServer().getScheduler().runTaskTimerAsynchronously(this, this::backupStats,
                         20 * 60 * 10L, // 10分後に初回実行
                         20L * 3600 * intervalHours);
-                getLogger().info("[Discord] Stats backup scheduled every " + intervalHours + " hours.");
+            }
+        }
+
+        // GitHub Periodic Sync
+        if (gistSyncManager.isConfigured()) {
+            int intervalHours = getConfig().getInt("github.syncIntervalHours", 1);
+            if (intervalHours > 0) {
+                getServer().getScheduler().runTaskTimerAsynchronously(this, gistSyncManager::push,
+                        20L * 3600 * intervalHours, 20L * 3600 * intervalHours);
+                getLogger().info("[CloudSync] Periodic push scheduled every " + intervalHours + " hours.");
             }
         }
 
@@ -244,6 +269,11 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
                         // Delay slightly to ensure player is fully logged in
                         getServer().getScheduler().runTaskLater(PatrolSpectatorPlugin.this, () -> {
                             if (joinedPlayer.isOnline()) {
+                                // アンチチート除外コマンド実行 (GrimAC等)
+                                String exemptCmd = "grim exempt " + joinedPlayer.getName();
+                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), exemptCmd);
+                                getLogger().info("[AutoStart] Executed anti-cheat exemption: " + exemptCmd);
+
                                 patrolManager.startPatrol(joinedPlayer, tourConf.dwellSeconds);
                             } else {
                                 getLogger().warning(
@@ -277,6 +307,35 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
         getLogger().info("PatrolSpectatorPlugin has been enabled!");
         getLogger().info("========================================");
+    }
+
+    /**
+     * プラグインの設定と統計データを再読み込みします。
+     */
+    public void reloadPlugin() {
+        reloadConfig();
+        loadConfigValues();
+        
+        // 統計データの再読み込みとレガシー反映
+        if (statsStorage != null) {
+            statsStorage.saveSync(); // 現在のデータを一旦保存
+            statsStorage.applyLegacyStatsFromConfig();
+        }
+        
+        // Discordクライアントの更新
+        if (discordWebhookClient != null) {
+            discordWebhookClient.reload();
+        }
+
+        // エンゲージメント放送の再開
+        if (engagementBroadcaster != null) {
+            engagementBroadcaster.start();
+        }
+        
+        // クラウド同期マネージャーの再生成（トークン等が変わった可能性のため）
+        gistSyncManager = new GistSyncManager(this);
+        
+        getLogger().info("[Patrol] Configuration and legacy stats reloaded.");
     }
 
     private void logGitInfo() {
@@ -315,6 +374,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
             gameModeEnforcer.shutdown();
         if (endGameManager != null)
             endGameManager.shutdown();
+        if (engagementBroadcaster != null)
+            engagementBroadcaster.stop();
 
         // 最後にストレージ保存
         if (statsStorage != null) {
@@ -323,6 +384,12 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         if (participationManager != null) {
             participationManager.shutdown();
         }
+
+        // 最後にクラウドへ保存
+        if (gistSyncManager != null && gistSyncManager.isConfigured()) {
+            gistSyncManager.push();
+        }
+
         if (this.tickMonitor != null) {
             this.tickMonitor.stop();
         }
@@ -372,6 +439,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         performanceConf.disableAutoEventWhilePatrol = getConfig().getBoolean("performance.disableAutoEventWhilePatrol",
                 false);
         performanceConf.debugLog = getConfig().getBoolean("performance.debugLog", false);
+        performanceConf.trackingUpdateIntervalTicks = getConfig().getInt("patrol.trackingUpdateIntervalTicks", 2);
 
         // autoStart
         autoStartConf = new AutoStartConf();
@@ -440,6 +508,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
     public EndGameManager getEndGameManager() {
         return endGameManager;
+    }
+
+    public TickMonitor getTickMonitor() {
+        return tickMonitor;
     }
 
     public int getPatrolIntervalSeconds() {

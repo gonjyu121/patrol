@@ -25,6 +25,7 @@ public class RankingDisplaySystem {
 
     private final JavaPlugin plugin;
     private final PlayerStatsStorage statsStorage;
+    private boolean isDisplaying = false;
 
     private BukkitTask rankingTask;
     private static final long RANKING_INTERVAL = 300L; // 5分 = 300秒
@@ -86,6 +87,9 @@ public class RankingDisplaySystem {
     }
 
     public void displayRankings() {
+        if (isDisplaying) return;
+        isDisplaying = true;
+
         // 通知
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.sendTitle(
@@ -114,40 +118,57 @@ public class RankingDisplaySystem {
                 }
             }
 
-            // メメインスレッドに戻して順次表示
+            // メインスレッドに戻して順次表示
             Bukkit.getScheduler().runTask(plugin, () -> {
-                displayAllRankingsSequentially(data);
+                try {
+                    displayAllRankingsSequentially(data);
+                } finally {
+                    isDisplaying = false;
+                }
             });
         });
     }
 
     private void displayAllRankingsSequentially(RankingData data) {
-        displayTotalPlayTimeRanking(data.totalPlayTime);
+        StringBuilder discordSummary = new StringBuilder();
+        discordSummary.append("🏆 **サーバーランキング発表** 🏆\n\n");
+
+        // 1. 累計プレイ時間
+        displayTotalPlayTimeRanking(data.totalPlayTime, discordSummary);
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            displayTodayPlayTimeRanking(data.todayPlayTime);
+            // 2. 今日のプレイ時間
+            displayTodayPlayTimeRanking(data.todayPlayTime, discordSummary);
 
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                displayContinuousSurvivalTimeRanking(data.continuousSurvival);
+                // 3. 連続生存時間
+                displayContinuousSurvivalTimeRanking(data.continuousSurvival, discordSummary);
 
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    displayKillCountRanking(data.kills);
+                    // 4. PK数
+                    displayKillCountRanking(data.kills, discordSummary);
 
                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                        displayEnderDragonKillRanking(data.dragonKills);
+                        // 5. エンドラ討伐数
+                        displayEnderDragonKillRanking(data.dragonKills, discordSummary);
 
                         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                            displayEventPointsRanking(data.eventPoints);
+                            // 6. イベントポイント
+                            displayEventPointsRanking(data.eventPoints, discordSummary);
 
                             Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                                // 7. 迷宮踏破
                                 if (data.dungeonLevels != null && !data.dungeonLevels.isEmpty()) {
-                                    displayDungeonRanking(data.dungeonLevels);
+                                    displayDungeonRanking(data.dungeonLevels, discordSummary);
                                 }
 
                                 Bukkit.getServer().broadcastMessage("");
                                 Bukkit.getServer()
                                         .broadcastMessage(ChatColor.GRAY + "※ " + ChatColor.GOLD + "[★]" + ChatColor.GRAY
                                                 + " は " + ChatColor.RED + "ヴォイド・ドラゴン" + ChatColor.GRAY + " 討伐の証です");
+                                
+                                // Discordへ一括送信
+                                sendSummaryToDiscord(discordSummary.toString());
                             }, 40L);
                         }, 40L);
                     }, 40L);
@@ -156,26 +177,19 @@ public class RankingDisplaySystem {
         }, 40L);
     }
 
-    private void broadcastToDiscord(String title, List<String> lines) {
+    private void sendSummaryToDiscord(String content) {
         if (plugin instanceof PatrolSpectatorPlugin) {
             DiscordWebhookClient client = ((PatrolSpectatorPlugin) plugin).getDiscordWebhookClient();
             if (client != null) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("**").append(title).append("**\n");
-                for (String line : lines) {
-                    sb.append(line).append("\n");
-                }
-                client.send(sb.toString());
+                client.send(content);
             }
         }
     }
 
-    /**
-     * 累計プレイ時間ランキングを表示します。
-     */
-    private void displayTotalPlayTimeRanking(List<Map.Entry<UUID, Long>> ranking) {
 
-        List<String> discordLines = new ArrayList<>();
+
+    private void displayTotalPlayTimeRanking(List<Map.Entry<UUID, Long>> ranking, StringBuilder discord) {
+        discord.append("**🏆 累計プレイ時間ランキング**\n");
 
         // Title表示
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -211,23 +225,21 @@ public class RankingDisplaySystem {
                         + ChatColor.GOLD + timeDisplay;
                 Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + line);
 
-                // Remove color codes for Discord
-                discordLines.add(ChatColor.stripColor(medal + " " + playerName + ": " + timeDisplay));
+                discord.append(ChatColor.stripColor(medal + " " + playerName + ": " + timeDisplay)).append("\n");
             }
         } else {
             Bukkit.getServer()
                     .broadcastMessage(ChatColor.GRAY + "  📊 まだ記録保持者がいません。あなたの挑戦を待っています！");
-            discordLines.add("記録保持者なし");
+            discord.append("記録保持者なし\n");
         }
-
-        broadcastToDiscord("🏆 累計プレイ時間ランキング", discordLines);
+        discord.append("\n");
     }
 
     /**
      * 今日のプレイ時間ランキングを表示します。
      */
-    private void displayTodayPlayTimeRanking(List<Map.Entry<UUID, Long>> ranking) {
-        List<String> discordLines = new ArrayList<>();
+    private void displayTodayPlayTimeRanking(List<Map.Entry<UUID, Long>> ranking, StringBuilder discord) {
+        discord.append("**📅 今日のプレイ時間ランキング**\n");
 
         // Title表示
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -263,21 +275,21 @@ public class RankingDisplaySystem {
                         + ChatColor.GREEN + timeDisplay;
                 Bukkit.getServer().broadcastMessage(line);
 
-                discordLines.add(ChatColor.stripColor(medal + " " + playerName + ": " + timeDisplay));
+                discord.append(ChatColor.stripColor(medal + " " + playerName + ": " + timeDisplay)).append("\n");
             }
         } else {
             Bukkit.getServer()
                     .broadcastMessage(ChatColor.GRAY + "  📅 まだ本日の記録保持者がいません。");
-            discordLines.add("記録保持者なし");
+            discord.append("記録保持者なし\n");
         }
-
-        broadcastToDiscord("📅 今日のプレイ時間ランキング", discordLines);
+        discord.append("\n");
     }
 
     /**
      * 連続生存時間ランキングを表示します。
      */
-    private void displayContinuousSurvivalTimeRanking(List<Map.Entry<UUID, Long>> ranking) {
+    private void displayContinuousSurvivalTimeRanking(List<Map.Entry<UUID, Long>> ranking, StringBuilder discord) {
+        discord.append("**🔥 連続生存時間ランキング**\n");
 
         // Title表示
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -311,17 +323,22 @@ public class RankingDisplaySystem {
 
                 Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "  " + medal + " " + status + " "
                         + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": " + ChatColor.RED + timeDisplay);
+
+                discord.append(ChatColor.stripColor(medal + " " + playerName + ": " + timeDisplay)).append("\n");
             }
         } else {
             Bukkit.getServer()
                     .broadcastMessage(ChatColor.GRAY + "  🔥 まだ生存者はいません。生き残れ！");
+            discord.append("生存者なし\n");
         }
+        discord.append("\n");
     }
 
     /**
      * PK数ランキングを表示します。
      */
-    private void displayKillCountRanking(List<Map.Entry<UUID, Integer>> ranking) {
+    private void displayKillCountRanking(List<Map.Entry<UUID, Integer>> ranking, StringBuilder discord) {
+        discord.append("**⚔️ PK数ランキング**\n");
 
         // Title表示
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -346,18 +363,22 @@ public class RankingDisplaySystem {
 
                 Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "  " + medal + " " + status + " "
                         + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": " + ChatColor.RED + kills + "キル");
+
+                discord.append(ChatColor.stripColor(medal + " " + playerName + ": " + kills + "キル")).append("\n");
             }
         } else {
             Bukkit.getServer()
                     .broadcastMessage(ChatColor.GRAY + "  ⚔️ まだPK王はいません。最初の王者になるのは誰だ！？");
+            discord.append("記録保持者なし\n");
         }
+        discord.append("\n");
     }
 
     /**
      * エンダードラゴン討伐数ランキングを表示します。
      */
-    private void displayEnderDragonKillRanking(List<Map.Entry<UUID, Integer>> ranking) {
-        List<String> discordLines = new ArrayList<>();
+    private void displayEnderDragonKillRanking(List<Map.Entry<UUID, Integer>> ranking, StringBuilder discord) {
+        discord.append("**🐉 エンダードラゴン討伐数ランキング**\n");
 
         // Title表示
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -386,26 +407,26 @@ public class RankingDisplaySystem {
                         + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": " + ChatColor.LIGHT_PURPLE
                         + dragonKills + "討伐");
 
-                discordLines.add(ChatColor.stripColor(medal + " " + playerName + ": " + dragonKills + "討伐"));
+                discord.append(ChatColor.stripColor(medal + " " + playerName + ": " + dragonKills + "討伐")).append("\n");
             }
         } else {
             Bukkit.getServer().broadcastMessage(
                     ChatColor.GRAY + "  🐉 まだドラゴンスレイヤーはいません。伝説を作るのはあなたです！");
-            discordLines.add("記録保持者なし");
+            discord.append("記録保持者なし\n");
         }
-
-        broadcastToDiscord("🐉 エンダードラゴン討伐数ランキング", discordLines);
+        discord.append("\n");
     }
 
     /**
      * イベントポイントランキングを表示します。
      */
-    private void displayEventPointsRanking(List<Map.Entry<UUID, Integer>> ranking) {
+    private void displayEventPointsRanking(List<Map.Entry<UUID, Integer>> ranking, StringBuilder discord) {
+        discord.append("**🎮 イベントポイントランキング**\n");
 
         // Title表示
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.sendTitle(
-                    ChatColor.AQUA + "🎮 イベントポイントランキング 🎮",
+                    ChatColor.AQUA + "🎮 イベントPtランキング 🎮",
                     "",
                     10, 40, 10);
         }
@@ -426,17 +447,23 @@ public class RankingDisplaySystem {
                 Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "  " + medal + " " + status + " "
                         + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": " + ChatColor.AQUA + eventPoints
                         + "ポイント");
+
+                discord.append(ChatColor.stripColor(medal + " " + playerName + ": " + eventPoints + "ポイント")).append("\n");
             }
         } else {
             Bukkit.getServer()
                     .broadcastMessage(ChatColor.GRAY + "  🎮 まだイベント勝者はいません。次のイベントで勝利を掴め！");
+            discord.append("記録保持者なし\n");
         }
+        discord.append("\n");
     }
 
     /**
      * 迷宮踏破ランキングを表示します。
      */
-    private void displayDungeonRanking(List<Map.Entry<UUID, Integer>> ranking) {
+    private void displayDungeonRanking(List<Map.Entry<UUID, Integer>> ranking, StringBuilder discord) {
+        discord.append("**💀 迷宮踏破ランキング**\n");
+
         // Title表示
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.sendTitle(
@@ -462,8 +489,13 @@ public class RankingDisplaySystem {
                 Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "  " + medal + " " + status + " "
                         + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": " + ChatColor.RED + "地下 " + level
                         + " 階");
+
+                discord.append(ChatColor.stripColor(medal + " " + playerName + ": 地下 " + level + " 階")).append("\n");
             }
+        } else {
+            discord.append("記録保持者なし\n");
         }
+        discord.append("\n");
     }
 
     /**

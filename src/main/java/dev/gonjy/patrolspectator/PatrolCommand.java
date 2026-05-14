@@ -102,6 +102,15 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                 plugin.backupStats();
                 break;
             }
+            case "reload": {
+                if (!sender.isOp()) {
+                    sender.sendMessage("§cPermission denied.");
+                    return true;
+                }
+                plugin.reloadPlugin();
+                sender.sendMessage("§a[Patrol] Configuration and legacy stats reloaded.");
+                break;
+            }
             default:
                 sender.sendMessage("Unknown subcommand. /patrol help");
         }
@@ -115,6 +124,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             if (sender.isOp()) {
                 sub.add("reset_survival");
                 sub.add("backup");
+                sub.add("reload");
             }
             List<String> ret = new ArrayList<>();
             for (String s : sub) {

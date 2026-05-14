@@ -42,6 +42,9 @@ public class PlayerStatsStorage {
         }
 
         startAutoSaveTask();
+
+        // レガシーデータの自動適用（Unknownの修復）
+        applyLegacyStatsFromConfig();
     }
 
     private void resetOnlineStatusOnStartup() {
@@ -81,6 +84,10 @@ public class PlayerStatsStorage {
             yaml.set(base + ".lastContinuousJoinAtMs", now);
 
             dirty = true;
+
+            // レガシーデータの適用チェック
+            applyLegacyStats(playerId, playerName);
+
             return count;
         }
     }
@@ -468,5 +475,93 @@ public class PlayerStatsStorage {
             yaml.set(basePath(playerId) + ".currentRank", rank);
             dirty = true;
         }
+    }
+
+    /**
+     * config.yml からレガシーデータを読み込み、全プレイヤーに対して適用を試みます。
+     * 特に「Unknown」となっているデータの修復や、初期実績の付与を目的とします。
+     */
+    public void applyLegacyStatsFromConfig() {
+        plugin.reloadConfig();
+        java.util.List<java.util.Map<?, ?>> legacyList = plugin.getConfig().getMapList("legacy_stats");
+        if (legacyList == null || legacyList.isEmpty()) return;
+
+        for (java.util.Map<?, ?> entry : legacyList) {
+            String name = (String) entry.get("name");
+            Object totalMsObj = entry.get("totalPlayMs");
+            if (name == null || totalMsObj == null) continue;
+
+            Object dragonKillsObj = entry.get("enderDragonKills");
+            Object hardSlayerObj = entry.get("hasKilledHardDragon");
+
+            long legacyMs = (totalMsObj instanceof Number) ? ((Number) totalMsObj).longValue() : 0L;
+            int legacyDragonKills = (dragonKillsObj instanceof Number) ? ((Number) dragonKillsObj).intValue() : 0;
+            boolean legacyHardSlayer = (hardSlayerObj instanceof Boolean) ? (Boolean) hardSlayerObj : false;
+
+            // オフラインモード用UUIDを計算
+            UUID offlineUuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            
+            synchronized (yaml) {
+                applyLegacyStats(offlineUuid, name, legacyMs, legacyDragonKills, legacyHardSlayer);
+            }
+        }
+    }
+
+    /**
+     * 特定のプレイヤーに対してレガシーデータを適用します（ログイン時など）。
+     */
+    private void applyLegacyStats(UUID uuid, String name) {
+        java.util.List<java.util.Map<?, ?>> legacyList = plugin.getConfig().getMapList("legacy_stats");
+        if (legacyList == null || legacyList.isEmpty()) return;
+
+        for (java.util.Map<?, ?> entry : legacyList) {
+            String legacyName = (String) entry.get("name");
+            if (name.equalsIgnoreCase(legacyName)) {
+                Object totalMsObj = entry.get("totalPlayMs");
+                Object dragonKillsObj = entry.get("enderDragonKills");
+                Object hardSlayerObj = entry.get("hasKilledHardDragon");
+
+                long legacyMs = (totalMsObj instanceof Number) ? ((Number) totalMsObj).longValue() : 0L;
+                int legacyDragonKills = (dragonKillsObj instanceof Number) ? ((Number) dragonKillsObj).intValue() : 0;
+                boolean legacyHardSlayer = (hardSlayerObj instanceof Boolean) ? (Boolean) hardSlayerObj : false;
+
+                applyLegacyStats(uuid, name, legacyMs, legacyDragonKills, legacyHardSlayer);
+                break;
+            }
+        }
+    }
+
+    /**
+     * 内部用：レガシーデータを適用し、フラグを立てます。
+     */
+    private void applyLegacyStats(UUID uuid, String name, long legacyMs, int legacyDragonKills, boolean legacyHardSlayer) {
+        String base = basePath(uuid);
+        // 既に適用済み、または既に十分な時間を持っている場合はスキップ（二重適用防止）
+        if (yaml.getBoolean(base + ".legacyApplied", false)) return;
+
+        // 名前が Unknown の場合は上書き、そうでなければ維持
+        String currentName = yaml.getString(base + ".name", "Unknown");
+        if (currentName.equals("Unknown")) {
+            yaml.set(base + ".name", name);
+        }
+
+        // プレイ時間を加算
+        long currentTotal = yaml.getLong(base + ".totalPlayMs", 0L);
+        yaml.set(base + ".totalPlayMs", currentTotal + legacyMs);
+
+        // ドラゴン討伐数を加算
+        int currentDragonKills = yaml.getInt(base + ".enderDragonKills", 0);
+        yaml.set(base + ".enderDragonKills", currentDragonKills + legacyDragonKills);
+
+        // ハード討伐フラグ（一度でも倒していればOK）
+        if (legacyHardSlayer) {
+            yaml.set(base + ".hasKilledHardDragon", true);
+        }
+        
+        // 適用済みフラグを立てる
+        yaml.set(base + ".legacyApplied", true);
+        dirty = true;
+        
+        plugin.getLogger().info("[Legacy] Applied stats to player " + name + " (" + uuid + "): " + legacyMs + "ms, " + legacyDragonKills + " kills");
     }
 }

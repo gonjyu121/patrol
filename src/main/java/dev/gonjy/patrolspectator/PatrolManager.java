@@ -60,6 +60,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
 
     // シネマティック追跡用タスク（エンドラ等で使用）
     private BukkitTask trackingTask;
+    private org.bukkit.entity.ArmorStand cinematicCameraStand;
 
     /**
      * コンストラクタ。
@@ -240,6 +241,10 @@ public class PatrolManager implements org.bukkit.event.Listener {
      * @param dwellSeconds 各スポットの滞在時間（秒）
      */
     public void startPatrol(Player camera, int dwellSeconds) {
+        if (plugin.getTickMonitor() != null) {
+            plugin.getTickMonitor().resetPauseState();
+        }
+
         stopPatrol(); // 既存タスクがあれば停止
         stopTracking(); // 追跡タスクも停止
 
@@ -306,6 +311,10 @@ public class PatrolManager implements org.bukkit.event.Listener {
      * （以前発生した「全員スペクテイター化事故」への安全策）
      */
     public void stopPatrol() {
+        if (plugin.getTickMonitor() != null) {
+            plugin.getTickMonitor().resetPauseState();
+        }
+
         if (patrolTask != null) {
             patrolTask.cancel();
             patrolTask = null;
@@ -574,11 +583,15 @@ public class PatrolManager implements org.bukkit.event.Listener {
         // pitch が極端（真下/真上）になりすぎないよう補正：±85度にクリップ
         float safePitch = Math.max(-85f, Math.min(85f, nextLocation.pitch));
 
+        // テレポート前に観戦状態を解除（視点ロック解除対策）
+        stopSpectating(camera);
+
         // テレポート実行
         org.bukkit.Location loc = new org.bukkit.Location(w, nextLocation.x, nextLocation.y, nextLocation.z,
                 nextLocation.yaw, safePitch);
+        camera.setGameMode(GameMode.SPECTATOR); // 移動前にスペクテイターにしておく
         camera.teleport(loc);
-        camera.setGameMode(GameMode.SPECTATOR); // 強制適用
+        camera.setGameMode(GameMode.SPECTATOR); // 移動後も強制適用
         camera.setFlying(true); // スペクテイターモードでの重力落下（視点ズレ）防止
 
         // タイトル表示（エンドリセット待機中なら残り時間を追記）
@@ -639,6 +652,9 @@ public class PatrolManager implements org.bukkit.event.Listener {
             lastSpectatedUuid = target.getUniqueId();
         }
 
+        // 視点切り替え失敗対策：次のターゲットへ移る前に、現在の観戦（SpectatorTarget）を解除する
+        stopSpectating(camera);
+
         // 3. まず同じ場所にテレポートさせる（ワールド読み込み・チャンク同期のため）
         // 低スペックモード：移動が多すぎないよう最低限の遅延を入れる
         Location targetLoc = target.getLocation();
@@ -648,6 +664,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
             // ワールドが異なる場合は1tick遅延実行（Paper/Magma負荷対策）
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (camera.isOnline() && target.isValid()) {
+                    camera.setGameMode(GameMode.SPECTATOR); // テレポート前にスペクテイター化
                     camera.teleport(target.getLocation());
                     camera.setGameMode(GameMode.SPECTATOR); // ワールド移動直後に適用して落下防止
                     camera.setFlying(true);
@@ -768,8 +785,31 @@ public class PatrolManager implements org.bukkit.event.Listener {
         stopTracking();
         stopSpectating(camera);
 
+        // 対象と同じワールド・位置へテレポート（ワールドを跨ぐ追跡を可能にする）
+        org.bukkit.Location targetLoc = target.getLocation();
+        if (!camera.getWorld().equals(targetLoc.getWorld())) {
+            camera.setGameMode(GameMode.SPECTATOR);
+            camera.teleport(targetLoc);
+            camera.setGameMode(GameMode.SPECTATOR);
+        }
+
         MessageUtils.showTitleLargeSmall(camera, title, subtitle);
 
+        // カメラ用の透明アーマースタンドを生成
+        org.bukkit.Location initialLoc = target.getLocation();
+        cinematicCameraStand = initialLoc.getWorld().spawn(initialLoc, org.bukkit.entity.ArmorStand.class, stand -> {
+            stand.setVisible(false);
+            stand.setGravity(false);
+            stand.setMarker(true);
+            stand.setInvulnerable(true);
+            stand.setSmall(true);
+            stand.addScoreboardTag("patrol_cinematic_camera");
+        });
+
+        // プレイヤーにアーマースタンドを観戦させる
+        camera.setSpectatorTarget(cinematicCameraStand);
+
+        int updateInterval = plugin.getConfig().getInt("patrol.trackingUpdateIntervalTicks", 2);
         trackingTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             if (!camera.isOnline() || !target.isValid() || !camera.getGameMode().equals(GameMode.SPECTATOR)) {
                 stopTracking();
@@ -788,9 +828,11 @@ public class PatrolManager implements org.bukkit.event.Listener {
             org.bukkit.util.Vector lookDir = target.getLocation().toVector().subtract(followLoc.toVector());
             followLoc.setDirection(lookDir);
 
-            // スムーズな移動（テレポート）
-            camera.teleport(followLoc);
-        }, 1L, 1L); // 毎ティック更新してスムーズにする
+            // スムーズな移動（アーマースタンドをテレポートさせることでクライアント側で補間される）
+            if (cinematicCameraStand != null && cinematicCameraStand.isValid()) {
+                cinematicCameraStand.teleport(followLoc);
+            }
+        }, 1L, (long) updateInterval); // 設定されたティック間隔で更新
     }
 
     private void stopTracking() {
@@ -798,11 +840,22 @@ public class PatrolManager implements org.bukkit.event.Listener {
             trackingTask.cancel();
             trackingTask = null;
         }
+        if (cinematicCameraStand != null) {
+            cinematicCameraStand.remove();
+            cinematicCameraStand = null;
+        }
     }
 
     private void stopSpectating(Player camera) {
         if (camera != null && camera.getGameMode() == GameMode.SPECTATOR) {
             camera.setSpectatorTarget(null);
+        }
+    }
+
+    @org.bukkit.event.EventHandler
+    public void onEntityPickupItem(org.bukkit.event.entity.EntityPickupItemEvent e) {
+        if (cameraUuid != null && e.getEntity().getUniqueId().equals(cameraUuid)) {
+            e.setCancelled(true);
         }
     }
 }

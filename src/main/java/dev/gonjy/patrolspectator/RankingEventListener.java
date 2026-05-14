@@ -50,11 +50,17 @@ public class RankingEventListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        engagementSystem.checkEngagement(event.getPlayer());
+        Player player = event.getPlayer();
+        // 参加時にログイン回数と名前を記録（Unknown対策）
+        statsStorage.recordLogin(player.getUniqueId(), player.getName());
+        engagementSystem.checkEngagement(player);
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        engagementSystem.checkEngagement(event.getPlayer());
+        Player player = event.getPlayer();
+        // 退出時にプレイ時間を確定
+        statsStorage.recordQuit(player.getUniqueId());
+        engagementSystem.checkEngagement(player);
     }
 }
