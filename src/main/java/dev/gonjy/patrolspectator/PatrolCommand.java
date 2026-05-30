@@ -1,5 +1,6 @@
 package dev.gonjy.patrolspectator;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -36,6 +37,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
         if (args.length == 0 || "help".equalsIgnoreCase(args[0])) {
             sender.sendMessage("§a/patrol start [dwellSeconds] - 観光巡りをスタート");
             sender.sendMessage("§a/patrol stop                 - 停止");
+            sender.sendMessage("§a/patrol spawn                - 初期スポーン地点へ戻り、開始地点をリセット");
             sender.sendMessage("§a/patrol status               - 状態表示");
             sender.sendMessage("§a/patrol rank                 - ランキング表示");
             if (sender.isOp()) {
@@ -111,6 +113,25 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage("§a[Patrol] Configuration and legacy stats reloaded.");
                 break;
             }
+            case "spawn": {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage("Player only.");
+                    return true;
+                }
+                Player p = (Player) sender;
+                org.bukkit.World overworld = Bukkit.getWorlds().get(0);
+                org.bukkit.Location spawnLoc = overworld.getSpawnLocation();
+                
+                // パトロール中なら停止
+                if (patrolManager.isRunning()) {
+                    patrolManager.stopPatrol();
+                }
+                
+                patrolManager.setStartLocation(spawnLoc);
+                p.teleport(spawnLoc);
+                sender.sendMessage("§a[Patrol] オーバーワールドの初期スポーン地点へ戻りました。開始地点をここにリセットしました。");
+                break;
+            }
             default:
                 sender.sendMessage("Unknown subcommand. /patrol help");
         }
@@ -120,7 +141,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> sub = new ArrayList<>(Arrays.asList("start", "stop", "status", "rank"));
+            List<String> sub = new ArrayList<>(Arrays.asList("start", "stop", "status", "rank", "spawn"));
             if (sender.isOp()) {
                 sub.add("reset_survival");
                 sub.add("backup");

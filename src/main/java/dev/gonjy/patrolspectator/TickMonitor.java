@@ -85,6 +85,13 @@ public class TickMonitor {
         highLoadCount = 0;
     }
 
+    /**
+     * 現在の平均Tickタイムが閾値（45ms）を超えているかどうかを返します。
+     */
+    public boolean isHighLoad() {
+        return Bukkit.getAverageTickTime() > 45.0;
+    }
+
     private void stopPatrolDueToLoad(double mspt) {
         plugin.getLogger().severe("[⚠️] サーバー負荷（MSPT: " + String.format("%.2f", mspt) + "ms）を検知したため、パトロールを自動停止しました。");
 

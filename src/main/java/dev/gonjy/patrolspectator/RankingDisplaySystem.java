@@ -28,7 +28,8 @@ public class RankingDisplaySystem {
     private boolean isDisplaying = false;
 
     private BukkitTask rankingTask;
-    private static final long RANKING_INTERVAL = 300L; // 5分 = 300秒
+    private static final long RANKING_CYCLE_INTERVAL = 300L; // 5分 = 300秒
+    private static final long RANKING_STEP_DELAY = 160L; // 8秒 = 160 ticks
 
     public RankingDisplaySystem(JavaPlugin plugin, PlayerStatsStorage statsStorage) {
         this.plugin = plugin;
@@ -44,8 +45,8 @@ public class RankingDisplaySystem {
         }
 
         rankingTask = Bukkit.getScheduler().runTaskTimer(plugin, this::displayRankings,
-                RANKING_INTERVAL * 20L, RANKING_INTERVAL * 20L);
-        plugin.getLogger().info("ランキング表示を開始しました（" + RANKING_INTERVAL + "秒間隔）");
+                RANKING_CYCLE_INTERVAL * 20L, RANKING_CYCLE_INTERVAL * 20L);
+        plugin.getLogger().info("ランキング表示を開始しました（" + RANKING_CYCLE_INTERVAL + "秒間隔）");
     }
 
     /**
@@ -88,6 +89,16 @@ public class RankingDisplaySystem {
 
     public void displayRankings() {
         if (isDisplaying) return;
+        
+        // サーバー負荷が高い場合はランキング表示をスキップ
+        if (plugin instanceof PatrolSpectatorPlugin) {
+            TickMonitor monitor = ((PatrolSpectatorPlugin) plugin).getTickMonitor();
+            if (monitor != null && monitor.isHighLoad()) {
+                plugin.getLogger().warning("[Ranking] サーバー負荷が高いため、今回のランキング発表をスキップします。");
+                return;
+            }
+        }
+
         isDisplaying = true;
 
         // 通知
@@ -169,12 +180,12 @@ public class RankingDisplaySystem {
                                 
                                 // Discordへ一括送信
                                 sendSummaryToDiscord(discordSummary.toString());
-                            }, 40L);
-                        }, 40L);
-                    }, 40L);
-                }, 40L);
-            }, 40L);
-        }, 40L);
+                            }, RANKING_STEP_DELAY);
+                        }, RANKING_STEP_DELAY);
+                    }, RANKING_STEP_DELAY);
+                }, RANKING_STEP_DELAY);
+            }, RANKING_STEP_DELAY);
+        }, RANKING_STEP_DELAY);
     }
 
     private void sendSummaryToDiscord(String content) {

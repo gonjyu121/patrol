@@ -40,6 +40,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
 
     // 現在稼働中の定期タスク
     private BukkitTask patrolTask;
+    private int currentDwellSeconds = 8;
 
     // カメラ役（/patrol start 実行者）のUUID
     private UUID cameraUuid;
@@ -142,7 +143,8 @@ public class PatrolManager implements org.bukkit.event.Listener {
                         spawn.getX(), y, spawn.getZ(),
                         0f, 20f,
                         "Server Spawn Point",
-                        "overworld"
+                        "overworld",
+                        null, null
                 ));
             }
 
@@ -163,7 +165,8 @@ public class PatrolManager implements org.bukkit.event.Listener {
                         0.0, 64.0, 0.0,
                         0f, 0f,
                         "Nether Initial Point",
-                        "nether"
+                        "nether",
+                        null, null
                 ));
             }
         }
@@ -182,7 +185,8 @@ public class PatrolManager implements org.bukkit.event.Listener {
                         0.0, 100.0, 0.0,
                         0f, 0f,
                         "Ender Dragon Arena",
-                        "end"));
+                        "end",
+                        null, null));
             }
         }
 
@@ -214,7 +218,8 @@ public class PatrolManager implements org.bukkit.event.Listener {
                 center.getX(), center.getY() + 4.0, center.getZ() - 8.0,
                 0f, 20f,
                 "Death Dungeon Entrance",
-                "overworld"));
+                "overworld",
+                null, null));
 
         plugin.getLogger().info("[Patrol] 観光案内リストに死の迷宮の入口を登録しました。");
     }
@@ -281,27 +286,32 @@ public class PatrolManager implements org.bukkit.event.Listener {
         // 次の巡回インデックスのリセット
         currentTourIndex = -1;
 
-        // タスクの実行間隔（tick）を計算。最低でも1秒（20ticks）は確保。
-        final int tickPeriod = Math.max(20, dwellSeconds * 20);
+        // パトロールの最初の実行をスケジュール
+        scheduleNextTick(1L);
 
-        // 定期タスクの開始
-        patrolTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+        plugin.getLogger().info("パトロールを開始しました。カメラ: " + camera.getName() + ", デフォルト間隔: " + dwellSeconds + "秒, 観光地数: "
+                + touristLocations.size());
+    }
+
+    /**
+     * 次のパトロール実行をスケジュールします。
+     *
+     * @param delayTicks 実行までのティック数
+     */
+    private void scheduleNextTick(long delayTicks) {
+        if (patrolTask != null) {
+            patrolTask.cancel();
+        }
+        patrolTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
             try {
-                tickPatrol();
+                int duration = tickPatrol();
+                scheduleNextTick(Math.max(20, (long) duration * 20));
             } catch (Throwable t) {
                 plugin.getLogger().log(Level.WARNING, "パトロール処理(tick)でエラーが発生しました: " + t.getMessage(), t);
+                // エラー時はデフォルト秒数で次をスケジュール
+                scheduleNextTick(20L * plugin.getTourConf().dwellSeconds);
             }
-        }, 1L, tickPeriod);
-
-        // 初回の事前読み込みをスケジュール
-        schedulePreLoad(dwellSeconds);
-
-        if (touristLocations.isEmpty()) {
-            plugin.getLogger().warning("[Patrol] 観光地リストが空です。観戦可能なプレイヤーがいない場合、カメラは何もしません。");
-        }
-
-        plugin.getLogger().info("パトロールを開始しました。カメラ: " + camera.getName() + ", 間隔: " + dwellSeconds + "秒, 観光地数: "
-                + touristLocations.size());
+        }, delayTicks);
     }
 
     /**
@@ -364,6 +374,15 @@ public class PatrolManager implements org.bukkit.event.Listener {
     }
 
     /**
+     * パトロール開始時の復帰地点を明示的に設定します。
+     * 
+     * @param loc 復帰地点
+     */
+    public void setStartLocation(org.bukkit.Location loc) {
+        this.startLocation = loc;
+    }
+
+    /**
      * パトロールの状態（実行中かどうか）を返します。
      * 
      * @return 実行中なら true
@@ -383,18 +402,17 @@ public class PatrolManager implements org.bukkit.event.Listener {
 
     /**
      * 定期実行されるパトロール処理の本体。
-     * <p>
-     * 1. カメラ役プレイヤーの有効性チェック
-     * 2. 近くに「映すべきプレイヤー（ターゲット）」がいるか確認
-     * 3. ターゲットがいればそのプレイヤーを観戦（スペクテイター）
-     * 4. いなければ次の観光地へテレポート
+     * 
+     * @return このスポットに滞在すべき秒数
      */
-    private void tickPatrol() {
+    private int tickPatrol() {
         Player camera = getCamera();
         if (camera == null || !camera.isOnline()) {
-            // カメラ役がオフラインになった場合などは何もしない（あるいは停止すべき？）
-            return;
+            return 8; // デフォルト
         }
+
+        // 基本の滞在時間
+        int staySeconds = plugin.getTourConf().dwellSeconds;
 
         // 定期的なサマリログ（5分おき）
         long now = System.currentTimeMillis();
@@ -444,8 +462,8 @@ public class PatrolManager implements org.bukkit.event.Listener {
             }
         }
 
-        // 次のサイクルに向けた事前読み込みをスケジュール
-        schedulePreLoad(plugin.getTourConf().dwellSeconds);
+        // 次のサイクルに向けた事前読み込みをスケジュール（現在の滞在時間を考慮）
+        schedulePreLoad(staySeconds);
 
         // 前の追跡タスクがあれば停止
         stopTracking();
@@ -459,7 +477,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
 
             // タイトル表示：プレイヤー名を大きく強調
             MessageUtils.showTitleLargeSmall(camera, "§b" + target.getName() + " §7さんの視点", "§aNow On Air");
-            return;
+            return staySeconds;
         }
 
         // ターゲットが見つからなかった場合、観光巡り（Tour）セクションへ進む
@@ -467,7 +485,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
 
         // 2. ターゲットがいなければ観光巡り：次のスポットへ
         if (touristLocations.isEmpty())
-            return;
+            return staySeconds;
 
         // 次の有効な観光地を探す（最大でリストサイズ分だけ試行）
         TouristLocation nextLocation = null;
@@ -478,6 +496,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
             // インデックスを進める（ループする）
             currentTourIndex = (currentTourIndex + 1) % listSize;
             TouristLocation candidate = touristLocations.get(currentTourIndex);
+            attempts++;
 
             World w = Bukkit.getWorld(candidate.world);
             if (w == null) {
@@ -506,7 +525,12 @@ public class PatrolManager implements org.bukkit.event.Listener {
 
         if (nextLocation == null) {
             // 有効な観光地が一つもない場合
-            return;
+            return staySeconds;
+        }
+
+        // 個別の滞在時間があれば適用
+        if (nextLocation.dwellSeconds != null && nextLocation.dwellSeconds > 0) {
+            staySeconds = nextLocation.dwellSeconds;
         }
 
         World w = Bukkit.getWorld(nextLocation.world);
@@ -514,7 +538,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
             // 低スペックモード時は強制ロードを行わない(フリーズ防止)
             // ただし、エンドワールド(world_the_end)だけは特別に許可する
             if (plugin.getPerformanceConf().lowSpecMode && !nextLocation.world.equalsIgnoreCase("world_the_end")) {
-                return;
+                return staySeconds;
             }
             try {
                 w = Bukkit.createWorld(new org.bukkit.WorldCreator(nextLocation.world));
@@ -526,57 +550,46 @@ public class PatrolManager implements org.bukkit.event.Listener {
         if (w == null) {
             plugin.getLogger().warning("[Debug] Skipped patrol location " + nextLocation.name + " because world "
                     + nextLocation.world + " could not be loaded.");
-            return;
+            return staySeconds;
         }
 
         // *** 特殊ロジック: エンドならドラゴンを探す ***
         if (w.getEnvironment() == World.Environment.THE_END) {
-            org.bukkit.entity.EnderDragon dragon = null;
-            for (org.bukkit.entity.Entity ent : w.getEntities()) {
-                if (ent instanceof org.bukkit.entity.EnderDragon) {
-                    dragon = (org.bukkit.entity.EnderDragon) ent;
-                    break;
-                }
-            }
+            org.bukkit.entity.EnderDragon dragon = w.getEntitiesByClass(org.bukkit.entity.EnderDragon.class)
+                    .stream().findFirst().orElse(null);
 
             if (dragon != null && dragon.isValid()) {
-                // v1.9.66: 憑依ではなく3人称視点（追跡モード）で映す
+                plugin.getLogger().info("[Patrol] エンダードラゴンを検知しました。追跡を開始します。");
+                // 三人称視点（追跡モード）で映す
                 startCinematicFollow(camera, dragon, "§5The Void Dragon", "§dエンドラを追跡中...");
-                return;
+                return staySeconds;
+            } else {
+                if (plugin.getPerformanceConf().debugLog) {
+                    plugin.getLogger().info("[Patrol] エンドにいますが、エンダードラゴンが見つかりません。");
+                }
             }
         }
 
         // *** 特殊ロジック: ネザー (ピグリンブルート) を探す ***
         if (w.getEnvironment() == World.Environment.NETHER) {
-            org.bukkit.entity.PiglinBrute brute = null;
-            for (org.bukkit.entity.Entity ent : w.getEntities()) {
-                if (ent instanceof org.bukkit.entity.PiglinBrute) {
-                    brute = (org.bukkit.entity.PiglinBrute) ent;
-                    break;
-                }
-            }
+            org.bukkit.entity.PiglinBrute brute = w.getEntitiesByClass(org.bukkit.entity.PiglinBrute.class)
+                    .stream().findFirst().orElse(null);
+
             if (brute != null && brute.isValid()) {
-                // v1.9.71: ピグリンブルートも3人称追跡にする
+                // ピグリンブルートも三人称追跡
                 startCinematicFollow(camera, brute, "§6砦の遺跡", "§eピグリンブルートを観測中...");
-                return;
+                return staySeconds;
             }
         }
 
         // *** 特殊ロジック: 海底神殿 (エルダーガーディアン) を探す ***
         if (w.getEnvironment() == World.Environment.NORMAL) {
-            org.bukkit.entity.ElderGuardian elder = null;
-            for (org.bukkit.entity.Entity ent : w.getEntities()) {
-                if (ent instanceof org.bukkit.entity.ElderGuardian) {
-                    elder = (org.bukkit.entity.ElderGuardian) ent;
-                    break;
-                }
-            }
+            org.bukkit.entity.ElderGuardian elder = w.getEntitiesByClass(org.bukkit.entity.ElderGuardian.class)
+                    .stream().findFirst().orElse(null);
 
             if (elder != null && elder.isValid()) {
-                // エルダーガーディアンは憑依の方が「迫力」があるかもしれないが、
-                // 3人称追跡の方が「場所」がわかりやすい。ここでは追跡を採用。
                 startCinematicFollow(camera, elder, "§b海底神殿", "§3エルダーガーディアンを観測中...");
-                return;
+                return staySeconds;
             }
         }
 
@@ -610,6 +623,8 @@ public class PatrolManager implements org.bukkit.event.Listener {
         } else {
             MessageUtils.showTourTitle(camera, nextLocation.name);
         }
+
+        return staySeconds;
     }
 
     /**
@@ -761,6 +776,32 @@ public class PatrolManager implements org.bukkit.event.Listener {
             }
         }
     }
+
+    @org.bukkit.event.EventHandler
+    public void onWorldChange(org.bukkit.event.player.PlayerChangedWorldEvent e) {
+        if (cameraUuid != null && e.getPlayer().getUniqueId().equals(cameraUuid)) {
+            // ワールド移動時にアーマースタンドを再生成するため、一旦停止
+            stopTracking();
+        }
+    }
+
+    @org.bukkit.event.EventHandler
+    public void onPlayerKick(org.bukkit.event.player.PlayerKickEvent e) {
+        plugin.getLogger().warning("[KickLog] Player " + e.getPlayer().getName() + " was kicked: " + e.getReason());
+        if (cameraUuid != null && e.getPlayer().getUniqueId().equals(cameraUuid)) {
+            plugin.getLogger().warning("[KickLog] カメラ役がキックされました！再ログインを待ちます。");
+            stopTracking();
+        }
+    }
+
+    @org.bukkit.event.EventHandler
+    public void onPlayerQuit(org.bukkit.event.player.PlayerQuitEvent e) {
+        if (cameraUuid != null && e.getPlayer().getUniqueId().equals(cameraUuid)) {
+            plugin.getLogger().warning("[QuitLog] カメラ役 " + e.getPlayer().getName() + " がログアウトしました。");
+            stopTracking();
+        }
+    }
+
     @org.bukkit.event.EventHandler
     public void onRespawn(org.bukkit.event.player.PlayerRespawnEvent e) {
         if (cameraUuid != null && e.getPlayer().getUniqueId().equals(cameraUuid)) {
@@ -772,7 +813,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
                     camera.setFlying(true);
                     plugin.getLogger().info("[Patrol] カメラ役のリスポーンを検知。パトロールを続行します。");
                     // 次の巡回を即座に実行して、死体ポイントから離脱させる
-                    tickPatrol();
+                    scheduleNextTick(1L);
                 }
             }, 1L);
         }
@@ -785,54 +826,70 @@ public class PatrolManager implements org.bukkit.event.Listener {
         stopTracking();
         stopSpectating(camera);
 
-        // 対象と同じワールド・位置へテレポート（ワールドを跨ぐ追跡を可能にする）
-        org.bukkit.Location targetLoc = target.getLocation();
-        if (!camera.getWorld().equals(targetLoc.getWorld())) {
-            camera.setGameMode(GameMode.SPECTATOR);
-            camera.teleport(targetLoc);
-            camera.setGameMode(GameMode.SPECTATOR);
-        }
+        // 常にターゲットの位置へ一度テレポさせて、チャンク読み込みを誘発する
+        camera.teleport(target.getLocation());
+        
+        // 15tick（0.75秒）待機してから追跡を開始（クライアント側でのエンティティ同期待ち）
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!camera.isOnline() || !target.isValid()) return;
 
-        MessageUtils.showTitleLargeSmall(camera, title, subtitle);
+            MessageUtils.showTitleLargeSmall(camera, title, subtitle);
 
-        // カメラ用の透明アーマースタンドを生成
-        org.bukkit.Location initialLoc = target.getLocation();
-        cinematicCameraStand = initialLoc.getWorld().spawn(initialLoc, org.bukkit.entity.ArmorStand.class, stand -> {
-            stand.setVisible(false);
-            stand.setGravity(false);
-            stand.setMarker(true);
-            stand.setInvulnerable(true);
-            stand.setSmall(true);
-            stand.addScoreboardTag("patrol_cinematic_camera");
-        });
+            // カメラ用の透明アーマースタンドを生成
+            org.bukkit.Location initialLoc = target.getLocation();
+            cinematicCameraStand = initialLoc.getWorld().spawn(initialLoc, org.bukkit.entity.ArmorStand.class, stand -> {
+                stand.setVisible(false);
+                stand.setGravity(false);
+                // Markerをfalseにしてみる（spectateの安定性向上のため）
+                stand.setMarker(false);
+                stand.setInvulnerable(true);
+                stand.setSmall(true);
+                stand.setBasePlate(false);
+                stand.addScoreboardTag("patrol_cinematic_camera");
+            });
 
-        // プレイヤーにアーマースタンドを観戦させる
-        camera.setSpectatorTarget(cinematicCameraStand);
+            // プレイヤーにアーマースタンドを観戦させる
+            camera.setSpectatorTarget(cinematicCameraStand);
 
-        int updateInterval = plugin.getConfig().getInt("patrol.trackingUpdateIntervalTicks", 2);
-        trackingTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (!camera.isOnline() || !target.isValid() || !camera.getGameMode().equals(GameMode.SPECTATOR)) {
-                stopTracking();
-                return;
-            }
+            int updateInterval = plugin.getConfig().getInt("patrol.trackingUpdateIntervalTicks", 2);
+            trackingTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+                if (!camera.isOnline() || !target.isValid() || !camera.getGameMode().equals(GameMode.SPECTATOR)) {
+                    stopTracking();
+                    return;
+                }
 
-            // ターゲットの後方・上方にカメラを配置
-            org.bukkit.util.Vector direction = target.getLocation().getDirection().normalize();
-            double distance = (target instanceof org.bukkit.entity.EnderDragon) ? 15.0 : 6.0;
-            double height = (target instanceof org.bukkit.entity.EnderDragon) ? 5.0 : 3.0;
+                // ターゲットの後方・上方にカメラを配置
+                org.bukkit.util.Vector direction = target.getLocation().getDirection().normalize();
+                double distance = (target instanceof org.bukkit.entity.EnderDragon) ? 15.0 : 6.0;
+                double height = (target instanceof org.bukkit.entity.EnderDragon) ? 5.0 : 3.0;
 
-            Location followLoc = target.getLocation().clone().subtract(direction.multiply(distance));
-            followLoc.setY(followLoc.getY() + height);
+                Location followLoc = target.getLocation().clone().subtract(direction.multiply(distance));
+                followLoc.setY(followLoc.getY() + height);
 
-            // ターゲットの方を向く
-            org.bukkit.util.Vector lookDir = target.getLocation().toVector().subtract(followLoc.toVector());
-            followLoc.setDirection(lookDir);
+                // ターゲットの方を向く
+                org.bukkit.util.Vector lookDir = target.getLocation().toVector().subtract(followLoc.toVector());
+                followLoc.setDirection(lookDir);
 
-            // スムーズな移動（アーマースタンドをテレポートさせることでクライアント側で補間される）
-            if (cinematicCameraStand != null && cinematicCameraStand.isValid()) {
-                cinematicCameraStand.teleport(followLoc);
-            }
-        }, 1L, (long) updateInterval); // 設定されたティック間隔で更新
+                // スムーズな移動
+                if (cinematicCameraStand != null && cinematicCameraStand.isValid()) {
+                    // ワールドが異なる場合は追跡不能なので停止
+                    if (!cinematicCameraStand.getWorld().equals(target.getWorld())) {
+                        stopTracking();
+                        return;
+                    }
+                    
+                    // 距離が極端に近い場合はテレポートをスキップしてパケット節約
+                    if (cinematicCameraStand.getLocation().distanceSquared(followLoc) < 0.0001) {
+                        return;
+                    }
+                    
+                    cinematicCameraStand.teleport(followLoc);
+                    if (camera.getSpectatorTarget() != cinematicCameraStand) {
+                        camera.setSpectatorTarget(cinematicCameraStand);
+                    }
+                }
+            }, 1L, (long) updateInterval);
+        }, 15L);
     }
 
     private void stopTracking() {

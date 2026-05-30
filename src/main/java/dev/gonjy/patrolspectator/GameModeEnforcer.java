@@ -6,6 +6,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.event.EventHandler;
@@ -21,6 +23,8 @@ public final class GameModeEnforcer implements Listener {
     private final Plugin plugin;
     private BukkitTask task;
     private UUID cameraOperator;
+    private boolean active = false;
+    private final Map<UUID, Long> worldChangeCooldowns = new HashMap<>();
 
     public GameModeEnforcer(Plugin plugin) {
         this.plugin = plugin;
@@ -28,8 +32,17 @@ public final class GameModeEnforcer implements Listener {
     }
 
     public void start() {
+        this.active = true;
         if (task != null)
             return;
+        
+        long interval = 20L;
+        if (plugin instanceof PatrolSpectatorPlugin) {
+            if (((PatrolSpectatorPlugin) plugin).getPerformanceConf().lowSpecMode) {
+                interval = 60L; // 低スペックモード時は3秒おき
+            }
+        }
+        
         task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             UUID cam = cameraOperator;
             for (Player p : Bukkit.getOnlinePlayers()) {
@@ -61,10 +74,11 @@ public final class GameModeEnforcer implements Listener {
                 // カメラ役以外はサバイバル強制
                 ensurePlayerIsSurvival(p);
             }
-        }, 20L, 20L); // 1秒周期
+        }, interval, interval);
     }
 
     public void stop() {
+        this.active = false;
         if (task != null) {
             task.cancel();
             task = null;
@@ -114,9 +128,14 @@ public final class GameModeEnforcer implements Listener {
         if (p == null)
             return;
         
-        if (isCameraPlayer(p)) {
-            // カメラ役（予定）のプレイヤーなのでサバイバル強制を除外
-            // かつ、即座にスペクテイターにして無敵化する
+        // ワールド移動直後はクライアント側の読み込みを待つため、数秒間は判定をスキップする
+        long now = System.currentTimeMillis();
+        if (worldChangeCooldowns.getOrDefault(p.getUniqueId(), 0L) > now) {
+            return;
+        }
+        
+        // 監視が有効かつカメラ役（配信アカウント等）の場合のみ、スペクテイターに強制する
+        if (active && isCameraPlayer(p)) {
             if (p.getGameMode() != GameMode.SPECTATOR) {
                 try {
                     p.setGameMode(GameMode.SPECTATOR);
@@ -127,9 +146,14 @@ public final class GameModeEnforcer implements Listener {
             return;
         }
 
+        // それ以外（パトロール停止中、または一般プレイヤー）はサバイバルに強制する
         if (p.getGameMode() != GameMode.SURVIVAL) {
             try {
                 p.setGameMode(GameMode.SURVIVAL);
+                // パトロール停止時は無敵も解除
+                if (!active && isCameraPlayer(p)) {
+                    p.setInvulnerable(false);
+                }
             } catch (Throwable ignored) {
             }
         }
@@ -179,7 +203,13 @@ public final class GameModeEnforcer implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler
+    public void onWorldChange(org.bukkit.event.player.PlayerChangedWorldEvent e) {
+        // ワールド移動後3秒間は、ゲームモード強制を保留する（タイムアウト/キック防止）
+        worldChangeCooldowns.put(e.getPlayer().getUniqueId(), System.currentTimeMillis() + 3000);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerDeath(PlayerDeathEvent e) {
         if (isCameraPlayer(e.getEntity())) {
             // カメラ役が万が一死んだ場合、デスメッセージを消去し、即座にリスポーンさせる

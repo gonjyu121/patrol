@@ -39,7 +39,7 @@ class TouristLocationTest {
         String description = "A test location";
         String worldType = "overworld";
 
-        TouristLocation loc = new TouristLocation(id, name, worldName, x, y, z, yaw, pitch, description, worldType);
+        TouristLocation loc = new TouristLocation(id, name, worldName, x, y, z, yaw, pitch, description, worldType, null, null);
 
         assertEquals(id, loc.id);
         assertEquals(name, loc.name);
@@ -55,7 +55,7 @@ class TouristLocationTest {
 
     @Test
     void testToString() {
-        TouristLocation loc = new TouristLocation("id1", "Name1", "world", 10, 64, 10, 0, 0, "Desc", "overworld");
+        TouristLocation loc = new TouristLocation("id1", "Name1", "world", 10, 64, 10, 0, 0, "Desc", "overworld", null, null);
         String str = loc.toString();
         assertTrue(str.contains("id1"));
         assertTrue(str.contains("Name1"));

@@ -18,9 +18,11 @@ public class TouristLocation {
     public final float yaw, pitch;
     public final String description;
     public final String worldType; // "overworld", "nether", "end"
+    public final Integer dwellSeconds; // 個別の滞在時間（秒）
+    public final Boolean firstPerson; // 憑依モード（一人称視点）を優先するかどうか
 
     public TouristLocation(String id, String name, String world, double x, double y, double z, float yaw, float pitch,
-            String description, String worldType) {
+            String description, String worldType, Integer dwellSeconds, Boolean firstPerson) {
         this.id = id;
         this.name = name;
         this.world = world;
@@ -31,6 +33,8 @@ public class TouristLocation {
         this.pitch = pitch;
         this.description = description != null ? description : "";
         this.worldType = worldType != null ? worldType : "overworld";
+        this.dwellSeconds = dwellSeconds;
+        this.firstPerson = firstPerson;
     }
 
     /**
@@ -88,7 +92,7 @@ public class TouristLocation {
             String id = "auto_" + i;
             String name = "Auto Point " + (i + 1);
 
-            list.add(new TouristLocation(id, name, world.getName(), x, y, z, 0f, 0f, "Auto Generated", "overworld"));
+            list.add(new TouristLocation(id, name, world.getName(), x, y, z, 0f, 0f, "Auto Generated", "overworld", null, null));
         }
         return list;
     }
@@ -107,8 +111,10 @@ public class TouristLocation {
 
         String description = (String) map.getOrDefault("description", "");
         String worldType = (String) map.getOrDefault("worldType", "overworld");
+        Integer dwellSeconds = map.containsKey("dwellSeconds") ? ((Number) map.get("dwellSeconds")).intValue() : null;
+        Boolean firstPerson = map.containsKey("firstPerson") ? (Boolean) map.get("firstPerson") : null;
 
-        return new TouristLocation(id, name, world, x, y, z, yaw, pitch, description, worldType);
+        return new TouristLocation(id, name, world, x, y, z, yaw, pitch, description, worldType, dwellSeconds, firstPerson);
     }
 
     private static double getDouble(Map<String, Object> map, String key) {
@@ -137,6 +143,8 @@ public class TouristLocation {
         map.put("pitch", pitch);
         map.put("description", description);
         map.put("worldType", worldType);
+        if (dwellSeconds != null) map.put("dwellSeconds", dwellSeconds);
+        if (firstPerson != null) map.put("firstPerson", firstPerson);
         return map;
     }
 

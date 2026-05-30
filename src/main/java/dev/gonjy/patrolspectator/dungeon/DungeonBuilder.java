@@ -150,7 +150,8 @@ public class DungeonBuilder {
                                     bossLoc.getX() - 5.0, bossLoc.getY() + 3.0, bossLoc.getZ() - 5.0,
                                     -45f, 20f,
                                     "Death Dungeon Boss Room",
-                                    "overworld"
+                                    "overworld",
+                                    null, null
                             );
                             plugin.getPatrolManager().addTouristLocation(bossTourLoc);
                         });

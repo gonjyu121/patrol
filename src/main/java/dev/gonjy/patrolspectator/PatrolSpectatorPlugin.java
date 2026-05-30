@@ -274,6 +274,9 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
                                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), exemptCmd);
                                 getLogger().info("[AutoStart] Executed anti-cheat exemption: " + exemptCmd);
 
+                                // AutoStart の場合は、開始地点をオーバーワールドのスポーン地点にしておく（ネザー等での脱出不能防止）
+                                org.bukkit.World overworld = Bukkit.getWorlds().get(0);
+                                patrolManager.setStartLocation(overworld.getSpawnLocation());
                                 patrolManager.startPatrol(joinedPlayer, tourConf.dwellSeconds);
                             } else {
                                 getLogger().warning(
@@ -512,6 +515,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
     public TickMonitor getTickMonitor() {
         return tickMonitor;
+    }
+
+    public GameModeEnforcer getGameModeEnforcer() {
+        return gameModeEnforcer;
     }
 
     public int getPatrolIntervalSeconds() {
