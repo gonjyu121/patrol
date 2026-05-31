@@ -353,6 +353,14 @@ public class PatrolManager implements org.bukkit.event.Listener {
         // カメラ役を開始地点とインベントリに戻す
         Player camera = getCamera();
         if (camera != null) {
+            // 安全のため、改めてサバイバル＆無敵解除を強制する
+            camera.setGameMode(GameMode.SURVIVAL);
+            try {
+                camera.setInvulnerable(false);
+                camera.setFlying(false);
+                camera.setAllowFlight(false);
+            } catch (Throwable ignored) {}
+
             // camera.setReducedDebugInfo(false); // IDE error workaround
             if (startLocation != null) {
                 camera.teleport(startLocation);
