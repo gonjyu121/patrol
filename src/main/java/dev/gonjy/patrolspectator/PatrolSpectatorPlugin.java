@@ -62,6 +62,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         public boolean disableAutoEventWhilePatrol;
         public boolean debugLog;
         public int trackingUpdateIntervalTicks;
+        public boolean disableLoadPause;
     }
 
     public static class AutoStartConf {
@@ -443,6 +444,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
                 false);
         performanceConf.debugLog = getConfig().getBoolean("performance.debugLog", false);
         performanceConf.trackingUpdateIntervalTicks = getConfig().getInt("patrol.trackingUpdateIntervalTicks", 2);
+        performanceConf.disableLoadPause = getConfig().getBoolean("performance.disableLoadPause", false);
 
         // autoStart
         autoStartConf = new AutoStartConf();

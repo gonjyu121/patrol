@@ -84,6 +84,8 @@ performance:
   disableWorldScan: false
   disableAutoEventWhilePatrol: false
   debugLog: false
+  disableLoadPause: true
+
 
 # Cloud Sync (GitHub Gist)
 # 複数のサーバー間でランキングデータを同期するための設定です。

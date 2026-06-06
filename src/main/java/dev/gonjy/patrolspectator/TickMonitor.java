@@ -54,6 +54,11 @@ public class TickMonitor {
             }
 
             // 実行中の負荷チェック
+            if (plugin.getPerformanceConf().disableLoadPause) {
+                highLoadCount = 0;
+                return;
+            }
+
             if (averageTickTime > THRESHOLD_MS) {
                 highLoadCount++;
                 if (plugin.getPerformanceConf().debugLog) {

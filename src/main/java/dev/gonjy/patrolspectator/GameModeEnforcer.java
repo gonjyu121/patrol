@@ -136,13 +136,17 @@ public final class GameModeEnforcer implements Listener {
         
         // 監視が有効かつカメラ役（配信アカウント等）の場合のみ、スペクテイターに強制する
         if (active && isCameraPlayer(p)) {
-            if (p.getGameMode() != GameMode.SPECTATOR) {
-                try {
+            try {
+                if (p.getGameMode() != GameMode.SPECTATOR) {
                     p.setGameMode(GameMode.SPECTATOR);
+                }
+                if (!p.isFlying()) {
                     p.setFlying(true);
+                }
+                if (!p.isInvulnerable()) {
                     p.setInvulnerable(true);
-                } catch (Throwable ignored) {}
-            }
+                }
+            } catch (Throwable ignored) {}
             return;
         }
 
@@ -150,12 +154,14 @@ public final class GameModeEnforcer implements Listener {
         if (p.getGameMode() != GameMode.SURVIVAL) {
             try {
                 p.setGameMode(GameMode.SURVIVAL);
-                // パトロール停止時は無敵も解除
-                if (!active && isCameraPlayer(p)) {
-                    p.setInvulnerable(false);
-                }
             } catch (Throwable ignored) {
             }
+        }
+        
+        // パトロール対象外のプレイヤーは無敵状態を確実に解除する（オフライン時のパトロール停止等でのフラグ残り対策）
+        try {
+            p.setInvulnerable(false);
+        } catch (Throwable ignored) {
         }
     }
 
@@ -194,24 +200,44 @@ public final class GameModeEnforcer implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onEntityDamage(EntityDamageEvent e) {
         if (e.getEntity() instanceof Player) {
-            if (isCameraPlayer((Player) e.getEntity())) {
+            Player p = (Player) e.getEntity();
+            if (active && isCameraPlayer(p)) {
                 e.setCancelled(true);
+                try {
+                    p.setHealth(20.0);
+                    p.setFoodLevel(20);
+                    p.setFireTicks(0);
+                } catch (Throwable ignored) {}
+                
+                // ボイド（奈落）ダメージの場合は、安全な位置（スポーン地点など）に退避させる
+                if (e.getCause() == EntityDamageEvent.DamageCause.VOID) {
+                    try {
+                        org.bukkit.Location spawn = p.getWorld().getSpawnLocation();
+                        p.teleport(spawn);
+                    } catch (Throwable ignored) {}
+                }
             }
         }
     }
 
     @EventHandler
     public void onWorldChange(org.bukkit.event.player.PlayerChangedWorldEvent e) {
+        Player p = e.getPlayer();
+        if (active && isCameraPlayer(p)) {
+            try {
+                p.setInvulnerable(true);
+            } catch (Throwable ignored) {}
+        }
         // ワールド移動後3秒間は、ゲームモード強制を保留する（タイムアウト/キック防止）
-        worldChangeCooldowns.put(e.getPlayer().getUniqueId(), System.currentTimeMillis() + 3000);
+        worldChangeCooldowns.put(p.getUniqueId(), System.currentTimeMillis() + 3000);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerDeath(PlayerDeathEvent e) {
-        if (isCameraPlayer(e.getEntity())) {
+        if (active && isCameraPlayer(e.getEntity())) {
             // カメラ役が万が一死んだ場合、デスメッセージを消去し、即座にリスポーンさせる
             e.setDeathMessage(null);
             e.getDrops().clear();
