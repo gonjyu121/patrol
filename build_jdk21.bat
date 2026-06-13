@@ -53,4 +53,15 @@ echo Generated JAR files:
 dir /b target\*.jar 2>nul
 echo.
 
+REM ====================================================
+REM ビルドしたJARをpluginsフォルダにコピー
+REM ====================================================
+if not exist "%~dp0plugins" mkdir "%~dp0plugins"
+for %%f in (target\PatrolSpectatorPlugin-*.jar) do (
+    echo Copying %%f to plugins\...
+    copy /Y "%%f" "%~dp0plugins\" >nul
+    echo Deployed: plugins\%%~nxf
+)
+
 endlocal
+
