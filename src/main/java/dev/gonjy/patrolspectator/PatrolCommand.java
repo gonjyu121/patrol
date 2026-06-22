@@ -37,6 +37,8 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
         if (args.length == 0 || "help".equalsIgnoreCase(args[0])) {
             sender.sendMessage("§a/patrol start [dwellSeconds] - 観光巡りをスタート");
             sender.sendMessage("§a/patrol stop                 - 停止");
+            sender.sendMessage("§a/patrol where                - 保存済みの開始地点(復帰地点)を表示");
+            sender.sendMessage("§a/patrol tpback               - 保存済みの開始地点に手動でTP");
             sender.sendMessage("§a/patrol spawn                - 初期スポーン地点へ戻り、開始地点をリセット");
             sender.sendMessage("§a/patrol status               - 状態表示");
             sender.sendMessage("§a/patrol rank                 - ランキング表示");
@@ -70,11 +72,21 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             case "stop": {
                 patrolManager.stopPatrol();
                 sender.sendMessage("§e[Patrol] stop");
+                // 停止後の複帰地点を案内（及び自分でTPできるTPBACKコマンドを案内）
+                // 注意: stopPatrol()内部で自動TP済みなので、ここでは案内のみ
                 break;
             }
             case "status": {
                 String running = patrolManager.isRunning() ? "RUNNING" : "IDLE";
                 sender.sendMessage("§b[Patrol] status=" + running + ", locations=" + patrolManager.getLocationCount());
+                // 状態表示時に保存地点も表示
+                org.bukkit.Location savedLoc = patrolManager.getStartLocation();
+                if (savedLoc != null) {
+                    sender.sendMessage(String.format("§b[Patrol] 保存地点: %s (%.1f, %.1f, %.1f)",
+                            savedLoc.getWorld().getName(), savedLoc.getX(), savedLoc.getY(), savedLoc.getZ()));
+                } else {
+                    sender.sendMessage("§b[Patrol] 保存地点: 未設定");
+                }
                 break;
             }
             case "rank": {
@@ -132,6 +144,40 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage("§a[Patrol] オーバーワールドの初期スポーン地点へ戻りました。開始地点をここにリセットしました。");
                 break;
             }
+            case "where": {
+                org.bukkit.Location loc = patrolManager.getStartLocation();
+                if (loc == null) {
+                    sender.sendMessage("§c[Patrol] 保存済みの戻り地点がありません。パトロールを開始してください。");
+                } else {
+                    sender.sendMessage(String.format(
+                            "§a[Patrol] 保存済みの戻り地点: §f%s §7(%.1f, %.1f, %.1f)",
+                            loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ()));
+                    sender.sendMessage("§7返るには: §e/patrol tpback §7を実行してください");
+                }
+                break;
+            }
+            case "tpback": {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage("Player only.");
+                    return true;
+                }
+                Player p = (Player) sender;
+                org.bukkit.Location loc = patrolManager.getStartLocation();
+                if (loc == null) {
+                    sender.sendMessage("§c[Patrol] 保存済みの戻り地点がありません。先に /patrol start を実行してください。");
+                } else {
+                    // パトロール中なら先に停止
+                    if (patrolManager.isRunning()) {
+                        patrolManager.stopPatrol();
+                        sender.sendMessage("§e[Patrol] パトロールを停止してからTPします...");
+                    }
+                    p.teleport(loc);
+                    sender.sendMessage(String.format(
+                            "§a[Patrol] 保存済みの戻り地点 §f%s §a(%.1f, %.1f, %.1f) §aにTPしました！",
+                            loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ()));
+                }
+                break;
+            }
             default:
                 sender.sendMessage("Unknown subcommand. /patrol help");
         }
@@ -141,7 +187,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> sub = new ArrayList<>(Arrays.asList("start", "stop", "status", "rank", "spawn"));
+            List<String> sub = new ArrayList<>(Arrays.asList("start", "stop", "where", "tpback", "status", "rank", "spawn"));
             if (sender.isOp()) {
                 sub.add("reset_survival");
                 sub.add("backup");

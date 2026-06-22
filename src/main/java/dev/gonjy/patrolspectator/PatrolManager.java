@@ -250,13 +250,26 @@ public class PatrolManager implements org.bukkit.event.Listener {
             plugin.getTickMonitor().resetPauseState();
         }
 
-        stopPatrol(); // 既存タスクがあれば停止
+        // 開始地点を先に保存（stopPatrol()のnullクリアより前に保持する）
+        // startLocation が外部から setStartLocation() で明示的に設定されていない場合のみ上書き
+        org.bukkit.Location newStartLocation = (this.startLocation != null) ? this.startLocation : camera.getLocation();
+        org.bukkit.inventory.ItemStack[] newSavedInventory = camera.getInventory().getContents();
+        org.bukkit.inventory.ItemStack[] newSavedArmor = camera.getInventory().getArmorContents();
+
+        stopPatrol(); // 既存タスクがあれば停止（startLocation がここでnullになる）
         stopTracking(); // 追跡タスクも停止
 
+        // stopPatrol() の後にあらためて設定（クリアされても確実に保持）
         this.cameraUuid = camera.getUniqueId();
-        this.startLocation = camera.getLocation(); // 開始地点を保存
-        this.savedInventory = camera.getInventory().getContents(); // インベントリ保存
-        this.savedArmor = camera.getInventory().getArmorContents(); // 防具保存
+        this.startLocation = newStartLocation;
+        this.savedInventory = newSavedInventory;
+        this.savedArmor = newSavedArmor;
+
+        plugin.getLogger().info("[Patrol] 開始地点を保存しました: "
+                + newStartLocation.getWorld().getName()
+                + " (" + String.format("%.1f", newStartLocation.getX())
+                + ", " + String.format("%.1f", newStartLocation.getY())
+                + ", " + String.format("%.1f", newStartLocation.getZ()) + ")");
 
         // GameModeEnforcerの設定と開始
         gameModeEnforcer.setCameraOperator(cameraUuid);
@@ -383,11 +396,29 @@ public class PatrolManager implements org.bukkit.event.Listener {
 
     /**
      * パトロール開始時の復帰地点を明示的に設定します。
+     * 次回 startPatrol() を呼んだ際に、この場所が優先して使用されます。
      * 
      * @param loc 復帰地点
      */
     public void setStartLocation(org.bukkit.Location loc) {
         this.startLocation = loc;
+        if (loc != null) {
+            plugin.getLogger().info("[Patrol] 開始地点を手動設定しました: "
+                    + loc.getWorld().getName()
+                    + " (" + String.format("%.1f", loc.getX())
+                    + ", " + String.format("%.1f", loc.getY())
+                    + ", " + String.format("%.1f", loc.getZ()) + ")");
+        }
+    }
+
+    /**
+     * 現在保存されているパトロール開始地点（復帰地点）を取得します。
+     * パトロール中でない場合は null を返します。
+     * 
+     * @return 開始地点、未設定の場合は null
+     */
+    public org.bukkit.Location getStartLocation() {
+        return this.startLocation;
     }
 
     /**
