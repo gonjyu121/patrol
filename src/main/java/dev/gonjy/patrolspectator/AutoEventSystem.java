@@ -431,14 +431,7 @@ public class AutoEventSystem implements Listener {
             }
         }
 
-        if (plugin instanceof PatrolSpectatorPlugin) {
-            String ip = plugin.getConfig().getString("discord.server_ip", "otougame.falixsrv.me");
-            int port = plugin.getServer().getPort();
-            String address = ip + ":" + port;
-            for (Player recipient : recipients) {
-                recipient.sendMessage(ChatColor.GRAY + "Server: " + address);
-            }
-        }
+
     }
 
     // カメラ役（配信者）とOPを取得
