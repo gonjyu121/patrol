@@ -250,11 +250,44 @@ public class PatrolManager implements org.bukkit.event.Listener {
             plugin.getTickMonitor().resetPauseState();
         }
 
-        // 開始地点を先に保存（stopPatrol()のnullクリアより前に保持する）
-        // startLocation が外部から setStartLocation() で明示的に設定されていない場合のみ上書き
-        org.bukkit.Location newStartLocation = (this.startLocation != null) ? this.startLocation : camera.getLocation();
-        org.bukkit.inventory.ItemStack[] newSavedInventory = camera.getInventory().getContents();
-        org.bukkit.inventory.ItemStack[] newSavedArmor = camera.getInventory().getArmorContents();
+        // 開始地点の決定ロジック
+        org.bukkit.Location newStartLocation = null;
+        org.bukkit.inventory.ItemStack[] newSavedInventory = null;
+        org.bukkit.inventory.ItemStack[] newSavedArmor = null;
+
+        // 1. メモリ上にすでに開始地点がある場合、それを最優先
+        if (this.startLocation != null) {
+            newStartLocation = this.startLocation;
+            newSavedInventory = this.savedInventory;
+            newSavedArmor = this.savedArmor;
+        } else {
+            // 2. メモリ上になければファイルからの復旧を試みる
+            loadPatrolState();
+            if (this.startLocation != null) {
+                newStartLocation = this.startLocation;
+                newSavedInventory = this.savedInventory;
+                newSavedArmor = this.savedArmor;
+            }
+        }
+
+        // 3. メモリにもファイルにもない場合は新規保存
+        if (newStartLocation == null) {
+            // カメラ役がすでにスペクテイターモードの場合は、元の位置が不明なため初期スポーン地点をフォールバックとする
+            if (camera.getGameMode() == GameMode.SPECTATOR) {
+                org.bukkit.World overworld = Bukkit.getWorlds().get(0);
+                newStartLocation = overworld.getSpawnLocation();
+                newSavedInventory = camera.getInventory().getContents();
+                newSavedArmor = camera.getInventory().getArmorContents();
+                plugin.getLogger().warning("[Patrol] カメラ役がスペクテイターモードの状態でパトロールが開始されました。安全のため初期スポーン地点を復帰先に設定します。");
+            } else {
+                newStartLocation = camera.getLocation();
+                newSavedInventory = camera.getInventory().getContents();
+                newSavedArmor = camera.getInventory().getArmorContents();
+            }
+            
+            // 新規に状態をファイルに永続化
+            savePatrolState(camera, newStartLocation, newSavedInventory, newSavedArmor);
+        }
 
         stopPatrol(); // 既存タスクがあれば停止（startLocation がここでnullになる）
         stopTracking(); // 追跡タスクも停止
@@ -391,6 +424,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
         savedInventory = null;
         savedArmor = null;
         lastSpectatedUuid = null;
+        clearPatrolState();
         plugin.getLogger().info("パトロールを停止しました。");
     }
 
@@ -952,6 +986,98 @@ public class PatrolManager implements org.bukkit.event.Listener {
     public void onEntityPickupItem(org.bukkit.event.entity.EntityPickupItemEvent e) {
         if (cameraUuid != null && e.getEntity().getUniqueId().equals(cameraUuid)) {
             e.setCancelled(true);
+        }
+    }
+
+    /**
+     * パトロールの一時状態（開始位置、インベントリなど）をファイルに保存します。
+     */
+    public void savePatrolState(Player camera, Location loc, org.bukkit.inventory.ItemStack[] inventory, org.bukkit.inventory.ItemStack[] armor) {
+        try {
+            File file = new File(plugin.getDataFolder(), "temp_patrol_state.yml");
+            org.bukkit.configuration.file.YamlConfiguration config = new org.bukkit.configuration.file.YamlConfiguration();
+            config.set("cameraUuid", camera.getUniqueId().toString());
+            config.set("location", loc);
+            config.set("inventory", inventory);
+            config.set("armor", armor);
+            config.save(file);
+            plugin.getLogger().info("[Patrol] パトロールの開始状態をファイルに永続化しました。");
+        } catch (Throwable t) {
+            plugin.getLogger().log(Level.SEVERE, "[Patrol] パトロール状態の保存に失敗しました: " + t.getMessage(), t);
+        }
+    }
+
+    /**
+     * パトロールの一時状態をファイルから読み込みます。
+     *
+     * @return 復元に成功した場合は true
+     */
+    public boolean loadPatrolState() {
+        try {
+            File file = new File(plugin.getDataFolder(), "temp_patrol_state.yml");
+            if (!file.exists()) {
+                return false;
+            }
+            org.bukkit.configuration.file.YamlConfiguration config = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file);
+            String uuidStr = config.getString("cameraUuid");
+            if (uuidStr == null) {
+                return false;
+            }
+            this.cameraUuid = UUID.fromString(uuidStr);
+            this.startLocation = (Location) config.get("location");
+            
+            // インベントリの復元
+            List<?> invList = config.getList("inventory");
+            if (invList != null) {
+                org.bukkit.inventory.ItemStack[] invArray = new org.bukkit.inventory.ItemStack[invList.size()];
+                for (int i = 0; i < invList.size(); i++) {
+                    Object item = invList.get(i);
+                    if (item instanceof org.bukkit.inventory.ItemStack) {
+                        invArray[i] = (org.bukkit.inventory.ItemStack) item;
+                    } else {
+                        invArray[i] = null;
+                    }
+                }
+                this.savedInventory = invArray;
+            }
+            
+            // 防具の復元
+            List<?> armorList = config.getList("armor");
+            if (armorList != null) {
+                org.bukkit.inventory.ItemStack[] armorArray = new org.bukkit.inventory.ItemStack[armorList.size()];
+                for (int i = 0; i < armorList.size(); i++) {
+                    Object item = armorList.get(i);
+                    if (item instanceof org.bukkit.inventory.ItemStack) {
+                        armorArray[i] = (org.bukkit.inventory.ItemStack) item;
+                    } else {
+                        armorArray[i] = null;
+                    }
+                }
+                this.savedArmor = armorArray;
+            }
+            
+            plugin.getLogger().info("[Patrol] ファイルからパトロール開始状態を復元しました: " 
+                    + (this.startLocation != null ? this.startLocation.getWorld().getName() + " (" + String.format("%.1f, %.1f, %.1f", this.startLocation.getX(), this.startLocation.getY(), this.startLocation.getZ()) + ")" : "null"));
+            return true;
+        } catch (Throwable t) {
+            plugin.getLogger().log(Level.SEVERE, "[Patrol] パトロール状態の読み込みに失敗しました: " + t.getMessage(), t);
+            return false;
+        }
+    }
+
+    /**
+     * 保存されたパトロールの一時状態ファイルを削除します。
+     */
+    public void clearPatrolState() {
+        try {
+            File file = new File(plugin.getDataFolder(), "temp_patrol_state.yml");
+            if (file.exists()) {
+                if (file.delete()) {
+                    plugin.getLogger().info("[Patrol] パトロール一時状態ファイルを削除しました。");
+                }
+            }
+        } catch (Throwable t) {
+            plugin.getLogger().warning("[Patrol] パトロール状態ファイルの削除に失敗しました: " + t.getMessage());
         }
     }
 }

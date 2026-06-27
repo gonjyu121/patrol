@@ -159,6 +159,9 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         // 観光地ロード
         patrolManager.loadTouristLocations();
 
+        // パトロール状態の復元
+        patrolManager.loadPatrolState();
+
         // 死の迷宮の自動生成チェック（enabled かつ 未生成なら実行）
         if (dungeonManager.isEnabled()) {
             getServer().getScheduler().runTaskLater(this, () -> {

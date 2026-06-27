@@ -19,14 +19,19 @@ public final class EngagementSystem {
     public void applyServerRules() {
         // 標準ルールはAPI経由で設定（チャットログが出ないようにするため）
         for (org.bukkit.World world : Bukkit.getWorlds()) {
+            // ワールドをハードモードに設定
+            if (world.getDifficulty() != org.bukkit.Difficulty.HARD) {
+                world.setDifficulty(org.bukkit.Difficulty.HARD);
+                log.info("[Rules] set difficulty to HARD in " + world.getName());
+            }
+
             setDynamicRule(world, new String[]{"doDaylightCycle", "do_daylight_cycle", "minecraft:do_daylight_cycle"}, true);
             setDynamicRule(world, new String[]{"keepInventory", "keep_inventory", "minecraft:keep_inventory"}, false);
 
             // Bedrock/Java 1.21.11+ 用のルールをAPIで安全に適用
-            // 1.21.11からはスネークケース（locator_bar）に変更された可能性があるため、複数候補を試す
-            setDynamicRule(world, new String[] { "locator_bar", "minecraft:locator_bar", "locatorBar" }, false);
-            setDynamicRule(world, new String[] { "show_coordinates", "minecraft:show_coordinates", "showCoordinates" },
-                    false);
+            // API で認識されない場合はコマンドフォールバックで確実に設定
+            setDynamicRuleWithFallback(world, new String[] { "locator_bar", "minecraft:locator_bar", "locatorBar" }, false, "locator_bar");
+            setDynamicRuleWithFallback(world, new String[] { "show_coordinates", "minecraft:show_coordinates", "showCoordinates" }, false, "showCoordinates");
         }
     }
 
@@ -58,16 +63,19 @@ public final class EngagementSystem {
         // 基本ルールの強制（API経由）
         for (org.bukkit.World world : Bukkit.getWorlds()) {
             try {
+                // ワールドをハードモードに強制
+                if (world.getDifficulty() != org.bukkit.Difficulty.HARD) {
+                    world.setDifficulty(org.bukkit.Difficulty.HARD);
+                }
+
                 // 変更が必要な場合のみセットする
                 setDynamicRuleIfNotMatch(world, new String[]{"doDaylightCycle", "do_daylight_cycle", "minecraft:do_daylight_cycle"}, true);
                 setDynamicRuleIfNotMatch(world, new String[]{"keepInventory", "keep_inventory", "minecraft:keep_inventory"}, false);
                 setDynamicRuleIfNotMatch(world, new String[]{"playersSleepingPercentage", "players_sleeping_percentage", "minecraft:players_sleeping_percentage"}, 0);
 
-                // 動的な設定（ログなし）
-                setDynamicRuleIfNotMatch(world, new String[] { "locator_bar", "minecraft:locator_bar", "locatorBar" },
-                        false);
-                setDynamicRuleIfNotMatch(world,
-                        new String[] { "show_coordinates", "minecraft:show_coordinates", "showCoordinates" }, false);
+                // 動的な設定（ログなし）。API で認識されない場合はコマンドで設定
+                setDynamicRuleWithFallbackQuiet(world, new String[] { "locator_bar", "minecraft:locator_bar", "locatorBar" }, false, "locator_bar");
+                setDynamicRuleWithFallbackQuiet(world, new String[] { "show_coordinates", "minecraft:show_coordinates", "showCoordinates" }, false, "showCoordinates");
 
             } catch (Throwable ignored) {
             }
@@ -91,6 +99,65 @@ public final class EngagementSystem {
                 }
             } catch (Throwable ignored) {
             }
+        }
+    }
+
+    /**
+     * API で GameRule が認識されない場合に /gamerule コマンドで確実に設定するメソッド（ログあり）。
+     * commandRuleName: コマンドで使用するルール名（例: "locator_bar"）
+     */
+    private <T> void setDynamicRuleWithFallback(org.bukkit.World world, String[] candidates, T value, String commandRuleName) {
+        for (String name : candidates) {
+            try {
+                org.bukkit.GameRule<?> rule = org.bukkit.GameRule.getByName(name);
+                if (rule != null) {
+                    Object current = world.getGameRuleValue(rule);
+                    if (current != null && current.equals(value)) {
+                        return;
+                    }
+                    @SuppressWarnings("unchecked")
+                    org.bukkit.GameRule<T> tRule = (org.bukkit.GameRule<T>) rule;
+                    world.setGameRule(tRule, value);
+                    log.info("[Rules] applied (Dynamic API): " + name + " = " + value + " in " + world.getName());
+                    return;
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        // API で認識できなかった場合はコマンドフォールバック
+        try {
+            String cmd = "gamerule " + commandRuleName + " " + value;
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+            log.info("[Rules] applied (command fallback): " + cmd + " in " + world.getName());
+        } catch (Throwable t) {
+            log.warning("[Rules] failed to apply " + commandRuleName + ": " + t.getMessage());
+        }
+    }
+
+    /**
+     * API で GameRule が認識されない場合に /gamerule コマンドで確実に設定するメソッド（ログなし）。
+     */
+    private <T> void setDynamicRuleWithFallbackQuiet(org.bukkit.World world, String[] candidates, T value, String commandRuleName) {
+        for (String name : candidates) {
+            try {
+                org.bukkit.GameRule<?> rule = org.bukkit.GameRule.getByName(name);
+                if (rule != null) {
+                    Object current = world.getGameRuleValue(rule);
+                    if (current != null && current.equals(value)) {
+                        return;
+                    }
+                    @SuppressWarnings("unchecked")
+                    org.bukkit.GameRule<T> tRule = (org.bukkit.GameRule<T>) rule;
+                    world.setGameRule(tRule, value);
+                    return;
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        // API で認識できなかった場合はコマンドフォールバック
+        try {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule " + commandRuleName + " " + value);
+        } catch (Throwable ignored) {
         }
     }
 

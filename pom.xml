@@ -105,6 +105,37 @@
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
+      <!-- Build時にpluginsディレクトリにある他のプラグインのJARをtargetにコピーする -->
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.3.1</version>
+        <executions>
+          <execution>
+            <id>copy-external-plugins</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}/plugins</directory>
+                  <includes>
+                    <include>*.jar</include>
+                  </includes>
+                  <!-- 自分自身の過去のビルドなどがpluginsに混ざっていた場合コピーしないように除外 -->
+                  <excludes>
+                    <exclude>PatrolSpectatorPlugin*.jar</exclude>
+                    <exclude>original-PatrolSpectatorPlugin*.jar</exclude>
+                    <exclude>patrol-spectator-plugin*.jar</exclude>
+                  </excludes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>

@@ -3,7 +3,8 @@
 
 $ErrorActionPreference = "Stop"
 $rootDir = $PSScriptRoot
-$targetDir = Join-Path $rootDir "plugins"   # ← target/ から plugins/ に変更（mvn clean で消えないように）
+$targetDir = Join-Path $rootDir "plugins"
+# target/ から plugins/ に変更（mvn clean で消えないように）
 $configFile = Join-Path $rootDir "plugin_urls.json"
 
 
