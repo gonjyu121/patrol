@@ -34,6 +34,11 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
         if (!"patrol".equalsIgnoreCase(command.getName()))
             return false;
 
+        if (!sender.isOp()) {
+            sender.sendMessage("§c[Patrol] このコマンドを実行する権限がありません (OP専用)。");
+            return true;
+        }
+
         if (args.length == 0 || "help".equalsIgnoreCase(args[0])) {
             sender.sendMessage("§a/patrol start [dwellSeconds] - 観光巡りをスタート");
             sender.sendMessage("§a/patrol stop                 - 停止");
@@ -212,17 +217,16 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!sender.isOp()) {
+            return Collections.emptyList();
+        }
         if (args.length == 1) {
-            List<String> sub = new ArrayList<>(Arrays.asList("start", "stop", "back", "where", "tpback", "travel", "status", "rank", "spawn"));
-            if (sender.isOp()) {
-                sub.add("reset_survival");
-                sub.add("backup");
-                sub.add("reload");
-            }
+            List<String> sub = Arrays.asList("start", "stop", "back", "where", "tpback", "travel", "status", "rank", "spawn", "reset_survival", "backup", "reload");
             List<String> ret = new ArrayList<>();
             for (String s : sub) {
-                if (s.startsWith(args[0].toLowerCase()))
+                if (s.startsWith(args[0].toLowerCase())) {
                     ret.add(s);
+                }
             }
             return ret;
         }
