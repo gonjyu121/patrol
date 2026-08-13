@@ -1,11 +1,10 @@
 # PatrolSpectatorPlugin Development Log
 
 ## Current Status (2026-08-13)
-- **Version**: 1.9.95
+- **Version**: 1.9.96
 - **Branch**: `feature/patrol-logic-update`
 - **Build Status**: Passed (`mvn clean package`)
-- **Git Status**: OP restriction added to `/patrol`
-- **Key Features Included in v1.9.95**:
+- **Key Features Included in v1.9.96**:
     - **`/patrol` Command Access**: Restricted all `/patrol` subcommands and tab completions strictly to OP (`sender.isOp()`).
     - **`/patrol back` (Manual Start Recovery)**: Saves pre-patrol inventory, armor, and location to `last_manual_start_state.yml` and restores upon `/patrol back`.
     - **Dungeon Built Flag**: Added `built: true` in `dungeon_config.yml` to prevent duplicate auto-generation on restarts.
