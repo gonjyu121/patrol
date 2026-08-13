@@ -210,18 +210,23 @@ public class PatrolManager implements org.bukkit.event.Listener {
         // 既存のダンジョン入口を削除
         touristLocations.removeIf(l -> "auto_dungeon_entrance".equals(l.id));
 
-        // 入口を追加
+        // 入口は北側外壁 (Z = center.getZ() - 30)
+        double entranceX = center.getX();
+        double entranceY = center.getY() + 1.0;
+        double entranceZ = center.getZ() - 30.0;
+
+        // 入口を追加 (北側正面を向く)
         touristLocations.add(new TouristLocation(
                 "auto_dungeon_entrance",
-                "§4死の迷宮 - 入口",
+                "§4死の迷宮 - 正面入口",
                 center.getWorld().getName(),
-                center.getX(), center.getY() + 4.0, center.getZ() - 8.0,
-                0f, 20f,
-                "Death Dungeon Entrance",
+                entranceX, entranceY + 2.0, entranceZ - 6.0,
+                0f, 15f,
+                "Death Dungeon North Entrance",
                 "overworld",
                 null, null));
 
-        plugin.getLogger().info("[Patrol] 観光案内リストに死の迷宮の入口を登録しました。");
+        plugin.getLogger().info("[Patrol] 観光案内リストに死の迷宮の正面入口を登録しました。");
     }
 
     /**

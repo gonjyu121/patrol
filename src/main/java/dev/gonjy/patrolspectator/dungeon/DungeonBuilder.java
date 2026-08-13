@@ -138,8 +138,8 @@ public class DungeonBuilder {
                             // ボスの配置 (ボスルーム中心)
                             plugin.getDungeonBossSystem().spawnBoss(
                                     new Location(finalWorld, finalStartX + 31, finalBaseY + 1, finalStartZ + 31));
-                            // 入口の案内掲示
-                            placeEntranceSigns(finalWorld, manager.getCenter());
+                            // 入口のくり抜きと門・看板の整備
+                            buildEntranceGate(finalWorld, finalStartX, finalBaseY, finalStartZ);
                             
                             // 観光案内へダンジョン最下層を動的に登録
                             Location bossLoc = new Location(finalWorld, finalStartX + 31, finalBaseY + 1, finalStartZ + 31);
@@ -165,6 +165,90 @@ public class DungeonBuilder {
         };
 
         digCalcTask.runTaskAsynchronously(plugin);
+    }
+
+    /**
+     * 北側正面にダンジョンの出入口（アーチ門・看板・壁くり抜き）を構築します。
+     */
+    public void buildEntranceGate(World world, int startX, int baseY, int startZ) {
+        int centerX = startX + 30; // 60x60 の中央（グリッド通路 X=startX+30 と直結）
+        int entranceZ = startZ;    // 北側の外壁 (Z=startZ)
+
+        // 1. 出入口の壁（岩盤）をくり抜く (X: centerX-1 ~ centerX+1, Y: baseY ~ baseY+2, Z: entranceZ-2 ~ entranceZ+1)
+        for (int x = centerX - 1; x <= centerX + 1; x++) {
+            for (int y = baseY; y <= baseY + 2; y++) {
+                for (int z = entranceZ - 2; z <= entranceZ + 1; z++) {
+                    world.getBlockAt(x, y, z).setType(Material.AIR);
+                }
+            }
+            // 床を磨かれたブラックストーンに
+            world.getBlockAt(x, baseY - 1, entranceZ - 3).setType(Material.POLISHED_BLACKSTONE);
+            world.getBlockAt(x, baseY - 1, entranceZ - 2).setType(Material.POLISHED_BLACKSTONE);
+            world.getBlockAt(x, baseY - 1, entranceZ - 1).setType(Material.POLISHED_BLACKSTONE);
+            world.getBlockAt(x, baseY - 1, entranceZ).setType(Material.POLISHED_BLACKSTONE);
+            world.getBlockAt(x, baseY - 1, entranceZ + 1).setType(Material.POLISHED_BLACKSTONE);
+        }
+
+        // 2. アーチ状の門枠を装飾 (Z = entranceZ - 2)
+        int gateZ = entranceZ - 2;
+        for (int y = baseY; y <= baseY + 3; y++) {
+            world.getBlockAt(centerX - 2, y, gateZ).setType(Material.CHISELED_DEEPSLATE);
+            world.getBlockAt(centerX + 2, y, gateZ).setType(Material.CHISELED_DEEPSLATE);
+        }
+        for (int x = centerX - 2; x <= centerX + 2; x++) {
+            world.getBlockAt(x, baseY + 3, gateZ).setType(Material.CHISELED_DEEPSLATE);
+        }
+        world.getBlockAt(centerX - 2, baseY + 4, gateZ).setType(Material.SOUL_LANTERN);
+        world.getBlockAt(centerX + 2, baseY + 4, gateZ).setType(Material.SOUL_LANTERN);
+
+        // 3. 看板の設置 (左右の柱)
+        Location leftSignLoc = new Location(world, centerX - 2, baseY + 1, gateZ - 1);
+        leftSignLoc.getBlock().setType(Material.OAK_WALL_SIGN);
+        if (leftSignLoc.getBlock().getState() instanceof org.bukkit.block.Sign) {
+            org.bukkit.block.Sign sign = (org.bukkit.block.Sign) leftSignLoc.getBlock().getState();
+            if (sign.getBlockData() instanceof org.bukkit.block.data.type.WallSign) {
+                org.bukkit.block.data.type.WallSign wallSign = (org.bukkit.block.data.type.WallSign) sign.getBlockData();
+                wallSign.setFacing(org.bukkit.block.BlockFace.NORTH);
+                sign.setBlockData(wallSign);
+            }
+            sign.setLine(0, ChatColor.DARK_RED + "☠ [死の迷宮] ☠");
+            sign.setLine(1, ChatColor.RED + "死はアイテム散布");
+            sign.setLine(2, ChatColor.GOLD + "最深部に超レア宝箱");
+            sign.setLine(3, ChatColor.DARK_PURPLE + "ボス討伐でクリア");
+            sign.update();
+        }
+
+        Location rightSignLoc = new Location(world, centerX + 2, baseY + 1, gateZ - 1);
+        rightSignLoc.getBlock().setType(Material.OAK_WALL_SIGN);
+        if (rightSignLoc.getBlock().getState() instanceof org.bukkit.block.Sign) {
+            org.bukkit.block.Sign sign = (org.bukkit.block.Sign) rightSignLoc.getBlock().getState();
+            if (sign.getBlockData() instanceof org.bukkit.block.data.type.WallSign) {
+                org.bukkit.block.data.type.WallSign wallSign = (org.bukkit.block.data.type.WallSign) sign.getBlockData();
+                wallSign.setFacing(org.bukkit.block.BlockFace.NORTH);
+                sign.setBlockData(wallSign);
+            }
+            sign.setLine(0, ChatColor.GOLD + "【 攻略心得 】");
+            sign.setLine(1, ChatColor.DARK_GRAY + "・ベッド設置不可");
+            sign.setLine(2, ChatColor.DARK_GRAY + "・水辺の罠に注意");
+            sign.setLine(3, ChatColor.DARK_GRAY + "・奪い合い自由");
+            sign.update();
+        }
+
+        // 4. 観光案内 (PatrolManager) へ正面入口座標を登録
+        Location entranceLoc = new Location(world, centerX + 0.5, baseY + 1.0, entranceZ - 4.5, 0f, 10f);
+        dev.gonjy.patrolspectator.TouristLocation entranceTourLoc = new dev.gonjy.patrolspectator.TouristLocation(
+                "auto_dungeon_entrance",
+                "§4死の迷宮 - 正面入口",
+                world.getName(),
+                entranceLoc.getX(), entranceLoc.getY() + 1.5, entranceLoc.getZ() - 2.0,
+                0f, 15f,
+                "Death Dungeon North Entrance Gate",
+                "overworld",
+                null, null
+        );
+        plugin.getPatrolManager().addTouristLocation(entranceTourLoc);
+
+        plugin.getLogger().info("[Dungeon] 北側正面入口門（アーチ・看板・壁くり抜き）を生成しました。 (X: " + centerX + ", Z: " + entranceZ + ")");
     }
 
     private void generateWaterVeins(World world, int startX, int baseY, int startZ) {
