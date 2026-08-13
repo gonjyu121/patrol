@@ -4,6 +4,14 @@
 - **Version**: 1.9.96
 - **Branch**: `feature/patrol-logic-update`
 - **Build Status**: Passed (`mvn clean package`)
+- **External Plugins**: Updated all dependencies to latest versions via `update_plugins.ps1`
+    - Geyser-Spigot (latest build)
+    - Floodgate-Spigot (latest build)
+    - ViaVersion (v5.11.0)
+    - ViaBackwards (v5.11.0)
+    - ViaRewind (v4.1.3)
+    - LunaChat (v3.0.20)
+    - GrimAC-Plugin (v2.3.73)
 - **Key Features Included in v1.9.96**:
     - **`/patrol` Command Access**: Restricted all `/patrol` subcommands and tab completions strictly to OP (`sender.isOp()`).
     - **`/patrol back` (Manual Start Recovery)**: Saves pre-patrol inventory, armor, and location to `last_manual_start_state.yml` and restores upon `/patrol back`.
