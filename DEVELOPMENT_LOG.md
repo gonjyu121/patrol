@@ -4,7 +4,8 @@
 - **Version**: 1.9.95
 - **Branch**: `feature/patrol-logic-update`
 - **Build Status**: Passed (`mvn clean package`)
-- **Key Recent Features**:
+- **Git Status**: Clean (Latest commit: `3f6a838`)
+- **Key Features Included in v1.9.95**:
     - **`/patrol back` (Manual Start Recovery)**: Saves pre-patrol inventory, armor, and location to `last_manual_start_state.yml` and restores upon `/patrol back`.
     - **Dungeon Built Flag**: Added `built: true` in `dungeon_config.yml` to prevent duplicate auto-generation on restarts.
     - **Performance Overrides**: Forced `forceViewDistance` and `forceSimulationDistance` per world on startup.
