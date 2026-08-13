@@ -154,6 +154,10 @@ public class DungeonBuilder {
                                     null, null
                             );
                             plugin.getPatrolManager().addTouristLocation(bossTourLoc);
+
+                            // 生成完了フラグを保存（次回起動時の重複生成を防ぐ）
+                            manager.setBuilt(true);
+                            plugin.getLogger().info("[Dungeon] 迷宮の全生成が完了しました。built=true を保存しました。");
                         });
                     }
                 }.runTask(plugin);

@@ -63,6 +63,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         public boolean debugLog;
         public int trackingUpdateIntervalTicks;
         public boolean disableLoadPause;
+        public int forceViewDistance;
+        public int forceSimulationDistance;
     }
 
     public static class AutoStartConf {
@@ -103,6 +105,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         // 観光地リストはPatrolManager側で動的に初期生成・保存されるように変更しました
 
         loadConfigValues();
+        applyWorldPerformanceSettings();
 
         // 保護データの初期化
         protectionData = new ProtectionData(this);
@@ -162,17 +165,14 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         // パトロール状態の復元
         patrolManager.loadPatrolState();
 
-        // 死の迷宮の自動生成チェック（enabled かつ 未生成なら実行）
-        if (dungeonManager.isEnabled()) {
+        // 死の迷宮の自動生成チェック（enabled かつ built=false なら自動生成）
+        if (dungeonManager.isEnabled() && !dungeonManager.isBuilt()) {
             getServer().getScheduler().runTaskLater(this, () -> {
-                StringBuilder sb = new StringBuilder();
-                if (dungeonManager.scanForSafety(sb)) {
-                    getLogger().info("[Dungeon] 迷宮が有効かつ未生成であるため、自動生成を開始します...");
-                    dungeonBuilder.buildB1();
-                } else {
-                    getLogger().info("[Dungeon] 迷宮は既に生成されているか、既存の建造物が検出されたため自動生成をスキップします。");
-                }
+                getLogger().info("[Dungeon] 迷宮が未生成のため、自動生成を開始します...");
+                dungeonBuilder.buildB1();
             }, 100L); // 起動直後の負荷を避けるため5秒待機
+        } else if (dungeonManager.isEnabled()) {
+            getLogger().info("[Dungeon] 迷宮は生成済みです。スキップします。");
         }
 
         // MessageUtils初期化
@@ -321,6 +321,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     public void reloadPlugin() {
         reloadConfig();
         loadConfigValues();
+        applyWorldPerformanceSettings();
         
         // 統計データの再読み込みとレガシー反映
         if (statsStorage != null) {
@@ -342,6 +343,28 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         gistSyncManager = new GistSyncManager(this);
         
         getLogger().info("[Patrol] Configuration and legacy stats reloaded.");
+    }
+
+    /**
+     * 設定された描画距離とシミュレーション距離をすべてのワールドに強制適用します。
+     */
+    public void applyWorldPerformanceSettings() {
+        if (performanceConf == null) return;
+        int forceVD = performanceConf.forceViewDistance;
+        int forceSD = performanceConf.forceSimulationDistance;
+
+        if (forceVD > 0 || forceSD > 0) {
+            for (org.bukkit.World world : getServer().getWorlds()) {
+                if (forceVD > 0) {
+                    world.setViewDistance(forceVD);
+                    getLogger().info("[Performance] Set view distance of " + world.getName() + " to " + forceVD);
+                }
+                if (forceSD > 0) {
+                    world.setSimulationDistance(forceSD);
+                    getLogger().info("[Performance] Set simulation distance of " + world.getName() + " to " + forceSD);
+                }
+            }
+        }
     }
 
     private void logGitInfo() {
@@ -447,6 +470,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         performanceConf.debugLog = getConfig().getBoolean("performance.debugLog", false);
         performanceConf.trackingUpdateIntervalTicks = getConfig().getInt("patrol.trackingUpdateIntervalTicks", 2);
         performanceConf.disableLoadPause = getConfig().getBoolean("performance.disableLoadPause", false);
+        performanceConf.forceViewDistance = getConfig().getInt("performance.forceViewDistance", -1);
+        performanceConf.forceSimulationDistance = getConfig().getInt("performance.forceSimulationDistance", -1);
 
         // autoStart
         autoStartConf = new AutoStartConf();

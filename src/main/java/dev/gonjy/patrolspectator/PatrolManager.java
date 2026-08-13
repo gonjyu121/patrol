@@ -398,7 +398,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
 
         // カメラ役を開始地点とインベントリに戻す
         Player camera = getCamera();
-        if (camera != null) {
+        if (camera != null && camera.isOnline()) {
             // 安全のため、改めてサバイバル＆無敵解除を強制する
             camera.setGameMode(GameMode.SURVIVAL);
             try {
@@ -417,15 +417,17 @@ public class PatrolManager implements org.bukkit.event.Listener {
             if (savedArmor != null) {
                 camera.getInventory().setArmorContents(savedArmor);
             }
-        }
 
-        cameraUuid = null;
-        startLocation = null;
-        savedInventory = null;
-        savedArmor = null;
-        lastSpectatedUuid = null;
-        clearPatrolState();
-        plugin.getLogger().info("パトロールを停止しました。");
+            cameraUuid = null;
+            startLocation = null;
+            savedInventory = null;
+            savedArmor = null;
+            lastSpectatedUuid = null;
+            clearPatrolState();
+            plugin.getLogger().info("パトロールを停止し、プレイヤーを元の位置に戻しました。");
+        } else {
+            plugin.getLogger().info("[Patrol] カメラ役がオフラインのため、復帰用状態ファイルを維持したままパトロールタスクのみ停止します。");
+        }
     }
 
     /**
@@ -1078,6 +1080,107 @@ public class PatrolManager implements org.bukkit.event.Listener {
             }
         } catch (Throwable t) {
             plugin.getLogger().warning("[Patrol] パトロール状態ファイルの削除に失敗しました: " + t.getMessage());
+        }
+    }
+
+    /**
+     * 手動パトロール開始時の状態（位置、インベントリなど）を永続ファイルに保存します。
+     */
+    public void saveManualStartState(Player camera, Location loc, org.bukkit.inventory.ItemStack[] inventory, org.bukkit.inventory.ItemStack[] armor) {
+        try {
+            File file = new File(plugin.getDataFolder(), "last_manual_start_state.yml");
+            org.bukkit.configuration.file.YamlConfiguration config = new org.bukkit.configuration.file.YamlConfiguration();
+            config.set("cameraUuid", camera.getUniqueId().toString());
+            config.set("location", loc);
+            config.set("inventory", inventory);
+            config.set("armor", armor);
+            config.save(file);
+            plugin.getLogger().info("[Patrol] 手動開始位置を last_manual_start_state.yml に保存しました。");
+        } catch (Throwable t) {
+            plugin.getLogger().log(Level.SEVERE, "[Patrol] 手動開始位置の保存に失敗しました: " + t.getMessage(), t);
+        }
+    }
+
+    /**
+     * 最後に手動で開始した時の状態（位置、インベントリ、防具、ゲームモード）を復元します。
+     * パトロール中である場合は停止します。
+     * 
+     * @param player 復元対象のプレイヤー
+     * @return 復元に成功した場合は true
+     */
+    public boolean restoreManualStartState(Player player) {
+        if (player == null) return false;
+
+        // パトロール中なら停止
+        if (isRunning()) {
+            stopPatrol();
+        }
+
+        try {
+            File file = new File(plugin.getDataFolder(), "last_manual_start_state.yml");
+            if (!file.exists()) {
+                return false;
+            }
+            org.bukkit.configuration.file.YamlConfiguration config = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file);
+            Location loc = (Location) config.get("location");
+            
+            // インベントリの復元
+            org.bukkit.inventory.ItemStack[] savedInv = null;
+            List<?> invList = config.getList("inventory");
+            if (invList != null) {
+                savedInv = new org.bukkit.inventory.ItemStack[invList.size()];
+                for (int i = 0; i < invList.size(); i++) {
+                    Object item = invList.get(i);
+                    if (item instanceof org.bukkit.inventory.ItemStack) {
+                        savedInv[i] = (org.bukkit.inventory.ItemStack) item;
+                    }
+                }
+            }
+            
+            // 防具の復元
+            org.bukkit.inventory.ItemStack[] savedArm = null;
+            List<?> armorList = config.getList("armor");
+            if (armorList != null) {
+                savedArm = new org.bukkit.inventory.ItemStack[armorList.size()];
+                for (int i = 0; i < armorList.size(); i++) {
+                    Object item = armorList.get(i);
+                    if (item instanceof org.bukkit.inventory.ItemStack) {
+                        savedArm[i] = (org.bukkit.inventory.ItemStack) item;
+                    }
+                }
+            }
+
+            // プレイヤーへの適用
+            player.setGameMode(GameMode.SURVIVAL);
+            try {
+                player.setInvulnerable(false);
+                player.setFlying(false);
+                player.setAllowFlight(false);
+            } catch (Throwable ignored) {}
+
+            if (loc != null) {
+                player.teleport(loc);
+            }
+            if (savedInv != null) {
+                player.getInventory().setContents(savedInv);
+            }
+            if (savedArm != null) {
+                player.getInventory().setArmorContents(savedArm);
+            }
+
+            // 一時状態のクリア
+            cameraUuid = null;
+            startLocation = null;
+            savedInventory = null;
+            savedArmor = null;
+            lastSpectatedUuid = null;
+            clearPatrolState();
+
+            plugin.getLogger().info("[Patrol] 手動開始時の状態に復元しました: " + player.getName());
+            return true;
+        } catch (Throwable t) {
+            plugin.getLogger().log(Level.SEVERE, "[Patrol] 手動開始状態の復元に失敗しました: " + t.getMessage(), t);
+            return false;
         }
     }
 }

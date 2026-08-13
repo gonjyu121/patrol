@@ -37,6 +37,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
         if (args.length == 0 || "help".equalsIgnoreCase(args[0])) {
             sender.sendMessage("§a/patrol start [dwellSeconds] - 観光巡りをスタート");
             sender.sendMessage("§a/patrol stop                 - 停止");
+            sender.sendMessage("§a/patrol back                 - 最後に手動開始した地点と状態に復帰");
             sender.sendMessage("§a/patrol where                - 保存済みの開始地点(復帰地点)を表示");
             sender.sendMessage("§a/patrol tpback               - 保存済みの開始地点に手動でTP");
             sender.sendMessage("§a/patrol spawn                - 初期スポーン地点へ戻り、開始地点をリセット");
@@ -53,7 +54,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "start": {
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("Player only.");
+                    sender.sendMessage("§cプレイヤーのみ実行できます。");
                     return true;
                 }
                 Player p = (Player) sender;
@@ -66,20 +67,35 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                     }
                 }
 
+                // 開始前の状態を保存
+                patrolManager.saveManualStartState(p, p.getLocation(), p.getInventory().getContents(), p.getInventory().getArmorContents());
                 patrolManager.startPatrol(p, dwell);
-                sender.sendMessage("§a[Patrol] start (dwell=" + dwell + "s)");
+                sender.sendMessage("§a[Patrol] パトロール開始 (停留時間=" + dwell + "秒)");
+                break;
+            }
+            case "back": {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage("§cプレイヤーのみ実行できます。");
+                    return true;
+                }
+                Player p = (Player) sender;
+                if (patrolManager.restoreManualStartState(p)) {
+                    sender.sendMessage("§a[Patrol] 最後に手動でstartした場所と状態に復帰しました！");
+                } else {
+                    sender.sendMessage("§c[Patrol] 保存された手動開始データが見つかりません。先に /patrol start を手動実行してください。");
+                }
                 break;
             }
             case "stop": {
                 patrolManager.stopPatrol();
-                sender.sendMessage("§e[Patrol] stop");
+                sender.sendMessage("§e[Patrol] パトロールを停止しました。");
                 // 停止後の複帰地点を案内（及び自分でTPできるTPBACKコマンドを案内）
                 // 注意: stopPatrol()内部で自動TP済みなので、ここでは案内のみ
                 break;
             }
             case "status": {
-                String running = patrolManager.isRunning() ? "RUNNING" : "IDLE";
-                sender.sendMessage("§b[Patrol] status=" + running + ", locations=" + patrolManager.getLocationCount());
+                String running = patrolManager.isRunning() ? "実行中" : "停止中";
+                sender.sendMessage("§b[Patrol] 状態=" + running + ", 地点数=" + patrolManager.getLocationCount());
                 // 状態表示時に保存地点も表示
                 org.bukkit.Location savedLoc = patrolManager.getStartLocation();
                 if (savedLoc != null) {
@@ -93,42 +109,42 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             case "rank": {
                 if (patrolManager.isRunning()) {
                     rankingDisplaySystem.displayRankings();
-                    sender.sendMessage("§a[Patrol] Ranking display triggered manually.");
+                    sender.sendMessage("§a[Patrol] ランキングを手動で表示しました。");
                 } else {
-                    sender.sendMessage("§c[Patrol] Patrol is not running. Start patrol first.");
+                    sender.sendMessage("§c[Patrol] パトロールが起動していません。先に /patrol start を実行してください。");
                 }
                 break;
             }
             case "reset_survival": {
                 if (!sender.isOp()) {
-                    sender.sendMessage("§cPermission denied.");
+                    sender.sendMessage("§c権限がありません。");
                     return true;
                 }
                 plugin.getStatsStorage().resetAllContinuousSurvivalTime();
-                sender.sendMessage("§a[Patrol] All continuous survival times have been reset.");
+                sender.sendMessage("§a[Patrol] 全プレイヤーの連続生存時間をリセットしました。");
                 break;
             }
             case "backup": {
                 if (!sender.isOp()) {
-                    sender.sendMessage("§cPermission denied.");
+                    sender.sendMessage("§c権限がありません。");
                     return true;
                 }
-                sender.sendMessage("§a[Patrol] Stats backup triggered. Check Discord shortly.");
+                sender.sendMessage("§a[Patrol] バックアップを開始しました。Discordを確認してください。");
                 plugin.backupStats();
                 break;
             }
             case "reload": {
                 if (!sender.isOp()) {
-                    sender.sendMessage("§cPermission denied.");
+                    sender.sendMessage("§c権限がありません。");
                     return true;
                 }
                 plugin.reloadPlugin();
-                sender.sendMessage("§a[Patrol] Configuration and legacy stats reloaded.");
+                sender.sendMessage("§a[Patrol] 設定とレガシーデータをリロードしました。");
                 break;
             }
             case "spawn": {
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("Player only.");
+                    sender.sendMessage("§cプレイヤーのみ実行できます。");
                     return true;
                 }
                 Player p = (Player) sender;
@@ -159,7 +175,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             }
             case "tpback": {
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("Player only.");
+                    sender.sendMessage("§cプレイヤーのみ実行できます。");
                     return true;
                 }
                 Player p = (Player) sender;
@@ -181,7 +197,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             }
             case "travel": {
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage("Player only.");
+                    sender.sendMessage("§cプレイヤーのみ実行できます。");
                     return true;
                 }
                 Player p = (Player) sender;
@@ -189,7 +205,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                 break;
             }
             default:
-                sender.sendMessage("Unknown subcommand. /patrol help");
+                sender.sendMessage("§c不明なサブコマンドです。/patrol help を確認してください。");
         }
         return true;
     }
@@ -197,7 +213,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> sub = new ArrayList<>(Arrays.asList("start", "stop", "where", "tpback", "travel", "status", "rank", "spawn"));
+            List<String> sub = new ArrayList<>(Arrays.asList("start", "stop", "back", "where", "tpback", "travel", "status", "rank", "spawn"));
             if (sender.isOp()) {
                 sub.add("reset_survival");
                 sub.add("backup");
@@ -223,14 +239,16 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
         player.sendMessage("§a[Patrol] 遠くの村を探索中...（数秒かかる場合があります）");
 
         org.bukkit.Location spawn = world.getSpawnLocation();
-        
+        // 現在地を基準にする（何度叩いても現在地からさらに遠くへ飛べる）
+        org.bukkit.Location current = player.getLocation();
+
         java.util.Random rand = new java.util.Random();
         double angle = rand.nextDouble() * 2 * Math.PI;
-        // 3000～8000ブロック離れた座標
+        // 現在地から3000～8000ブロック離れた座標
         double distance = 3000 + rand.nextInt(5000);
-        int targetX = (int) (spawn.getX() + Math.cos(angle) * distance);
-        int targetZ = (int) (spawn.getZ() + Math.sin(angle) * distance);
-        
+        int targetX = (int) (current.getX() + Math.cos(angle) * distance);
+        int targetZ = (int) (current.getZ() + Math.sin(angle) * distance);
+
         org.bukkit.Location searchOrigin = new org.bukkit.Location(world, targetX, 64, targetZ);
         org.bukkit.Location targetLoc = null;
 
@@ -242,7 +260,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                     targetLoc = result.getLocation();
                 }
             }
-            
+
             if (targetLoc == null) {
                 org.bukkit.generator.structure.Structure desertVillage = org.bukkit.Registry.STRUCTURE.get(org.bukkit.NamespacedKey.minecraft("village_desert"));
                 if (desertVillage != null) {
@@ -252,7 +270,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                     }
                 }
             }
-            
+
             if (targetLoc == null) {
                 org.bukkit.generator.structure.Structure taigaVillage = org.bukkit.Registry.STRUCTURE.get(org.bukkit.NamespacedKey.minecraft("village_taiga"));
                 if (taigaVillage != null) {
@@ -269,25 +287,23 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
         if (targetLoc != null) {
             int y = world.getHighestBlockYAt(targetLoc.getBlockX(), targetLoc.getBlockZ());
             targetLoc.setY(y + 1);
-            
+
             if (patrolManager.isRunning()) {
                 patrolManager.stopPatrol();
             }
-            
+
             player.teleport(targetLoc);
-            player.sendMessage(String.format("§a[Patrol] 初期リスから %.1f ブロック離れた村にテレポートしました！ (X: %d, Z: %d)", 
-                    targetLoc.distance(spawn), targetLoc.getBlockX(), targetLoc.getBlockZ()));
+            player.sendMessage("§a[Patrol] 遠くの村にテレポートしました！");
         } else {
             int y = world.getHighestBlockYAt(targetX, targetZ);
             org.bukkit.Location fallbackLoc = new org.bukkit.Location(world, targetX, y + 1, targetZ);
-            
+
             if (patrolManager.isRunning()) {
                 patrolManager.stopPatrol();
             }
-            
+
             player.teleport(fallbackLoc);
-            player.sendMessage(String.format("§e[Patrol] 近くに村が見つからなかったため、初期リスから %.1f ブロック離れたランダムな地表にテレポートしました。 (X: %d, Z: %d)", 
-                    fallbackLoc.distance(spawn), targetX, targetZ));
+            player.sendMessage("§e[Patrol] 近くに村が見つからなかったため、ランダムな地表にテレポートしました。");
         }
     }
 }

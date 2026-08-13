@@ -7,4 +7,7 @@ center:
   z: 0.0
 
 # 迷宮システムを有効にするかどうか
-enabled: false
+enabled: true
+
+# 迷宮が既に生成済みかどうか（自動管理: 手動変更不要）
+built: false

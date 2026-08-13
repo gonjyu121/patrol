@@ -488,21 +488,28 @@ public class PlayerStatsStorage {
 
         for (java.util.Map<?, ?> entry : legacyList) {
             String name = (String) entry.get("name");
-            Object totalMsObj = entry.get("totalPlayMs");
-            if (name == null || totalMsObj == null) continue;
+            if (name == null) continue; // name がなければスキップ
 
+            Object totalMsObj = entry.get("totalPlayMs");
             Object dragonKillsObj = entry.get("enderDragonKills");
             Object hardSlayerObj = entry.get("hasKilledHardDragon");
+            Object playerKillsObj = entry.get("playerKills");
+            Object eventPointsObj = entry.get("eventPoints");
 
             long legacyMs = (totalMsObj instanceof Number) ? ((Number) totalMsObj).longValue() : 0L;
             int legacyDragonKills = (dragonKillsObj instanceof Number) ? ((Number) dragonKillsObj).intValue() : 0;
             boolean legacyHardSlayer = (hardSlayerObj instanceof Boolean) ? (Boolean) hardSlayerObj : false;
+            int legacyPlayerKills = (playerKillsObj instanceof Number) ? ((Number) playerKillsObj).intValue() : 0;
+            int legacyEventPoints = (eventPointsObj instanceof Number) ? ((Number) eventPointsObj).intValue() : 0;
+
+            // 何も引き継ぎデータがなければスキップ
+            if (legacyMs == 0 && legacyDragonKills == 0 && !legacyHardSlayer && legacyPlayerKills == 0 && legacyEventPoints == 0) continue;
 
             // オフラインモード用UUIDを計算
             UUID offlineUuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(java.nio.charset.StandardCharsets.UTF_8));
             
             synchronized (yaml) {
-                applyLegacyStats(offlineUuid, name, legacyMs, legacyDragonKills, legacyHardSlayer);
+                applyLegacyStats(offlineUuid, name, legacyMs, legacyDragonKills, legacyHardSlayer, legacyPlayerKills, legacyEventPoints);
             }
         }
     }
@@ -520,12 +527,16 @@ public class PlayerStatsStorage {
                 Object totalMsObj = entry.get("totalPlayMs");
                 Object dragonKillsObj = entry.get("enderDragonKills");
                 Object hardSlayerObj = entry.get("hasKilledHardDragon");
+                Object playerKillsObj = entry.get("playerKills");
+                Object eventPointsObj = entry.get("eventPoints");
 
                 long legacyMs = (totalMsObj instanceof Number) ? ((Number) totalMsObj).longValue() : 0L;
                 int legacyDragonKills = (dragonKillsObj instanceof Number) ? ((Number) dragonKillsObj).intValue() : 0;
                 boolean legacyHardSlayer = (hardSlayerObj instanceof Boolean) ? (Boolean) hardSlayerObj : false;
+                int legacyPlayerKills = (playerKillsObj instanceof Number) ? ((Number) playerKillsObj).intValue() : 0;
+                int legacyEventPoints = (eventPointsObj instanceof Number) ? ((Number) eventPointsObj).intValue() : 0;
 
-                applyLegacyStats(uuid, name, legacyMs, legacyDragonKills, legacyHardSlayer);
+                applyLegacyStats(uuid, name, legacyMs, legacyDragonKills, legacyHardSlayer, legacyPlayerKills, legacyEventPoints);
                 break;
             }
         }
@@ -534,7 +545,7 @@ public class PlayerStatsStorage {
     /**
      * 内部用：レガシーデータを適用し、フラグを立てます。
      */
-    private void applyLegacyStats(UUID uuid, String name, long legacyMs, int legacyDragonKills, boolean legacyHardSlayer) {
+    private void applyLegacyStats(UUID uuid, String name, long legacyMs, int legacyDragonKills, boolean legacyHardSlayer, int legacyPlayerKills, int legacyEventPoints) {
         String base = basePath(uuid);
         // 既に適用済み、または既に十分な時間を持っている場合はスキップ（二重適用防止）
         if (yaml.getBoolean(base + ".legacyApplied", false)) return;
@@ -557,11 +568,19 @@ public class PlayerStatsStorage {
         if (legacyHardSlayer) {
             yaml.set(base + ".hasKilledHardDragon", true);
         }
+
+        // PK数を加算
+        int currentKills = yaml.getInt(base + ".playerKills", 0);
+        yaml.set(base + ".playerKills", currentKills + legacyPlayerKills);
+
+        // イベントポイントを加算
+        int currentPoints = yaml.getInt(base + ".eventPoints", 0);
+        yaml.set(base + ".eventPoints", currentPoints + legacyEventPoints);
         
         // 適用済みフラグを立てる
         yaml.set(base + ".legacyApplied", true);
         dirty = true;
         
-        plugin.getLogger().info("[Legacy] Applied stats to player " + name + " (" + uuid + "): " + legacyMs + "ms, " + legacyDragonKills + " kills");
+        plugin.getLogger().info("[Legacy] Applied stats to player " + name + " (" + uuid + "): " + legacyMs + "ms, " + legacyDragonKills + " dragon kills, " + legacyPlayerKills + " kills, " + legacyEventPoints + " points");
     }
 }

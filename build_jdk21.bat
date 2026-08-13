@@ -39,7 +39,7 @@ echo.
 
 REM Run Maven build
 echo Starting Maven build...
-call "%MAVEN_HOME%\bin\mvn.cmd" clean package -DskipTests
+call "%MAVEN_HOME%\bin\mvn.cmd" clean package
 
 if errorlevel 1 (
     echo.

@@ -43,7 +43,7 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendHelp(CommandSender sender) {
-        sender.sendMessage(ChatColor.GOLD + "===== Bounty System =====");
+        sender.sendMessage(ChatColor.GOLD + "===== 賞金首システム =====");
         sender.sendMessage(ChatColor.YELLOW + "/bounty list " + ChatColor.WHITE + "- 賞金首リストを表示");
         if (sender.hasPermission("patrol.bounty.admin")) {
             sender.sendMessage(ChatColor.YELLOW + "/bounty add <player> <amount> " + ChatColor.WHITE + "- 賞金をかける(OP)");
@@ -56,7 +56,7 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        sender.sendMessage(ChatColor.RED + "===== WANTED LIST =====");
+        sender.sendMessage(ChatColor.RED + "===== 賞金首リスト =====");
         for (BountyData data : bountyManager.getActiveBounties().values()) {
             sender.sendMessage(ChatColor.GOLD + data.getTargetName() +
                     ChatColor.WHITE + " - 賞金: " + ChatColor.AQUA + (int) data.getAmount() + " ダイヤ" +
@@ -71,7 +71,7 @@ public class BountyCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length < 3) {
-            sender.sendMessage(ChatColor.RED + "Usage: /bounty add <player> <amount>");
+            sender.sendMessage(ChatColor.RED + "使い方: /bounty add <プレイヤー名> <金額>");
             return;
         }
 

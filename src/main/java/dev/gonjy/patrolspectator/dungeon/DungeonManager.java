@@ -19,6 +19,7 @@ public class DungeonManager {
 
     private Location center;
     private boolean enabled = false;
+    private boolean built = false;
     private final int DUNGEON_SIZE = 60;
 
     public DungeonManager(PatrolSpectatorPlugin plugin) {
@@ -48,6 +49,7 @@ public class DungeonManager {
             }
         }
         enabled = config.getBoolean("enabled", false);
+        built = config.getBoolean("built", false);
     }
 
     public void saveConfig() {
@@ -58,6 +60,7 @@ public class DungeonManager {
             config.set("center.z", center.getZ());
         }
         config.set("enabled", enabled);
+        config.set("built", built);
         try {
             config.save(configFile);
         } catch (IOException e) {
@@ -80,6 +83,15 @@ public class DungeonManager {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+        saveConfig();
+    }
+
+    public boolean isBuilt() {
+        return built;
+    }
+
+    public void setBuilt(boolean built) {
+        this.built = built;
         saveConfig();
     }
 
