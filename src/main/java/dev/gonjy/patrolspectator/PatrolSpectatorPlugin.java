@@ -1,15 +1,10 @@
 package dev.gonjy.patrolspectator;
 
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
-import java.util.logging.Level;
 
 public class PatrolSpectatorPlugin extends JavaPlugin {
 
@@ -19,6 +14,15 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     private GameModeEnforcer gameModeEnforcer;
     private ParticipationManager participationManager;
     private PatrolManager patrolManager;
+    private RankingDisplaySystem rankingDisplaySystem;
+
+    private EndResetManager endResetManager;
+    private YouTubeManager youTubeManager;
+    private DiscordWebhookClient discordWebhookClient;
+    private BountyManager bountyManager;
+    private EndGameManager endGameManager;
+    private GistSyncManager gistSyncManager;
+    private EngagementBroadcaster engagementBroadcaster;
 
     // タイトル/音の設定
     public static class TitleConf {
@@ -50,9 +54,36 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         public double autogenYOffset;
     }
 
+    public static class PerformanceConf {
+        public boolean lowSpecMode;
+        public int minIntervalSeconds;
+        public int maxCameraMovesPerMinute;
+        public boolean disableWorldScan;
+        public boolean disableAutoEventWhilePatrol;
+        public boolean debugLog;
+        public int trackingUpdateIntervalTicks;
+        public boolean disableLoadPause;
+        public int forceViewDistance;
+        public int forceSimulationDistance;
+    }
+
+    public static class AutoStartConf {
+        public boolean enabled;
+        public String cameraPlayerName;
+    }
+
+    public static class ChunkPreLoadingConf {
+        public boolean enabled;
+        public int secondsBefore;
+    }
+
     private TourConf tourConf;
+    private PerformanceConf performanceConf;
+    private AutoStartConf autoStartConf;
+    private ChunkPreLoadingConf chunkPreLoadingConf;
     private int patrolIntervalSeconds;
-    private boolean announce; // 予約（未使用だが残す）
+    @SuppressWarnings("unused") // Reserved for future use, loaded from config
+    private boolean announce;
 
     // 保護情報
     private ProtectionData protectionData;
@@ -60,33 +91,305 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     // 参加回数・ランキング
     private PlayerStatsStorage statsStorage;
 
+    private TickMonitor tickMonitor;
+    private dev.gonjy.patrolspectator.dungeon.DungeonManager dungeonManager;
+    private dev.gonjy.patrolspectator.dungeon.DungeonStatsStorage dungeonStatsStorage;
+    private dev.gonjy.patrolspectator.dungeon.DungeonBuilder dungeonBuilder;
+    private dev.gonjy.patrolspectator.dungeon.TrapRunner trapRunner;
+    private dev.gonjy.patrolspectator.dungeon.DungeonLootSystem dungeonLootSystem;
+    private dev.gonjy.patrolspectator.dungeon.DungeonBossSystem dungeonBossSystem;
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        // 観光地リストはPatrolManager側で動的に初期生成・保存されるように変更しました
+
         loadConfigValues();
+        applyWorldPerformanceSettings();
 
         // 保護データの初期化
         protectionData = new ProtectionData(this);
+
+        // クラウド同期 (GitHub Gist)
+        gistSyncManager = new GistSyncManager(this);
+        if (gistSyncManager.isConfigured()) {
+            gistSyncManager.pull();
+        }
 
         // ストレージ
         statsStorage = new PlayerStatsStorage(this);
 
         // サブシステム初期化
+        // Discord Integration (Early init for dependency injection)
+        discordWebhookClient = new DiscordWebhookClient(this);
+        discordWebhookClient.reload();
+
         engagementSystem = new EngagementSystem(this);
         gameModeEnforcer = new GameModeEnforcer(this);
         autoEventSystem = new AutoEventSystem(this);
         participationManager = new ParticipationManager(this, statsStorage);
+        rankingDisplaySystem = new RankingDisplaySystem(this, statsStorage);
+        endResetManager = new EndResetManager(this);
+        endGameManager = new EndGameManager(this, statsStorage, discordWebhookClient);
+
+        // 死の迷宮システム初期化
+        dungeonManager = new dev.gonjy.patrolspectator.dungeon.DungeonManager(this);
+        dungeonStatsStorage = new dev.gonjy.patrolspectator.dungeon.DungeonStatsStorage(this);
+        trapRunner = new dev.gonjy.patrolspectator.dungeon.TrapRunner(this, dungeonManager);
+        dungeonBuilder = new dev.gonjy.patrolspectator.dungeon.DungeonBuilder(this, dungeonManager);
+        dungeonLootSystem = new dev.gonjy.patrolspectator.dungeon.DungeonLootSystem();
+        dungeonBossSystem = new dev.gonjy.patrolspectator.dungeon.DungeonBossSystem();
+
+        // Engagement Broadcaster
+        engagementBroadcaster = new EngagementBroadcaster(this);
+        engagementBroadcaster.start();
+
+        // イベントリスナーの登録
+        getServer().getPluginManager().registerEvents(new RankingEventListener(statsStorage, engagementSystem), this);
+        getServer().getPluginManager().registerEvents(
+                new dev.gonjy.patrolspectator.dungeon.DungeonListener(this, dungeonManager, dungeonStatsStorage,
+                        trapRunner),
+                this);
 
         // PatrolManagerの初期化（依存関係を注入）
-        patrolManager = new PatrolManager(this, engagementSystem, participationManager, gameModeEnforcer);
+        patrolManager = new PatrolManager(this, engagementSystem, participationManager, gameModeEnforcer,
+                rankingDisplaySystem);
+        getServer().getPluginManager().registerEvents(patrolManager, this);
 
-        // ルール適用（Bedrock系 gamerule は失敗するので握りつぶす）
-        applyServerRulesSafely();
+        // ルール適用（Bedrock/Java 1.21.11+ 対応）
+        engagementSystem.applyServerRules();
 
         // 観光地ロード
         patrolManager.loadTouristLocations();
 
-        getLogger().info("PatrolSpectatorPlugin enabled.");
+        // パトロール状態の復元
+        patrolManager.loadPatrolState();
+
+        // 死の迷宮の自動生成チェック（enabled かつ built=false なら自動生成）
+        if (dungeonManager.isEnabled() && !dungeonManager.isBuilt()) {
+            getServer().getScheduler().runTaskLater(this, () -> {
+                getLogger().info("[Dungeon] 迷宮が未生成のため、自動生成を開始します...");
+                dungeonBuilder.buildB1();
+            }, 100L); // 起動直後の負荷を避けるため5秒待機
+        } else if (dungeonManager.isEnabled()) {
+            getLogger().info("[Dungeon] 迷宮は生成済みです。スキップします。");
+        }
+
+        // MessageUtils初期化
+        MessageUtils.init(titleConf);
+
+        // コマンド登録
+        PatrolCommand patrolCmd = new PatrolCommand(this, patrolManager, rankingDisplaySystem);
+        if (getCommand("patrol") != null) {
+            getCommand("patrol").setExecutor(patrolCmd);
+            getCommand("patrol").setTabCompleter(patrolCmd);
+        } else {
+            getLogger().warning("Command 'patrol' not found in plugin.yml!");
+        }
+
+        // Stats コマンド登録
+        if (getCommand("stats") != null) {
+            getCommand("stats").setExecutor(new StatsCommand(this, engagementSystem));
+        } else {
+            getLogger().warning("Command 'stats' not found in plugin.yml!");
+        }
+
+        // Dungeon コマンド登録
+        dev.gonjy.patrolspectator.dungeon.DungeonCommand dungeonCmd = new dev.gonjy.patrolspectator.dungeon.DungeonCommand(
+                dungeonManager);
+        if (getCommand("dungeon") != null) {
+            getCommand("dungeon").setExecutor(dungeonCmd);
+            getCommand("dungeon").setTabCompleter(dungeonCmd);
+        } else {
+            getLogger().warning("Command 'dungeon' not found in plugin.yml!");
+        }
+
+        // 自動イベントシステムの開始
+        autoEventSystem.startAutoEvents();
+
+        // ゲームモード強制システムの開始 (パトロール外でもサバイバルを維持)
+        gameModeEnforcer.start();
+
+        // ルール定期適用タスク（3分間隔に緩和）
+        getServer().getScheduler().runTaskTimer(this, () -> {
+            engagementSystem.applyServerRulesQuietly();
+        }, 3600L, 3600L);
+
+        // エンゲージメント（マイルストーン/ランク）定期チェックタスク（1分間隔に短縮）
+        getServer().getScheduler().runTaskTimer(this, () -> {
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                engagementSystem.checkEngagement(p);
+            }
+        }, 1200L, 1200L);
+
+        if (getConfig().getBoolean("discord.enabled", true)) {
+            getServer().getPluginManager().registerEvents(new DiscordListener(this, discordWebhookClient), this);
+            getLogger().info("[Discord] Integration enabled.");
+
+            // Stats Backup Task
+            if (getConfig().getBoolean("discord.backup.enabled", true)) {
+                int intervalHours = getConfig().getInt("discord.backup.interval_hours", 6);
+                getServer().getScheduler().runTaskTimerAsynchronously(this, this::backupStats,
+                        20 * 60 * 10L, // 10分後に初回実行
+                        20L * 3600 * intervalHours);
+            }
+        }
+
+        // GitHub Periodic Sync
+        if (gistSyncManager.isConfigured()) {
+            int intervalHours = getConfig().getInt("github.syncIntervalHours", 1);
+            if (intervalHours > 0) {
+                getServer().getScheduler().runTaskTimerAsynchronously(this, gistSyncManager::push,
+                        20L * 3600 * intervalHours, 20L * 3600 * intervalHours);
+                getLogger().info("[CloudSync] Periodic push scheduled every " + intervalHours + " hours.");
+            }
+        }
+
+        // YouTube Integration
+        youTubeManager = new YouTubeManager(this);
+        if (getConfig().getBoolean("youtube.enabled", false)) {
+            String clientId = getConfig().getString("youtube.client_id");
+            String clientSecret = getConfig().getString("youtube.client_secret");
+            String refreshToken = getConfig().getString("youtube.refresh_token");
+            youTubeManager.initialize(clientId, clientSecret, refreshToken);
+            getServer().getPluginManager().registerEvents(new YouTubeChatListener(this, youTubeManager), this);
+        }
+
+        // Auto Start Listener
+        if (autoStartConf.enabled) {
+            getLogger().info("AutoStart is enabled for camera player: " + autoStartConf.cameraPlayerName);
+            getServer().getPluginManager().registerEvents(new org.bukkit.event.Listener() {
+                @org.bukkit.event.EventHandler
+                public void onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent event) {
+                    Player joinedPlayer = event.getPlayer();
+                    String playerName = joinedPlayer.getName();
+                    if (playerName.equalsIgnoreCase(autoStartConf.cameraPlayerName)) {
+                        // カメラプレイヤーにOPを付与（未取得時のみ）
+                        if (!joinedPlayer.isOp()) {
+                            joinedPlayer.setOp(true);
+                            getLogger().info("[AutoStart] Camera player " + playerName + " granted OP automatically.");
+                        }
+                        getLogger().info("Camera player " + playerName + " joined. Starting patrol in 40 ticks...");
+                        // Delay slightly to ensure player is fully logged in
+                        getServer().getScheduler().runTaskLater(PatrolSpectatorPlugin.this, () -> {
+                            if (joinedPlayer.isOnline()) {
+                                // アンチチート除外コマンド実行 (GrimAC等)
+                                String exemptCmd = "grim exempt " + joinedPlayer.getName();
+                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), exemptCmd);
+                                getLogger().info("[AutoStart] Executed anti-cheat exemption: " + exemptCmd);
+
+                                // ログイン地点（実際の現在地）を開始地点として使用するため、startLocationは設定しない
+                                // (startPatrol内部で camera.getLocation() が自動使用される)
+                                patrolManager.startPatrol(joinedPlayer, tourConf.dwellSeconds);
+                            } else {
+                                getLogger().warning(
+                                        "Camera player " + playerName + " is no longer online. AutoStart aborted.");
+                            }
+                        }, 40L);
+                    }
+                }
+            }, this);
+        } else {
+            getLogger().info("AutoStart is disabled.");
+        }
+
+        // Bounty System
+        bountyManager = new BountyManager(this);
+        if (getCommand("bounty") != null) {
+            getCommand("bounty").setExecutor(new BountyCommand(bountyManager));
+        } else {
+            getLogger().warning("Command 'bounty' not found in plugin.yml!");
+        }
+
+        // Create TickMonitor
+        this.tickMonitor = new TickMonitor(this);
+        this.tickMonitor.start();
+
+        getLogger().info("========================================");
+        getLogger().info("PatrolSpectatorPlugin v" + getPluginMeta().getVersion());
+
+        // Log Git Commit Hash
+        logGitInfo();
+
+        getLogger().info("PatrolSpectatorPlugin has been enabled!");
+        getLogger().info("========================================");
+    }
+
+    /**
+     * プラグインの設定と統計データを再読み込みします。
+     */
+    public void reloadPlugin() {
+        reloadConfig();
+        loadConfigValues();
+        applyWorldPerformanceSettings();
+        
+        // 統計データの再読み込みとレガシー反映
+        if (statsStorage != null) {
+            statsStorage.saveSync(); // 現在のデータを一旦保存
+            statsStorage.applyLegacyStatsFromConfig();
+        }
+        
+        // Discordクライアントの更新
+        if (discordWebhookClient != null) {
+            discordWebhookClient.reload();
+        }
+
+        // エンゲージメント放送の再開
+        if (engagementBroadcaster != null) {
+            engagementBroadcaster.start();
+        }
+        
+        // クラウド同期マネージャーの再生成（トークン等が変わった可能性のため）
+        gistSyncManager = new GistSyncManager(this);
+        
+        getLogger().info("[Patrol] Configuration and legacy stats reloaded.");
+    }
+
+    /**
+     * 設定された描画距離とシミュレーション距離をすべてのワールドに強制適用します。
+     */
+    public void applyWorldPerformanceSettings() {
+        if (performanceConf == null) return;
+        int forceVD = performanceConf.forceViewDistance;
+        int forceSD = performanceConf.forceSimulationDistance;
+
+        if (forceVD > 0 || forceSD > 0) {
+            for (org.bukkit.World world : getServer().getWorlds()) {
+                if (forceVD > 0) {
+                    world.setViewDistance(forceVD);
+                    getLogger().info("[Performance] Set view distance of " + world.getName() + " to " + forceVD);
+                }
+                if (forceSD > 0) {
+                    world.setSimulationDistance(forceSD);
+                    getLogger().info("[Performance] Set simulation distance of " + world.getName() + " to " + forceSD);
+                }
+            }
+        }
+    }
+
+    private void logGitInfo() {
+        try (java.io.InputStream is = getResource("git.properties")) {
+            if (is != null) {
+                Properties gitProps = new Properties();
+                gitProps.load(is);
+                String commitHash = gitProps.getProperty("git.commit.id.abbrev", "unknown");
+                String buildTime = gitProps.getProperty("git.build.time", "unknown");
+                getLogger().info("Commit: " + commitHash);
+                getLogger().info("Build Time: " + buildTime);
+            } else {
+                getLogger().warning("git.properties not found in JAR");
+            }
+        } catch (Exception e) {
+            getLogger().warning("Could not load git.properties: " + e.getMessage());
+        }
+    }
+
+    public DiscordWebhookClient getDiscordWebhookClient() {
+        return discordWebhookClient;
+    }
+
+    public BountyManager getBountyManager() {
+        return bountyManager;
     }
 
     @Override
@@ -98,16 +401,35 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
             autoEventSystem.shutdown();
         if (gameModeEnforcer != null)
             gameModeEnforcer.shutdown();
+        if (endGameManager != null)
+            endGameManager.shutdown();
+        if (engagementBroadcaster != null)
+            engagementBroadcaster.stop();
 
         // 最後にストレージ保存
         if (statsStorage != null) {
             statsStorage.flush();
         }
-        getLogger().info("PatrolSpectatorPlugin disabled.");
+        if (participationManager != null) {
+            participationManager.shutdown();
+        }
+
+        // 最後にクラウドへ保存
+        if (gistSyncManager != null && gistSyncManager.isConfigured()) {
+            gistSyncManager.push();
+        }
+
+        if (this.tickMonitor != null) {
+            this.tickMonitor.stop();
+        }
+
+        getLogger().info("PatrolSpectatorPlugin has been disabled!");
     }
 
     private void loadConfigValues() {
         reloadConfig();
+        getConfig().options().copyDefaults(true);
+        saveConfig();
         patrolIntervalSeconds = getConfig().getInt("patrol.intervalSeconds", 10);
         announce = getConfig().getBoolean("patrol.announce", true); // 予約・今は未使用
 
@@ -136,25 +458,30 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         tourConf.autogenPoints = getConfig().getInt("patrol.tour.autogen.points", 6);
         tourConf.autogenRadius = getConfig().getInt("patrol.tour.autogen.radius", 60);
         tourConf.autogenYOffset = getConfig().getDouble("patrol.tour.autogen.yOffset", 0.0);
-    }
 
-    private void applyServerRulesSafely() {
-        // Paper(Java)で通る範囲のみ実行。Bedrock専用は例外になるので握りつぶす
-        ConsoleCommandSender console = Bukkit.getServer().getConsoleSender();
-        String[] cmds = new String[] {
-                "gamerule doDaylightCycle true",
-                "gamerule keepInventory false",
-                "gamerule locatorBar false", // Bedrock寄りAPIだが、実行できる環境もあるのでtry
-                "gamerule showCoordinates false" // ほぼ失敗するので try/catchで握る
-        };
-        for (String c : cmds) {
-            try {
-                Bukkit.dispatchCommand(console, c);
-                getLogger().info("[Rules] applied: " + c);
-            } catch (Throwable t) {
-                getLogger().log(Level.WARNING, "[Rules] failed: " + c + " (" + t.getMessage() + ")");
-            }
-        }
+        // performance
+        performanceConf = new PerformanceConf();
+        performanceConf.lowSpecMode = getConfig().getBoolean("performance.lowSpecMode", false);
+        performanceConf.minIntervalSeconds = getConfig().getInt("performance.minIntervalSeconds", 60);
+        performanceConf.maxCameraMovesPerMinute = getConfig().getInt("performance.maxCameraMovesPerMinute", 3);
+        performanceConf.disableWorldScan = getConfig().getBoolean("performance.disableWorldScan", false);
+        performanceConf.disableAutoEventWhilePatrol = getConfig().getBoolean("performance.disableAutoEventWhilePatrol",
+                false);
+        performanceConf.debugLog = getConfig().getBoolean("performance.debugLog", false);
+        performanceConf.trackingUpdateIntervalTicks = getConfig().getInt("patrol.trackingUpdateIntervalTicks", 2);
+        performanceConf.disableLoadPause = getConfig().getBoolean("performance.disableLoadPause", false);
+        performanceConf.forceViewDistance = getConfig().getInt("performance.forceViewDistance", -1);
+        performanceConf.forceSimulationDistance = getConfig().getInt("performance.forceSimulationDistance", -1);
+
+        // autoStart
+        autoStartConf = new AutoStartConf();
+        autoStartConf.enabled = getConfig().getBoolean("patrol.autoStart.enabled", true);
+        autoStartConf.cameraPlayerName = getConfig().getString("patrol.autoStart.cameraPlayerName", "OtouGame");
+
+        // chunkPreLoading
+        chunkPreLoadingConf = new ChunkPreLoadingConf();
+        chunkPreLoadingConf.enabled = getConfig().getBoolean("patrol.chunkPreLoading.enabled", true);
+        chunkPreLoadingConf.secondsBefore = getConfig().getInt("patrol.chunkPreLoading.secondsBefore", 3);
     }
 
     // —— ここから公共API（他クラスから呼ばれる） ——
@@ -171,6 +498,18 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         return tourConf;
     }
 
+    public PerformanceConf getPerformanceConf() {
+        return performanceConf;
+    }
+
+    public AutoStartConf getAutoStartConf() {
+        return autoStartConf;
+    }
+
+    public ChunkPreLoadingConf getChunkPreLoadingConf() {
+        return chunkPreLoadingConf;
+    }
+
     public ProtectionData getProtectionData() {
         return protectionData;
     }
@@ -183,8 +522,32 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         return participationManager;
     }
 
+    public JavaPlugin getPlugin() {
+        return this;
+    }
+
     public PatrolManager getPatrolManager() {
         return patrolManager;
+    }
+
+    public AutoEventSystem getAutoEventSystem() {
+        return autoEventSystem;
+    }
+
+    public EndResetManager getEndResetManager() {
+        return endResetManager;
+    }
+
+    public EndGameManager getEndGameManager() {
+        return endGameManager;
+    }
+
+    public TickMonitor getTickMonitor() {
+        return tickMonitor;
+    }
+
+    public GameModeEnforcer getGameModeEnforcer() {
+        return gameModeEnforcer;
     }
 
     public int getPatrolIntervalSeconds() {
@@ -205,106 +568,57 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         statsStorage.ensureName(uuid, name);
     }
 
+    public EngagementSystem getEngagementSystem() {
+        return engagementSystem;
+    }
+
+    public dev.gonjy.patrolspectator.dungeon.DungeonManager getDungeonManager() {
+        return dungeonManager;
+    }
+
+    public dev.gonjy.patrolspectator.dungeon.DungeonStatsStorage getDungeonStatsStorage() {
+        return dungeonStatsStorage;
+    }
+
+    public dev.gonjy.patrolspectator.dungeon.DungeonBuilder getDungeonBuilder() {
+        return dungeonBuilder;
+    }
+
+    public dev.gonjy.patrolspectator.dungeon.TrapRunner getTrapRunner() {
+        return trapRunner;
+    }
+
+    public dev.gonjy.patrolspectator.dungeon.DungeonLootSystem getDungeonLootSystem() {
+        return dungeonLootSystem;
+    }
+
+    public dev.gonjy.patrolspectator.dungeon.DungeonBossSystem getDungeonBossSystem() {
+        return dungeonBossSystem;
+    }
+
     // 死亡保護の延長（存在しなかったので用意）
     public void extendProtectionDuration(UUID uuid, long extraMillis) {
         protectionData.extend(uuid, extraMillis);
     }
 
-    // 観光タイトル表示（名称を大きく／「観光地」は小さく）
-    public void showTourTitle(Player p, String name) {
-        if (p == null || !titleConf.enabled)
+    /**
+     * 現在の統計情報をDiscordにバックアップとして送信します。
+     */
+    public void backupStats() {
+        if (statsStorage == null || discordWebhookClient == null)
             return;
-        try {
-            // 上段を名称（大）、下段を「観光地」
-            p.sendTitle("§l" + name, "§7観光地", titleConf.fadeIn, titleConf.stay, titleConf.fadeOut);
-        } catch (Throwable ignored) {
+
+        // 最新の状態をディスクに同期
+        statsStorage.saveSync();
+
+        java.io.File statsFile = new java.io.File(getDataFolder(), "player_stats.yml");
+        if (statsFile.exists()) {
+            String serverName = Bukkit.getServer().getName();
+            String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+            discordWebhookClient.sendFile(statsFile, "📊 **Periodic Ranking Backup**\n" +
+                    "> Server: `" + serverName + "`\n" +
+                    "> Time: `" + timestamp + "`\n" +
+                    "> Version: `v" + getPluginMeta().getVersion() + "`");
         }
-    }
-
-    /**
-     * タイトルを大きく（上段）と小さく（下段）で表示します。
-     * 
-     * @param p        プレイヤー
-     * @param title    上段のタイトル
-     * @param subtitle 下段のサブタイトル
-     */
-    public void showTitleLargeSmall(Player p, String title, String subtitle) {
-        if (p == null || !titleConf.enabled)
-            return;
-        try {
-            p.sendTitle(title, subtitle, titleConf.fadeIn, titleConf.stay, titleConf.fadeOut);
-        } catch (Throwable ignored) {
-        }
-    }
-
-    /**
-     * カラーコード付きの太字テキストを生成します。
-     * 
-     * @param hexColor 16進数カラーコード（例: "#A5D6A7"）
-     * @param text     テキスト内容
-     * @return フォーマット済みテキスト
-     */
-    public String textBold(String hexColor, String text) {
-        return "§l" + hexColor + text;
-    }
-
-    /**
-     * カラーコード付きのテキストを生成します。
-     * 
-     * @param hexColor 16進数カラーコード（例: "#FFFFFF"）
-     * @param text     テキスト内容
-     * @return フォーマット済みテキスト
-     */
-    public String text(String hexColor, String text) {
-        return hexColor + text;
-    }
-
-    // —— /patrol コマンド ——
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!"patrol".equalsIgnoreCase(command.getName()))
-            return false;
-
-        if (args.length == 0 || "help".equalsIgnoreCase(args[0])) {
-            sender.sendMessage("§a/patrol start [dwellSeconds] - 観光巡りをスタート");
-            sender.sendMessage("§a/patrol stop                 - 停止");
-            sender.sendMessage("§a/patrol status               - 状態表示");
-            return true;
-        }
-
-        switch (args[0].toLowerCase(Locale.ROOT)) {
-            case "start": {
-                if (!(sender instanceof Player)) {
-                    sender.sendMessage("Player only.");
-                    return true;
-                }
-                Player p = (Player) sender;
-
-                int dwell = tourConf.dwellSeconds;
-                if (args.length >= 2) {
-                    try {
-                        dwell = Math.max(3, Integer.parseInt(args[1]));
-                    } catch (NumberFormatException ignored) {
-                    }
-                }
-
-                patrolManager.startPatrol(p, dwell);
-                sender.sendMessage("§a[Patrol] start (dwell=" + dwell + "s)");
-                break;
-            }
-            case "stop": {
-                patrolManager.stopPatrol();
-                sender.sendMessage("§e[Patrol] stop");
-                break;
-            }
-            case "status": {
-                String running = patrolManager.isRunning() ? "RUNNING" : "IDLE";
-                sender.sendMessage("§b[Patrol] status=" + running + ", locations=" + patrolManager.getLocationCount());
-                break;
-            }
-            default:
-                sender.sendMessage("Unknown subcommand. /patrol help");
-        }
-        return true;
     }
 }

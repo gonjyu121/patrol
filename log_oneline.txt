@@ -1,0 +1,20 @@
+a995494 build: bump version to 1.9.55
+2f257ad perf(participation): make dirty flag volatile for thread-safe async saving
+e47af0f perf(patrol): optimize Ender Dragon search in End world using getEntitiesByClass
+eecdce9 feat: restore End world and dragon check in low-spec mode (v1.9.53)
+1f4216b refactor: ultra-low spec stability improvements (v1.9.52)
+1915db6 build: finalize version 1.9.51
+b0924b2 fix(patrol): continue to scenic tour when no players are active
+44e5f95 fix(build): add missing getter for AutoEventSystem
+37f8a18 build: update to version 1.9.50 and Java 21 compatibility
+25d7f26 perf(patrol): delay auto-events on patrol start
+695f82b perf(patrol): add 5-minute summary log and reduce loop output
+8fc8eb0 feat(safety): implement TickMonitor safety mechanism
+5526d2c perf(event): suppress auto-events during patrol
+ddd5b8b perf(discord): cap message queue to 1 and add enabled check
+fc192da perf(patrol): optimize patrol logic for low-spec servers
+209062b feat(config): add performance settings for low-spec optimization
+45e334b feat(patrol): Auto-spectate Ender Dragon when patrolling The End
+1e7c425 feat(discord): Add in-game chat bridge and ranking synchronization to Discord
+7965b61 feat(discord): Simplify event start notification and add Dragon spawn announcement
+92e7c6b Fix: Count all Dragon kills & improve End patrol logic

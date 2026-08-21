@@ -20,7 +20,7 @@ class GameModeEnforcerTest {
     void setUp() {
         server = MockBukkit.mock();
         plugin = MockBukkit.load(PatrolSpectatorPlugin.class);
-        enforcer = new GameModeEnforcer(plugin);
+        enforcer = plugin.getGameModeEnforcer();
     }
 
     @AfterEach

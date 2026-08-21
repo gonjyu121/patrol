@@ -1,8 +1,8 @@
 package dev.gonjy.patrolspectator;
 
 import org.mockbukkit.mockbukkit.MockBukkit;
-import org.mockbukkit.mockbukkit.ServerMock;
-import org.mockbukkit.mockbukkit.entity.PlayerMock;
+
+// import org.mockbukkit.mockbukkit.entity.PlayerMock; // Unused
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,13 +15,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ParticipationManagerTest {
 
-    private ServerMock server;
+    // private ServerMock server; // Unused
     private PatrolSpectatorPlugin plugin;
     private ParticipationManager manager;
 
     @BeforeEach
     void setUp() {
-        server = MockBukkit.mock();
+        // server = MockBukkit.mock();
+        MockBukkit.mock();
         plugin = MockBukkit.load(PatrolSpectatorPlugin.class);
         manager = new ParticipationManager(plugin);
     }
@@ -100,32 +101,7 @@ class ParticipationManagerTest {
         assertEquals(150, top.get(1).score());
     }
 
-    @Test
-    void testThankOnJoin() {
-        PlayerMock player = server.addPlayer("TestPlayer");
+    // thankOnJoin test removed
 
-        // Should not throw any exceptions
-        manager.thankOnJoin(player);
-    }
-
-    @Test
-    void testMultipleJoinsIncrementCount() {
-        PlayerMock player = server.addPlayer("TestPlayer");
-
-        manager.thankOnJoin(player);
-        manager.thankOnJoin(player);
-        manager.thankOnJoin(player);
-
-        // Verify the count was incremented (indirectly through topN)
-        List<ParticipationManager.Entry> top = manager.topN(10);
-        assertFalse(top.isEmpty());
-
-        ParticipationManager.Entry entry = top.stream()
-                .filter(e -> e.id().equals(player.getUniqueId()))
-                .findFirst()
-                .orElse(null);
-
-        assertNotNull(entry);
-        assertEquals(3, entry.count());
-    }
+    // testMultipleJoinsIncrementCount removed as it relied on thankOnJoin
 }

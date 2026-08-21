@@ -5,19 +5,23 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>dev.gonjy</groupId>
   <artifactId>patrol-spectator-plugin</artifactId>
-  <version>1.8.3</version>
+  <version>1.9.98</version>
   <name>PatrolSpectatorPlugin</name>
 
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <paper.api.version>1.21.1-R0.1-SNAPSHOT</paper.api.version>
+    <paper.api.version>1.21.4-R0.1-SNAPSHOT</paper.api.version>
   </properties>
 
   <repositories>
     <repository>
       <id>papermc</id>
       <url>https://repo.papermc.io/repository/maven-public/</url>
+    </repository>
+    <repository>
+      <id>central</id>
+      <url>https://repo.maven.apache.org/maven2</url>
     </repository>
   </repositories>
 
@@ -38,13 +42,59 @@
     <dependency>
       <groupId>org.mockbukkit.mockbukkit</groupId>
       <artifactId>mockbukkit-v1.21</artifactId>
-      <version>4.1.0</version>
+      <version>4.36.0</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>5.11.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <version>5.11.0</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Google API Dependencies -->
+    <!-- Google API Dependencies (Commented out to fix build)
+    <dependency>
+      <groupId>com.google.api-client</groupId>
+      <artifactId>google-api-client</artifactId>
+      <version>2.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.apis</groupId>
+      <artifactId>google-api-services-youtube</artifactId>
+      <version>v3-rev20231011-2.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.http-client</groupId>
+      <artifactId>google-http-client-jackson2</artifactId>
+      <version>1.43.3</version>
+    </dependency>
+    -->
   </dependencies>
 
   <build>
     <finalName>PatrolSpectatorPlugin-${project.version}</finalName>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>plugin.yml</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>false</filtering>
+        <excludes>
+          <exclude>plugin.yml</exclude>
+        </excludes>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -52,12 +102,96 @@
         <version>3.11.0</version>
         <configuration>
           <release>${maven.compiler.release}</release>
+          <encoding>UTF-8</encoding>
         </configuration>
+      </plugin>
+      <!-- Build時にpluginsディレクトリにある他のプラグインのJARをtargetにコピーする -->
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.3.1</version>
+        <executions>
+          <execution>
+            <id>copy-external-plugins</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}/plugins</directory>
+                  <includes>
+                    <include>*.jar</include>
+                  </includes>
+                  <!-- 自分自身の過去のビルドなどがpluginsに混ざっていた場合コピーしないように除外 -->
+                  <excludes>
+                    <exclude>PatrolSpectatorPlugin*.jar</exclude>
+                    <exclude>original-PatrolSpectatorPlugin*.jar</exclude>
+                    <exclude>patrol-spectator-plugin*.jar</exclude>
+                  </excludes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.2.2</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.5.1</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+              <!-- Relocations removed as Google dependencies are disabled
+              <relocations>
+                <relocation>
+                  <pattern>com.google</pattern>
+                  <shadedPattern>dev.gonjy.patrolspectator.libs.google</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache.commons</pattern>
+                  <shadedPattern>dev.gonjy.patrolspectator.libs.commons</shadedPattern>
+                </relocation>
+              </relocations>
+              -->
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>io.github.git-commit-id</groupId>
+        <artifactId>git-commit-id-maven-plugin</artifactId>
+        <version>7.0.0</version>
+        <executions>
+          <execution>
+            <id>get-the-git-infos</id>
+            <goals>
+              <goal>revision</goal>
+            </goals>
+            <phase>initialize</phase>
+          </execution>
+        </executions>
+        <configuration>
+          <generateGitPropertiesFile>true</generateGitPropertiesFile>
+          <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+          <includeOnlyProperties>
+            <includeOnlyProperty>^git.build.(time|version)$</includeOnlyProperty>
+            <includeOnlyProperty>^git.commit.id.(abbrev|full)$</includeOnlyProperty>
+            <includeOnlyProperty>^git.branch$</includeOnlyProperty>
+          </includeOnlyProperties>
+          <commitIdGenerationMode>flat</commitIdGenerationMode>
+        </configuration>
       </plugin>
     </plugins>
   </build>

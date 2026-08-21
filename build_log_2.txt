@@ -1,0 +1,715 @@
+========================================
+PatrolSpectatorPlugin Build Script
+========================================
+
+JAVA_HOME: C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot
+MAVEN_HOME: C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\.maven\apache-maven-3.9.6
+Project Dir: C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin
+
+Testing Java installation...
+openjdk version "17.0.16" 2025-07-15
+OpenJDK Runtime Environment Temurin-17.0.16+8 (build 17.0.16+8)
+OpenJDK 64-Bit Server VM Temurin-17.0.16+8 (build 17.0.16+8, mixed mode, sharing)
+
+Testing Maven installation...
+Apache Maven 3.9.6 (bc0240f3c744dd6b6ec2920b3cd08dcc295161ae)
+Maven home: C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\.maven\apache-maven-3.9.6
+Java version: 17.0.16, vendor: Eclipse Adoptium, runtime: C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot
+Default locale: ja_JP, platform encoding: MS932
+OS name: "windows 11", version: "10.0", arch: "amd64", family: "windows"
+
+========================================
+Starting Maven build...
+========================================
+
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------< dev.gonjy:patrol-spectator-plugin >------------------
+[INFO] Building PatrolSpectatorPlugin 1.9.31
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ patrol-spectator-plugin ---
+[INFO] Deleting C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ patrol-spectator-plugin ---
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ patrol-spectator-plugin ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 23 source files with javac [debug release 17] to target\classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[3,18] org.bukkit.Bukkitにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/Bukkit.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[4,18] org.bukkit.GameModeにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/GameMode.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[5,25] org.bukkit.entity.Playerにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/entity/Player.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[6,25] org.bukkit.plugin.Pluginにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/plugin/Plugin.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[7,28] org.bukkit.scheduler.BukkitTaskにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/scheduler/BukkitTask.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[11,24] org.bukkit.event.EventHandlerにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/EventHandler.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[12,24] org.bukkit.event.Listenerにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/Listener.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[13,31] org.bukkit.event.player.PlayerJoinEventにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/player/PlayerJoinEvent.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/TouristLocation.java:[77,64] org.bukkit.Worldにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/World.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyManager.java:[4,18] org.bukkit.ChatColorにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/ChatColor.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyManager.java:[5,18] org.bukkit.Materialにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/Material.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyManager.java:[9,31] org.bukkit.event.entity.PlayerDeathEventにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/entity/PlayerDeathEvent.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyManager.java:[10,28] org.bukkit.inventory.ItemStackにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/inventory/ItemStack.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java:[4,26] org.bukkit.command.ConsoleCommandSenderにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/command/ConsoleCommandSender.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java:[5,30] org.bukkit.plugin.java.JavaPluginにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/plugin/java/JavaPlugin.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[5,18] org.bukkit.Locationにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/Location.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[8,25] org.bukkit.entity.EntityTypeにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/entity/EntityType.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[14,31] org.bukkit.event.entity.EntityDeathEventにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/entity/EntityDeathEvent.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[16,30] org.bukkit.event.block.BlockBreakEventにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/block/BlockBreakEvent.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[17,31] org.bukkit.event.player.PlayerMoveEventにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/player/PlayerMoveEvent.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/ParticipationManager.java:[3,37] org.bukkit.configuration.file.YamlConfigurationにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/configuration/file/YamlConfiguration.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndResetManager.java:[8,25] org.bukkit.entity.EnderDragonにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/entity/EnderDragon.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[7,28] org.bukkit.attribute.Attributeにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/attribute/Attribute.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[13,31] org.bukkit.event.entity.CreatureSpawnEventにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/entity/CreatureSpawnEvent.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/ProtectionData.java:[3,37] org.bukkit.configuration.file.FileConfigurationにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/configuration/file/FileConfiguration.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[30,51] org.bukkit.entity.Entityにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/entity/Entity.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EngagementSystem.java:[26,64] org.bukkit.GameRuleにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/GameRule.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[247,53] org.bukkit.potion.PotionTypeにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/potion/PotionType.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/DiscordListener.java:[6,31] org.bukkit.event.player.AsyncPlayerChatEventにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/player/AsyncPlayerChatEvent.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyCommand.java:[5,26] org.bukkit.command.Commandにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/command/Command.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyCommand.java:[6,26] org.bukkit.command.CommandExecutorにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/command/CommandExecutor.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyCommand.java:[7,26] org.bukkit.command.CommandSenderにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/command/CommandSender.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyCommand.java:[8,26] org.bukkit.command.TabCompleterにアクセスできません
+  クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/command/TabCompleter.class)は不正です
+    クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+    削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[15,48] シンボルを見つけられません
+  シンボル: クラス Listener
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[16,19] シンボルを見つけられません
+  シンボル:   クラス Plugin
+  場所: クラス dev.gonjy.patrolspectator.GameModeEnforcer
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[17,13] シンボルを見つけられません
+  シンボル:   クラス BukkitTask
+  場所: クラス dev.gonjy.patrolspectator.GameModeEnforcer
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[20,29] シンボルを見つけられません
+  シンボル:   クラス Plugin
+  場所: クラス dev.gonjy.patrolspectator.GameModeEnforcer
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[65,40] シンボルを見つけられません
+  シンボル:   クラス Player
+  場所: クラス dev.gonjy.patrolspectator.GameModeEnforcer
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[80,24] シンボルを見つけられません
+  シンボル:   クラス PlayerJoinEvent
+  場所: クラス dev.gonjy.patrolspectator.GameModeEnforcer
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/Ticks.java:[12,29] シンボルを見つけられません
+  シンボル:   クラス Plugin
+  場所: クラス dev.gonjy.patrolspectator.Ticks
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyManager.java:[20,39] シンボルを見つけられません
+  シンボル: クラス Listener
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java:[9,44] シンボルを見つけられません
+  シンボル: クラス JavaPlugin
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyManager.java:[34,27] シンボルを見つけられません
+  シンボル:   クラス Player
+  場所: クラス dev.gonjy.patrolspectator.BountyManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyManager.java:[71,31] シンボルを見つけられません
+  シンボル:   クラス PlayerDeathEvent
+  場所: クラス dev.gonjy.patrolspectator.BountyManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[24,41] シンボルを見つけられません
+  シンボル: クラス Listener
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndResetManager.java:[23,41] シンボルを見つけられません
+  シンボル: クラス Listener
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[21,40] シンボルを見つけられません
+  シンボル: クラス Listener
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PlayerStatsStorage.java:[20,19] シンボルを見つけられません
+  シンボル:   クラス JavaPlugin
+  場所: クラス dev.gonjy.patrolspectator.PlayerStatsStorage
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PlayerStatsStorage.java:[22,11] シンボルを見つけられません
+  シンボル:   クラス YamlConfiguration
+  場所: クラス dev.gonjy.patrolspectator.PlayerStatsStorage
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PlayerStatsStorage.java:[24,31] シンボルを見つけられません
+  シンボル:   クラス JavaPlugin
+  場所: クラス dev.gonjy.patrolspectator.PlayerStatsStorage
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/ProtectionData.java:[26,19] シンボルを見つけられません
+  シンボル:   クラス JavaPlugin
+  場所: クラス dev.gonjy.patrolspectator.ProtectionData
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/ProtectionData.java:[28,19] シンボルを見つけられません
+  シンボル:   クラス FileConfiguration
+  場所: クラス dev.gonjy.patrolspectator.ProtectionData
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/ProtectionData.java:[34,27] シンボルを見つけられません
+  シンボル:   クラス JavaPlugin
+  場所: クラス dev.gonjy.patrolspectator.ProtectionData
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[23,19] シンボルを見つけられません
+  シンボル:   クラス JavaPlugin
+  場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[26,13] シンボルを見つけられません
+  シンボル:   クラス BukkitTask
+  場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[27,13] シンボルを見つけられません
+  シンボル:   クラス BukkitTask
+  場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[32,27] シンボルを見つけられません
+  シンボル:   クラス JavaPlugin
+  場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[46,31] シンボルを見つけられません
+  シンボル:   クラス CreatureSpawnEvent
+  場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[68,34] シンボルを見つけられません
+  シンボル:   クラス EnderDragon
+  場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[88,34] シンボルを見つけられません
+  シンボル:   クラス EnderDragon
+  場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[128,35] シンボルを見つけられません
+  シンボル:   クラス EnderDragon
+  場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[156,30] シンボルを見つけられません
+  シンボル:   クラス Location
+  場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[156,47] シンボルを見つけられません
+  シンボル:   クラス EntityType
+  場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[180,31] シンボルを見つけられません
+  シンボル:   クラス EntityDeathEvent
+  場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/DiscordWebhookClient.java:[6,19] シンボルを見つけられません
+  シンボル:   クラス JavaPlugin
+  場所: クラス dev.gonjy.patrolspectator.DiscordWebhookClient
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/DiscordWebhookClient.java:[12,33] シンボルを見つけられません
+  シンボル:   クラス JavaPlugin
+  場所: クラス dev.gonjy.patrolspectator.DiscordWebhookClient
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/YouTubeManager.java:[26,19] シンボルを見つけられません
+  シンボル:   クラス JavaPlugin
+  場所: クラス dev.gonjy.patrolspectator.YouTubeManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/YouTubeManager.java:[44,27] シンボルを見つけられません
+  シンボル:   クラス JavaPlugin
+  場所: クラス dev.gonjy.patrolspectator.YouTubeManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndResetManager.java:[28,13] シンボルを見つけられません
+  シンボル:   クラス BukkitTask
+  場所: クラス dev.gonjy.patrolspectator.EndResetManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndResetManager.java:[112,31] シンボルを見つけられません
+  シンボル:   クラス EntityDeathEvent
+  場所: クラス dev.gonjy.patrolspectator.EndResetManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/RankingDisplaySystem.java:[26,19] シンボルを見つけられません
+  シンボル:   クラス JavaPlugin
+  場所: クラス dev.gonjy.patrolspectator.RankingDisplaySystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/RankingDisplaySystem.java:[29,13] シンボルを見つけられません
+  シンボル:   クラス BukkitTask
+  場所: クラス dev.gonjy.patrolspectator.RankingDisplaySystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/RankingDisplaySystem.java:[32,33] シンボルを見つけられません
+  シンボル:   クラス JavaPlugin
+  場所: クラス dev.gonjy.patrolspectator.RankingDisplaySystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java:[41,13] シンボルを見つけられません
+  シンボル:   クラス BukkitTask
+  場所: クラス dev.gonjy.patrolspectator.PatrolManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java:[107,29] シンボルを見つけられません
+  シンボル:   クラス Player
+  場所: クラス dev.gonjy.patrolspectator.PatrolManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java:[439,12] シンボルを見つけられません
+  シンボル:   クラス Player
+  場所: クラス dev.gonjy.patrolspectator.PatrolManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java:[445,13] シンボルを見つけられません
+  シンボル:   クラス Player
+  場所: クラス dev.gonjy.patrolspectator.PatrolManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java:[455,33] シンボルを見つけられません
+  シンボル:   クラス Player
+  場所: クラス dev.gonjy.patrolspectator.PatrolManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java:[455,48] シンボルを見つけられません
+  シンボル:   クラス Player
+  場所: クラス dev.gonjy.patrolspectator.PatrolManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java:[465,33] シンボルを見つけられません
+  シンボル:   クラス Player
+  場所: クラス dev.gonjy.patrolspectator.PatrolManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/ParticipationManager.java:[15,19] シンボルを見つけられません
+  シンボル:   クラス YamlConfiguration
+  場所: クラス dev.gonjy.patrolspectator.ParticipationManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[26,19] シンボルを見つけられません
+  シンボル:   クラス JavaPlugin
+  場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[33,13] シンボルを見つけられません
+  シンボル:   クラス BukkitTask
+  場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[34,13] シンボルを見つけられません
+  シンボル:   クラス BukkitTask
+  場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[50,28] シンボルを見つけられません
+  シンボル:   クラス JavaPlugin
+  場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[214,13] シンボルを見つけられません
+  シンボル:   クラス ItemStack
+  場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[247,13] シンボルを見つけられません
+  シンボル:   クラス ItemStack
+  場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[268,31] シンボルを見つけられません
+  シンボル:   クラス EntityDeathEvent
+  場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[299,34] シンボルを見つけられません
+  シンボル:   クラス EntityType
+  場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[325,30] シンボルを見つけられません
+  シンボル:   クラス BlockBreakEvent
+  場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[338,33] シンボルを見つけられません
+  シンボル:   クラス Material
+  場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[361,31] シンボルを見つけられません
+  シンボル:   クラス PlayerDeathEvent
+  場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[381,30] シンボルを見つけられません
+  シンボル:   クラス PlayerMoveEvent
+  場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[455,17] シンボルを見つけられません
+  シンボル:   クラス Player
+  場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[534,38] シンボルを見つけられません
+  シンボル:   クラス Player
+  場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[545,39] シンボルを見つけられません
+  シンボル:   クラス Player
+  場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[570,13] シンボルを見つけられません
+  シンボル:   クラス ItemStack
+  場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/DiscordListener.java:[14,41] シンボルを見つけられません
+  シンボル: クラス Listener
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/DiscordListener.java:[16,19] シンボルを見つけられません
+  シンボル:   クラス JavaPlugin
+  場所: クラス dev.gonjy.patrolspectator.DiscordListener
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/DiscordListener.java:[20,28] シンボルを見つけられません
+  シンボル:   クラス JavaPlugin
+  場所: クラス dev.gonjy.patrolspectator.DiscordListener
+[INFO] 100 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  7.087 s
+[INFO] Finished at: 2025-12-17T17:32:07+09:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project patrol-spectator-plugin: Compilation failure: Compilation failure: 
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[3,18] org.bukkit.Bukkitにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/Bukkit.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[4,18] org.bukkit.GameModeにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/GameMode.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[5,25] org.bukkit.entity.Playerにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/entity/Player.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[6,25] org.bukkit.plugin.Pluginにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/plugin/Plugin.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[7,28] org.bukkit.scheduler.BukkitTaskにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/scheduler/BukkitTask.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[11,24] org.bukkit.event.EventHandlerにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/EventHandler.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[12,24] org.bukkit.event.Listenerにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/Listener.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[13,31] org.bukkit.event.player.PlayerJoinEventにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/player/PlayerJoinEvent.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/TouristLocation.java:[77,64] org.bukkit.Worldにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/World.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyManager.java:[4,18] org.bukkit.ChatColorにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/ChatColor.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyManager.java:[5,18] org.bukkit.Materialにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/Material.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyManager.java:[9,31] org.bukkit.event.entity.PlayerDeathEventにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/entity/PlayerDeathEvent.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyManager.java:[10,28] org.bukkit.inventory.ItemStackにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/inventory/ItemStack.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java:[4,26] org.bukkit.command.ConsoleCommandSenderにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/command/ConsoleCommandSender.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java:[5,30] org.bukkit.plugin.java.JavaPluginにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/plugin/java/JavaPlugin.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[5,18] org.bukkit.Locationにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/Location.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[8,25] org.bukkit.entity.EntityTypeにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/entity/EntityType.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[14,31] org.bukkit.event.entity.EntityDeathEventにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/entity/EntityDeathEvent.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[16,30] org.bukkit.event.block.BlockBreakEventにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/block/BlockBreakEvent.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[17,31] org.bukkit.event.player.PlayerMoveEventにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/player/PlayerMoveEvent.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/ParticipationManager.java:[3,37] org.bukkit.configuration.file.YamlConfigurationにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/configuration/file/YamlConfiguration.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndResetManager.java:[8,25] org.bukkit.entity.EnderDragonにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/entity/EnderDragon.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[7,28] org.bukkit.attribute.Attributeにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/attribute/Attribute.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[13,31] org.bukkit.event.entity.CreatureSpawnEventにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/entity/CreatureSpawnEvent.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/ProtectionData.java:[3,37] org.bukkit.configuration.file.FileConfigurationにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/configuration/file/FileConfiguration.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[30,51] org.bukkit.entity.Entityにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/entity/Entity.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EngagementSystem.java:[26,64] org.bukkit.GameRuleにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/GameRule.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[247,53] org.bukkit.potion.PotionTypeにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/potion/PotionType.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/DiscordListener.java:[6,31] org.bukkit.event.player.AsyncPlayerChatEventにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/event/player/AsyncPlayerChatEvent.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyCommand.java:[5,26] org.bukkit.command.Commandにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/command/Command.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyCommand.java:[6,26] org.bukkit.command.CommandExecutorにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/command/CommandExecutor.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyCommand.java:[7,26] org.bukkit.command.CommandSenderにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/command/CommandSender.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyCommand.java:[8,26] org.bukkit.command.TabCompleterにアクセスできません
+[ERROR]   クラス・ファイルC:\Users\gonjy\.m2\repository\io\papermc\paper\paper-api\1.21.1-R0.1-SNAPSHOT\paper-api-1.21.1-R0.1-SNAPSHOT.jar(/org/bukkit/command/TabCompleter.class)は不正です
+[ERROR]     クラス・ファイルのバージョン65.0は不正です。61.0である必要があります
+[ERROR]     削除するか、クラスパスの正しいサブディレクトリにあるかを確認してください。
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[15,48] シンボルを見つけられません
+[ERROR]   シンボル: クラス Listener
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[16,19] シンボルを見つけられません
+[ERROR]   シンボル:   クラス Plugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.GameModeEnforcer
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[17,13] シンボルを見つけられません
+[ERROR]   シンボル:   クラス BukkitTask
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.GameModeEnforcer
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[20,29] シンボルを見つけられません
+[ERROR]   シンボル:   クラス Plugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.GameModeEnforcer
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[65,40] シンボルを見つけられません
+[ERROR]   シンボル:   クラス Player
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.GameModeEnforcer
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java:[80,24] シンボルを見つけられません
+[ERROR]   シンボル:   クラス PlayerJoinEvent
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.GameModeEnforcer
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/Ticks.java:[12,29] シンボルを見つけられません
+[ERROR]   シンボル:   クラス Plugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.Ticks
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyManager.java:[20,39] シンボルを見つけられません
+[ERROR]   シンボル: クラス Listener
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java:[9,44] シンボルを見つけられません
+[ERROR]   シンボル: クラス JavaPlugin
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyManager.java:[34,27] シンボルを見つけられません
+[ERROR]   シンボル:   クラス Player
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.BountyManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/BountyManager.java:[71,31] シンボルを見つけられません
+[ERROR]   シンボル:   クラス PlayerDeathEvent
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.BountyManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[24,41] シンボルを見つけられません
+[ERROR]   シンボル: クラス Listener
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndResetManager.java:[23,41] シンボルを見つけられません
+[ERROR]   シンボル: クラス Listener
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[21,40] シンボルを見つけられません
+[ERROR]   シンボル: クラス Listener
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PlayerStatsStorage.java:[20,19] シンボルを見つけられません
+[ERROR]   シンボル:   クラス JavaPlugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.PlayerStatsStorage
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PlayerStatsStorage.java:[22,11] シンボルを見つけられません
+[ERROR]   シンボル:   クラス YamlConfiguration
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.PlayerStatsStorage
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PlayerStatsStorage.java:[24,31] シンボルを見つけられません
+[ERROR]   シンボル:   クラス JavaPlugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.PlayerStatsStorage
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/ProtectionData.java:[26,19] シンボルを見つけられません
+[ERROR]   シンボル:   クラス JavaPlugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.ProtectionData
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/ProtectionData.java:[28,19] シンボルを見つけられません
+[ERROR]   シンボル:   クラス FileConfiguration
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.ProtectionData
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/ProtectionData.java:[34,27] シンボルを見つけられません
+[ERROR]   シンボル:   クラス JavaPlugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.ProtectionData
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[23,19] シンボルを見つけられません
+[ERROR]   シンボル:   クラス JavaPlugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[26,13] シンボルを見つけられません
+[ERROR]   シンボル:   クラス BukkitTask
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[27,13] シンボルを見つけられません
+[ERROR]   シンボル:   クラス BukkitTask
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[32,27] シンボルを見つけられません
+[ERROR]   シンボル:   クラス JavaPlugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[46,31] シンボルを見つけられません
+[ERROR]   シンボル:   クラス CreatureSpawnEvent
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[68,34] シンボルを見つけられません
+[ERROR]   シンボル:   クラス EnderDragon
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[88,34] シンボルを見つけられません
+[ERROR]   シンボル:   クラス EnderDragon
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[128,35] シンボルを見つけられません
+[ERROR]   シンボル:   クラス EnderDragon
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[156,30] シンボルを見つけられません
+[ERROR]   シンボル:   クラス Location
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[156,47] シンボルを見つけられません
+[ERROR]   シンボル:   クラス EntityType
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java:[180,31] シンボルを見つけられません
+[ERROR]   シンボル:   クラス EntityDeathEvent
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.EndGameManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/DiscordWebhookClient.java:[6,19] シンボルを見つけられません
+[ERROR]   シンボル:   クラス JavaPlugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.DiscordWebhookClient
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/DiscordWebhookClient.java:[12,33] シンボルを見つけられません
+[ERROR]   シンボル:   クラス JavaPlugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.DiscordWebhookClient
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/YouTubeManager.java:[26,19] シンボルを見つけられません
+[ERROR]   シンボル:   クラス JavaPlugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.YouTubeManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/YouTubeManager.java:[44,27] シンボルを見つけられません
+[ERROR]   シンボル:   クラス JavaPlugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.YouTubeManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndResetManager.java:[28,13] シンボルを見つけられません
+[ERROR]   シンボル:   クラス BukkitTask
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.EndResetManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/EndResetManager.java:[112,31] シンボルを見つけられません
+[ERROR]   シンボル:   クラス EntityDeathEvent
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.EndResetManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/RankingDisplaySystem.java:[26,19] シンボルを見つけられません
+[ERROR]   シンボル:   クラス JavaPlugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.RankingDisplaySystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/RankingDisplaySystem.java:[29,13] シンボルを見つけられません
+[ERROR]   シンボル:   クラス BukkitTask
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.RankingDisplaySystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/RankingDisplaySystem.java:[32,33] シンボルを見つけられません
+[ERROR]   シンボル:   クラス JavaPlugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.RankingDisplaySystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java:[41,13] シンボルを見つけられません
+[ERROR]   シンボル:   クラス BukkitTask
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.PatrolManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java:[107,29] シンボルを見つけられません
+[ERROR]   シンボル:   クラス Player
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.PatrolManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java:[439,12] シンボルを見つけられません
+[ERROR]   シンボル:   クラス Player
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.PatrolManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java:[445,13] シンボルを見つけられません
+[ERROR]   シンボル:   クラス Player
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.PatrolManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java:[455,33] シンボルを見つけられません
+[ERROR]   シンボル:   クラス Player
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.PatrolManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java:[455,48] シンボルを見つけられません
+[ERROR]   シンボル:   クラス Player
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.PatrolManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java:[465,33] シンボルを見つけられません
+[ERROR]   シンボル:   クラス Player
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.PatrolManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/ParticipationManager.java:[15,19] シンボルを見つけられません
+[ERROR]   シンボル:   クラス YamlConfiguration
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.ParticipationManager
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[26,19] シンボルを見つけられません
+[ERROR]   シンボル:   クラス JavaPlugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[33,13] シンボルを見つけられません
+[ERROR]   シンボル:   クラス BukkitTask
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[34,13] シンボルを見つけられません
+[ERROR]   シンボル:   クラス BukkitTask
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[50,28] シンボルを見つけられません
+[ERROR]   シンボル:   クラス JavaPlugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[214,13] シンボルを見つけられません
+[ERROR]   シンボル:   クラス ItemStack
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[247,13] シンボルを見つけられません
+[ERROR]   シンボル:   クラス ItemStack
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[268,31] シンボルを見つけられません
+[ERROR]   シンボル:   クラス EntityDeathEvent
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[299,34] シンボルを見つけられません
+[ERROR]   シンボル:   クラス EntityType
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[325,30] シンボルを見つけられません
+[ERROR]   シンボル:   クラス BlockBreakEvent
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[338,33] シンボルを見つけられません
+[ERROR]   シンボル:   クラス Material
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[361,31] シンボルを見つけられません
+[ERROR]   シンボル:   クラス PlayerDeathEvent
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[381,30] シンボルを見つけられません
+[ERROR]   シンボル:   クラス PlayerMoveEvent
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[455,17] シンボルを見つけられません
+[ERROR]   シンボル:   クラス Player
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[534,38] シンボルを見つけられません
+[ERROR]   シンボル:   クラス Player
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[545,39] シンボルを見つけられません
+[ERROR]   シンボル:   クラス Player
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java:[570,13] シンボルを見つけられません
+[ERROR]   シンボル:   クラス ItemStack
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.AutoEventSystem
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/DiscordListener.java:[14,41] シンボルを見つけられません
+[ERROR]   シンボル: クラス Listener
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/DiscordListener.java:[16,19] シンボルを見つけられません
+[ERROR]   シンボル:   クラス JavaPlugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.DiscordListener
+[ERROR] /C:/Users/gonjy/Projects/Private/PatrolSpectatorPlugin/src/main/java/dev/gonjy/patrolspectator/DiscordListener.java:[20,28] シンボルを見つけられません
+[ERROR]   シンボル:   クラス JavaPlugin
+[ERROR]   場所: クラス dev.gonjy.patrolspectator.DiscordListener
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+
+========================================
+BUILD FAILED
+========================================

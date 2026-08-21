@@ -1,17 +1,139 @@
 # src/main/resources/config.yml（差し替え）
 patrol:
-  intervalSeconds: 10
+  intervalSeconds: 5
   announce: true
+  titles:
+    enabled: true
+    fadeIn: 5
+    stay: 40
+    fadeOut: 10
+  sounds:
+    onPlayerSpectate:
+      enabled: false
+      type: UI_TOAST_CHALLENGE_COMPLETE
+      volume: 1.0
+      pitch: 1.2
   tour:
     enabled: true
-    dwellSeconds: 10
+    dwellSeconds: 5
     # 外部ファイルの相対パス（プラグインデータフォルダ直下）
     file: tourist_locations.yml
     # 既存の内蔵リスト（外部ファイルが無い時のフォールバック）
     locations: []
+    useArmorStandPOIs: true
+    armorStandTag: patrol_poi
     # 自動生成（0〜1件しかない時に補完）
     autogen:
       enabled: true
       points: 6
       radius: 60
       yOffset: 0.0
+  # カメラ役が参加した時に自動でパトロールを開始する設定
+  autoStart:
+    enabled: true
+    cameraPlayerName: "OtouGame" # カメラ役のプレイヤー名を設定
+  # 移動前にチャンクを非同期で読み込む設定（負荷分散）
+  chunkPreLoading:
+    enabled: true
+    secondsBefore: 3 # 移動の3秒前に事前読み込みを開始
+  # シネマティック追跡の更新間隔（ticks）: 1=最速(20fps), 2=標準(10fps), 4=軽量(5fps)
+  # 数値を大きくするとネットワーク負荷が下がります
+  trackingUpdateIntervalTicks: 2
+
+# YouTube Chat Integration (Safe Mode)
+youtube:
+  enabled: false # Disabled to avoid Google Cloud billing risks
+  client_id: ""
+  client_secret: ""
+  refresh_token: ""
+  # Optional: Fixed Video ID (If empty, auto-detects active stream)
+  video_id: ""
+  # Safety: Max messages per day (Default: 100)
+  max_daily_messages: 100
+
+# Discord Integration
+discord:
+  enabled: true
+  webhook_url: "https://discord.com/api/webhooks/1445307410536333373/BdWrRUXP9QYWnmlI8hysEIW0yCRkbWgkuBKseZ5n3vpYodClhvTrQRAkeQ2kGto8-FPU"
+  # Server IP (Host). Port is auto-detected.
+  server_ip: "otougame.falixsrv.me"
+  notifications:
+    # Notify when Auto Event starts
+    events: true
+    # Notify when player count reaches specific numbers (e.g. 3, 5, 10)
+    crowd_alert: true
+    # Forward in-game chat to Discord (Optimized for OneComme)
+    chat: true
+    # カメラ役が切断した時にDiscordに通知する
+    quit: true
+  # Automatic stats backup to Discord
+  backup:
+    enabled: false
+    interval_hours: 6
+
+# End World Reset Settings
+end:
+  # Minutes to wait before resetting the End after Dragon death or absence
+  resetDelayMinutes: 120
+  # End world name (defaults to "world_the_end")
+  worldName: "world_the_end"
+
+# Performance / Low-Spec Optimization
+performance:
+  lowSpecMode: false
+  minIntervalSeconds: 5
+  maxCameraMovesPerMinute: 3
+  disableWorldScan: false
+  disableAutoEventWhilePatrol: false
+  debugLog: false
+  disableLoadPause: true
+  # サーバーの描画距離とシミュレーション距離をプラグイン起動時に強制上書きする設定
+  # (-1 で無効化、正の数でその設定値を強制適用)
+  forceViewDistance: 6
+  forceSimulationDistance: 5
+
+
+# Cloud Sync (GitHub Gist)
+# 複数のサーバー間でランキングデータを同期するための設定です。
+# 手順: GitHubアカウント作成 -> Gist作成 -> PAT(トークン)発行
+github:
+  enabled: true
+  token: "YOUR_GITHUB_TOKEN_HERE"
+  gistId: "74ed4196a9eaf6cef18a7079c080fa5e"
+  # 同期するファイル名（通常は player_stats.yml）
+  fileName: "player_stats.yml"
+  # サーバー終了時だけでなく、定期的に保存するか（時間単位, 0で無効）
+  syncIntervalHours: 1
+
+# 過去サーバーからの引き継ぎデータ（自動反映用）
+# ここに記載されたプレイヤーが参加するか、起動時にUUIDが一致すれば、自動で実績を合算します。
+# （※ totalPlayMs, enderDragonKills, hasKilledHardDragon, playerKills, eventPoints を引き継ぎ可能）
+legacy_stats:
+  - name: "minato20131201"
+    totalPlayMs: 3163260000 # 878時間41分
+  - name: "gjtx"
+    totalPlayMs: 3153240000 # 875時間54分
+  - name: "banto2008"
+    totalPlayMs: 3141600000 # 872時間40分
+  - name: "TOWA2006"
+    enderDragonKills: 3
+    hasKilledHardDragon: true
+  - name: "miya2012"
+    enderDragonKills: 1
+    hasKilledHardDragon: false
+  - name: "Hopedguide89503"
+    enderDragonKills: 1
+    hasKilledHardDragon: true
+    playerKills: 5
+    eventPoints: 100
+
+# Engagement / YouTube Strategy
+engagement:
+  enabled: true
+  # Interval in minutes between automated broadcasts
+  interval_minutes: 15
+  # Random messages to encourage YouTube participation
+  messages:
+    - "§b[YouTube] §f24時間配信中！高評価とチャンネル登録お願いします！"
+    - "§b[YouTube] §fこのサーバーが面白いと思ったら、ぜひYouTubeの配信も覗いてみてね！"
+    - "§b[YouTube] §fチャンネル登録者が増えると、サーバーに新しい機能が追加されるかも...？"

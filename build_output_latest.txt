@@ -1,0 +1,19 @@
+========================================
+PatrolSpectatorPlugin Build Script
+========================================
+
+JAVA_HOME: C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot
+MAVEN_HOME: C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\.maven\apache-maven-3.9.6
+Project Dir: C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin
+
+Testing Java installation...
+openjdk version "17.0.16" 2025-07-15
+OpenJDK Runtime Environment Temurin-17.0.16+8 (build 17.0.16+8)
+OpenJDK 64-Bit Server VM Temurin-17.0.16+8 (build 17.0.16+8, mixed mode, sharing)
+
+Testing Maven installation...
+Apache Maven 3.9.6 (bc0240f3c744dd6b6ec2920b3cd08dcc295161ae)
+Maven home: C:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\.maven\apache-maven-3.9.6
+Java version: 17.0.16, vendor: Eclipse Adoptium, runtime: C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot
+Default locale: ja_JP, platform encoding: MS932
+OS name: "windows 11", version: "10.0", arch: "amd64", family: "windows"

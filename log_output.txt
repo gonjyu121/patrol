@@ -1,0 +1,29 @@
+commit 5c4e5312c771dbbac35c23a7b9e7682dd4a8bd23
+Author: Akira Miyatake <gonjyu121@gmail.com>
+Date:   Fri Mar 27 22:22:41 2026 +0900
+
+    chore: verify v1.9.58 build and implement engagement visibility improvements
+
+commit df7c2852b107e03270e4963998654710eb439df3
+Author: Akira Miyatake <gonjyu121@gmail.com>
+Date:   Fri Mar 20 21:17:15 2026 +0900
+
+    feat: パトロール観光地にダンジョンの最下層を動的に追加する処理を実装
+
+commit 572c4bf317d6efbd8149defcc241c45e062a2d66
+Author: Akira Miyatake <gonjyu121@gmail.com>
+Date:   Thu Mar 19 07:57:21 2026 +0900
+
+    Sync version to 1.9.62, add new dungeon traps and update_plugins fixes
+
+commit e318d1a594e570869f38e8259cba8239abffe0fa
+Author: Akira Miyatake <gonjyu121@gmail.com>
+Date:   Sun Mar 1 12:23:15 2026 +0900
+
+    Merge Dungeon entrance into tourist locations and implement player evacuation on boss death
+
+commit 208219d2f7db2c9c0208ab649c3f8c9370f51609
+Author: Akira Miyatake <gonjyu121@gmail.com>
+Date:   Fri Feb 27 09:44:17 2026 +0900
+
+    [機能追加] 死の迷宮実装およびDungeon機能のテスト完了

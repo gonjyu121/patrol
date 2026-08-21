@@ -18,9 +18,11 @@ public class TouristLocation {
     public final float yaw, pitch;
     public final String description;
     public final String worldType; // "overworld", "nether", "end"
+    public final Integer dwellSeconds; // 個別の滞在時間（秒）
+    public final Boolean firstPerson; // 憑依モード（一人称視点）を優先するかどうか
 
     public TouristLocation(String id, String name, String world, double x, double y, double z, float yaw, float pitch,
-            String description, String worldType) {
+            String description, String worldType, Integer dwellSeconds, Boolean firstPerson) {
         this.id = id;
         this.name = name;
         this.world = world;
@@ -31,6 +33,8 @@ public class TouristLocation {
         this.pitch = pitch;
         this.description = description != null ? description : "";
         this.worldType = worldType != null ? worldType : "overworld";
+        this.dwellSeconds = dwellSeconds;
+        this.firstPerson = firstPerson;
     }
 
     /**
@@ -88,7 +92,7 @@ public class TouristLocation {
             String id = "auto_" + i;
             String name = "Auto Point " + (i + 1);
 
-            list.add(new TouristLocation(id, name, world.getName(), x, y, z, 0f, 0f, "Auto Generated", "overworld"));
+            list.add(new TouristLocation(id, name, world.getName(), x, y, z, 0f, 0f, "Auto Generated", "overworld", null, null));
         }
         return list;
     }
@@ -107,8 +111,10 @@ public class TouristLocation {
 
         String description = (String) map.getOrDefault("description", "");
         String worldType = (String) map.getOrDefault("worldType", "overworld");
+        Integer dwellSeconds = map.containsKey("dwellSeconds") ? ((Number) map.get("dwellSeconds")).intValue() : null;
+        Boolean firstPerson = map.containsKey("firstPerson") ? (Boolean) map.get("firstPerson") : null;
 
-        return new TouristLocation(id, name, world, x, y, z, yaw, pitch, description, worldType);
+        return new TouristLocation(id, name, world, x, y, z, yaw, pitch, description, worldType, dwellSeconds, firstPerson);
     }
 
     private static double getDouble(Map<String, Object> map, String key) {
@@ -123,5 +129,36 @@ public class TouristLocation {
     public String toString() {
         return String.format("TouristLocation{id='%s', name='%s', loc=(%s,%.1f,%.1f,%.1f)}",
                 id, name, world, x, y, z);
+    }
+
+    public Map<String, Object> toMap() {
+        Map<String, Object> map = new java.util.LinkedHashMap<>();
+        map.put("id", id);
+        map.put("name", name);
+        map.put("world", world);
+        map.put("x", x);
+        map.put("y", y);
+        map.put("z", z);
+        map.put("yaw", yaw);
+        map.put("pitch", pitch);
+        map.put("description", description);
+        map.put("worldType", worldType);
+        if (dwellSeconds != null) map.put("dwellSeconds", dwellSeconds);
+        if (firstPerson != null) map.put("firstPerson", firstPerson);
+        return map;
+    }
+
+    public static void saveToYaml(File file, List<TouristLocation> locations) {
+        org.bukkit.configuration.file.YamlConfiguration config = new org.bukkit.configuration.file.YamlConfiguration();
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (TouristLocation loc : locations) {
+            list.add(loc.toMap());
+        }
+        config.set("locations", list);
+        try {
+            config.save(file);
+        } catch (java.io.IOException e) {
+            System.err.println("Could not save tourist locations to " + file.getName() + ": " + e.getMessage());
+        }
     }
 }

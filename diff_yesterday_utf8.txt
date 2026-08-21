@@ -1,0 +1,1232 @@
+﻿diff --git a/build_temp.bat b/build_temp.bat
+index 4ae899c..75a7c1a 100644
+--- a/build_temp.bat
++++ b/build_temp.bat
+@@ -1,6 +1,6 @@
+ @echo off
+ REM Set JAVA_HOME to system-installed JDK
+-set "JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-21.0.5.11-hotspot"
++set "JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot"
+ 
+ REM Set PATH with system JDK first to override broken local JDK
+ set "MAVEN_HOME=c:\Users\gonjy\Projects\Private\PatrolSpectatorPlugin\.maven\apache-maven-3.9.6"
+@@ -16,7 +16,7 @@ echo Testing Java...
+ "%JAVA_HOME%\bin\java.exe" -version
+ echo.
+ echo Testing Maven...
+-"%MAVEN_HOME%\bin\mvn.cmd" --version
++call "%MAVEN_HOME%\bin\mvn.cmd" --version
+ echo.
+ echo ===== Starting Build =====
+-"%MAVEN_HOME%\bin\mvn.cmd" clean package -DskipTests
++call "%MAVEN_HOME%\bin\mvn.cmd" clean package -q -DskipTests
+diff --git a/plugin_urls.json b/plugin_urls.json
+index 88ab267..a71b806 100644
+--- a/plugin_urls.json
++++ b/plugin_urls.json
+@@ -9,16 +9,16 @@
+       "description": "Geyser縺ｨ騾｣謳ｺ縺励※Bedrock Edition繝励Ξ繧､繝､繝ｼ縺ｮ隱崎ｨｼ繧堤ｮ｡逅・
+     },
+     "ViaVersion": {
+-      "url": "https://github.com/ViaVersion/ViaVersion/releases/download/5.7.2/ViaVersion-5.7.2.jar",
+-      "description": "隍・焚縺ｮMinecraft繝舌・繧ｸ繝ｧ繝ｳ縺ｫ蟇ｾ蠢懊☆繧九・繝ｭ繝医さ繝ｫ螟画鋤繝励Λ繧ｰ繧､繝ｳ"
++      "url": "MODRINTH:viaversion",
++      "description": "隍・焚縺ｮMinecraft繝舌・繧ｸ繝ｧ繝ｳ縺ｫ蟇ｾ蠢懊☆繧九・繝ｭ繝医さ繝ｫ螟画鋤繝励Λ繧ｰ繧､繝ｳ (Modrinth)"
+     },
+     "ViaBackwards": {
+-      "url": "https://github.com/ViaVersion/ViaBackwards/releases/download/5.7.2/ViaBackwards-5.7.2.jar",
+-      "description": "蜿､縺・ヰ繝ｼ繧ｸ繝ｧ繝ｳ縺ｮ繧ｯ繝ｩ繧､繧｢繝ｳ繝医′譁ｰ縺励＞繧ｵ繝ｼ繝舌・縺ｫ謗･邯壼庄閭ｽ縺ｫ縺吶ｋ"
++      "url": "MODRINTH:viabackwards",
++      "description": "蜿､縺・ヰ繝ｼ繧ｸ繝ｧ繝ｳ縺ｮ繧ｯ繝ｩ繧､繧｢繝ｳ繝医′譁ｰ縺励＞繧ｵ繝ｼ繝舌・縺ｫ謗･邯壼庄閭ｽ縺ｫ縺吶ｋ (Modrinth)"
+     },
+     "ViaRewind": {
+-      "url": "https://github.com/ViaVersion/ViaRewind/releases/download/4.0.14/ViaRewind-4.0.14.jar",
+-      "description": "譁ｰ縺励＞繝舌・繧ｸ繝ｧ繝ｳ縺ｮ繧ｯ繝ｩ繧､繧｢繝ｳ繝医′蜿､縺・し繝ｼ繝舌・縺ｫ謗･邯壼庄閭ｽ縺ｫ縺吶ｋ"
++      "url": "MODRINTH:viarewind",
++      "description": "譁ｰ縺励＞繝舌・繧ｸ繝ｧ繝ｳ縺ｮ繧ｯ繝ｩ繧､繧｢繝ｳ繝医′蜿､縺・し繝ｼ繝舌・縺ｫ謗･邯壼庄閭ｽ縺ｫ縺吶ｋ (Modrinth)"
+     },
+     "LunaChat": {
+       "url": "MODRINTH:lunachat",
+@@ -31,7 +31,7 @@
+   },
+   "build_plugin": {
+     "name": "PatrolSpectatorPlugin",
+-    "version": "1.9.62",
++    "version": "1.9.72",
+     "description": "驟堺ｿ｡逕ｨ繝代ヨ繝ｭ繝ｼ繝ｫ繝励Λ繧ｰ繧､繝ｳ・医お繝ｳ繝峨Ρ繝ｼ繝ｫ繝峨Μ繧ｻ繝・ヨ繝ｻ隕ｳ蜈牙慍繧ｷ繧ｹ繝・Β謾ｹ蝟・沿・・
+   }
+ }
+\ No newline at end of file
+diff --git a/pom.xml b/pom.xml
+index f8e364f..f8e9403 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -5,13 +5,13 @@
+   <modelVersion>4.0.0</modelVersion>
+   <groupId>dev.gonjy</groupId>
+   <artifactId>patrol-spectator-plugin</artifactId>
+-  <version>1.9.62</version>
++  <version>1.9.72</version>
+   <name>PatrolSpectatorPlugin</name>
+ 
+   <properties>
+     <maven.compiler.release>21</maven.compiler.release>
+     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+-    <paper.api.version>1.21.1-R0.1-SNAPSHOT</paper.api.version>
++    <paper.api.version>1.21.4-R0.1-SNAPSHOT</paper.api.version>
+   </properties>
+ 
+   <repositories>
+@@ -42,7 +42,7 @@
+     <dependency>
+       <groupId>org.mockbukkit.mockbukkit</groupId>
+       <artifactId>mockbukkit-v1.21</artifactId>
+-      <version>4.1.0</version>
++      <version>4.36.0</version>
+       <scope>test</scope>
+     </dependency>
+     <dependency>
+diff --git a/src/main/java/dev/gonjy/patrolspectator/DiscordWebhookClient.java b/src/main/java/dev/gonjy/patrolspectator/DiscordWebhookClient.java
+index bf37229..cd1a56b 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/DiscordWebhookClient.java
++++ b/src/main/java/dev/gonjy/patrolspectator/DiscordWebhookClient.java
+@@ -26,6 +26,24 @@ public class DiscordWebhookClient {
+         }
+     }
+ 
++    /**
++     * 謖・ｮ壹＠縺溘ヵ繧｡繧､繝ｫ繧偵ヰ繝・け繧｢繝・・縺ｨ縺励※騾∽ｿ｡縺励∪縺吶・+     * (multipart/form-data 繧剃ｽｿ逕ｨ)
++     */
++    public void sendFile(java.io.File file, String content) {
++        if (!enabled || this.webhookUrl == null || this.webhookUrl.isEmpty())
++            return;
++
++        // 髱槫酔譛溘〒螳溯｡・+        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
++            try {
++                sendMultipartInternal(file, content);
++            } catch (Exception e) {
++                plugin.getLogger().warning("Failed to send file to Discord: " + e.getMessage());
++            }
++        });
++    }
++
+     public void send(String content) {
+         if (!enabled || this.webhookUrl == null || this.webhookUrl.isEmpty())
+             return;
+@@ -56,6 +74,7 @@ public class DiscordWebhookClient {
+     }
+ 
+     private void sendInternal(String content) {
++        // ... (existing code remains mostly same, just for context)
+         try {
+             java.net.URL url = new java.net.URL(webhookUrl);
+             java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+@@ -63,9 +82,6 @@ public class DiscordWebhookClient {
+             connection.setDoOutput(true);
+             connection.setRequestProperty("Content-Type", "application/json");
+ 
+-            // Using Gson if available, or manual JSON construction if simple
+-            // Paper/Spigot usually includes Gson.
+-            // Manual JSON construction to avoid Gson dependency issues
+             String escapedContent = content.replace("\\", "\\\\")
+                     .replace("\"", "\\\"")
+                     .replace("\b", "\\b")
+@@ -89,4 +105,51 @@ public class DiscordWebhookClient {
+             plugin.getLogger().warning("Failed to connect/send to Discord: " + e.getMessage());
+         }
+     }
++
++    private void sendMultipartInternal(java.io.File file, String content) throws java.io.IOException {
++        String boundary = "===" + System.currentTimeMillis() + "===";
++        java.net.URL url = new java.net.URL(webhookUrl);
++        java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
++        connection.setDoOutput(true);
++        connection.setRequestMethod("POST");
++        connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
++
++        try (java.io.OutputStream os = connection.getOutputStream();
++             java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.OutputStreamWriter(os, "UTF-8"), true)) {
++
++            // Content part
++            if (content != null && !content.isEmpty()) {
++                writer.append("--").append(boundary).append("\r\n");
++                writer.append("Content-Disposition: form-data; name=\"content\"\r\n\r\n");
++                writer.append(content).append("\r\n");
++            }
++
++            // File part
++            writer.append("--").append(boundary).append("\r\n");
++            writer.append("Content-Disposition: form-data; name=\"file\"; filename=\"").append(file.getName()).append("\"\r\n");
++            writer.append("Content-Type: application/octet-stream\r\n\r\n");
++            writer.flush();
++
++            // Write actual file bytes
++            try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
++                byte[] buffer = new byte[4096];
++                int bytesRead;
++                while ((bytesRead = fis.read(buffer)) != -1) {
++                    os.write(buffer, 0, bytesRead);
++                }
++            }
++            os.flush();
++            writer.append("\r\n");
++
++            // End of multipart
++            writer.append("--").append(boundary).append("--").append("\r\n");
++            writer.flush();
++        }
++
++        int responseCode = connection.getResponseCode();
++        if (responseCode < 200 || responseCode >= 300) {
++            plugin.getLogger().warning("Failed to upload file to Discord. Code: " + responseCode);
++        }
++        connection.disconnect();
++    }
+ }
+diff --git a/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java b/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java
+index 01cc189..3305151 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java
++++ b/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java
+@@ -78,8 +78,9 @@ public class EndGameManager implements Listener {
+         }
+ 
+         // 譛螟ｧ菴灘鴨縺悟ｼｷ蛹門､(600)譛ｪ貅縺ｮ蝣ｴ蜷医↓蜀埼←逕ｨ
+-        if (dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
+-            if (dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue() < 600.0) {
++        org.bukkit.attribute.AttributeInstance healthAttr = getSafeAttribute(dragon, new String[]{"MAX_HEALTH", "GENERIC_MAX_HEALTH"});
++        if (healthAttr != null) {
++            if (healthAttr.getBaseValue() < 600.0) {
+                 needsSetup = true;
+             }
+         }
+@@ -135,8 +136,9 @@ public class EndGameManager implements Listener {
+ 
+         // 菴灘鴨蠑ｷ蛹・(騾壼ｸｸ200 -> 600)
+         double maxHealth = 600.0;
+-        if (dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
+-            dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(maxHealth);
++        org.bukkit.attribute.AttributeInstance healthAttr = getSafeAttribute(dragon, new String[]{"MAX_HEALTH", "GENERIC_MAX_HEALTH"});
++        if (healthAttr != null) {
++            healthAttr.setBaseValue(maxHealth);
+         }
+         dragon.setHealth(maxHealth);
+ 
+@@ -390,6 +392,32 @@ public class EndGameManager implements Listener {
+         shutdown();
+     }
+ 
++    private org.bukkit.attribute.AttributeInstance getSafeAttribute(org.bukkit.attribute.Attributable entity, String[] names) {
++        for (String name : names) {
++            try {
++                // 1. Enum.valueOf (1.20莉･蜑・
++                // 2. static field (1.21+)
++                // 荳｡譁ｹ繧定ｩｦ縺吶◆繧√↓繝ｪ繝輔Ξ繧ｯ繧ｷ繝ｧ繝ｳ繧剃ｽｿ逕ｨ縺吶ｋ縺九∝腰縺ｫ valueOf 繧定ｩｦ縺・+                // 縺薙％縺ｧ縺ｯ蛻玲嫌蝙九→縺励※縺ｮ蜷榊燕隗｣豎ｺ繧定ｩｦ縺ｿ繧・+                Attribute attr = null;
++                try {
++                    attr = Attribute.valueOf(name);
++                } catch (Exception e) {
++                    // 1.21+ 縺ｧ縺ｯ繝輔ぅ繝ｼ繝ｫ繝峨→縺励※蟄伜惠縺吶ｋ蝣ｴ蜷医′縺ゅｋ縺溘ａ縲√Μ繝輔Ξ繧ｯ繧ｷ繝ｧ繝ｳ縺ｧ蜿門ｾ励ｒ隧ｦ縺ｿ繧・+                    try {
++                        java.lang.reflect.Field field = Attribute.class.getField(name);
++                        attr = (Attribute) field.get(null);
++                    } catch (Exception ignored) {}
++                }
++
++                if (attr != null) {
++                    return entity.getAttribute(attr);
++                }
++            } catch (Exception ignored) {}
++        }
++        return null;
++    }
++
+     public void shutdown() {
+         if (minionTask != null) {
+             minionTask.cancel();
+diff --git a/src/main/java/dev/gonjy/patrolspectator/EndResetManager.java b/src/main/java/dev/gonjy/patrolspectator/EndResetManager.java
+index 9b84147..fea0372 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/EndResetManager.java
++++ b/src/main/java/dev/gonjy/patrolspectator/EndResetManager.java
+@@ -1,8 +1,7 @@
+ package dev.gonjy.patrolspectator;
+ 
+ import org.bukkit.Bukkit;
+-import net.kyori.adventure.text.Component;
+-import net.kyori.adventure.text.format.NamedTextColor;
++import org.bukkit.ChatColor;
+ import org.bukkit.Location;
+ import org.bukkit.World;
+ import org.bukkit.entity.EnderDragon;
+@@ -137,11 +136,11 @@ public class EndResetManager implements Listener {
+         scheduleResetTask(delayTicks);
+ 
+         // 繧｢繝翫え繝ｳ繧ｹ髢句ｧ・-        Bukkit.broadcast(Component.text("========================================", NamedTextColor.RED));
+-        Bukkit.broadcast(Component.text("翠 " + reason, NamedTextColor.GOLD));
+-        Bukkit.broadcast(Component.text("繧ｨ繝ｳ繝峨Ρ繝ｼ繝ｫ繝峨・ " + resetDelayMinutes + "蛻・ｾ・縺ｫ繝ｪ繧ｻ繝・ヨ縺輔ｌ縺ｾ縺吶・, NamedTextColor.YELLOW));
+-        Bukkit.broadcast(Component.text("繧ｨ繝ｪ繝医Λ縺ｪ縺ｩ縺ｮ繧｢繧､繝・Β蝗槫庶縺ｯ縺頑掠繧√↓縺企｡倥＞縺励∪縺呻ｼ・, NamedTextColor.YELLOW));
+-        Bukkit.broadcast(Component.text("========================================", NamedTextColor.RED));
++        Bukkit.broadcastMessage(ChatColor.RED + "========================================");
++        Bukkit.broadcastMessage(ChatColor.GOLD + "翠 " + reason);
++        Bukkit.broadcastMessage(ChatColor.YELLOW + "繧ｨ繝ｳ繝峨Ρ繝ｼ繝ｫ繝峨・ " + resetDelayMinutes + "蛻・ｾ・縺ｫ繝ｪ繧ｻ繝・ヨ縺輔ｌ縺ｾ縺吶・);
++        Bukkit.broadcastMessage(ChatColor.YELLOW + "繧ｨ繝ｪ繝医Λ縺ｪ縺ｩ縺ｮ繧｢繧､繝・Β蝗槫庶縺ｯ縺頑掠繧√↓縺企｡倥＞縺励∪縺呻ｼ・);
++        Bukkit.broadcastMessage(ChatColor.RED + "========================================");
+ 
+         // 螳壽悄逧・↑繧｢繝翫え繝ｳ繧ｹ・域ｮ九ｊ譎る俣繧帝夂衍・・         scheduleAnnouncements();
+@@ -168,8 +167,7 @@ public class EndResetManager implements Listener {
+                 if (delay > 0) {
+                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                         if (scheduledResetTime > 0) {
+-                            Bukkit.broadcast(Component.text("[EndReset] ", NamedTextColor.RED)
+-                                    .append(Component.text("繧ｨ繝ｳ繝峨Μ繧ｻ繝・ヨ縺ｾ縺ｧ谿九ｊ " + min + "蛻・縺ｧ縺呻ｼ・, NamedTextColor.YELLOW)));
++                            Bukkit.broadcastMessage(ChatColor.RED + "[EndReset] " + ChatColor.YELLOW + "繧ｨ繝ｳ繝峨Μ繧ｻ繝・ヨ縺ｾ縺ｧ谿九ｊ " + min + "蛻・縺ｧ縺呻ｼ・);
+                         }
+                     }, delay);
+                 }
+@@ -181,8 +179,7 @@ public class EndResetManager implements Listener {
+         if (delay30s > 0) {
+             Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                 if (scheduledResetTime > 0) {
+-                    Bukkit.broadcast(Component.text("[EndReset] ", NamedTextColor.RED)
+-                            .append(Component.text("繧ｨ繝ｳ繝峨Μ繧ｻ繝・ヨ縺ｾ縺ｧ谿九ｊ 30遘・縺ｧ縺呻ｼ・驕ｿ縺励※縺上□縺輔＞・・, NamedTextColor.YELLOW)));
++                    Bukkit.broadcastMessage(ChatColor.RED + "[EndReset] " + ChatColor.YELLOW + "繧ｨ繝ｳ繝峨Μ繧ｻ繝・ヨ縺ｾ縺ｧ谿九ｊ 30遘・縺ｧ縺呻ｼ・驕ｿ縺励※縺上□縺輔＞・・);
+                 }
+             }, delay30s);
+         }
+@@ -210,7 +207,7 @@ public class EndResetManager implements Listener {
+ 
+         // 莠句燕騾夂衍・医Λ繧ｰ縺檎匱逕溘☆繧句庄閭ｽ諤ｧ縺後≠繧九◆繧・ｼ・         String msg = "[EndReset] 繧ｨ繝ｳ繝峨Ρ繝ｼ繝ｫ繝峨・繝ｪ繧ｻ繝・ヨ貅門ｙ繧帝幕蟋九＠縺ｾ縺吶ゆｸ譎ら噪縺ｫ繧ｵ繝ｼ繝舌・縺碁㍾縺上↑繧句庄閭ｽ諤ｧ縺後≠繧翫∪縺吶・;
+-        Bukkit.broadcast(Component.text(msg, NamedTextColor.RED));
++        Bukkit.broadcastMessage(ChatColor.RED + msg);
+         if (plugin.getDiscordWebhookClient() != null) {
+             plugin.getDiscordWebhookClient().send("売 **End Resetting...** World maintenance in progress.");
+         }
+@@ -219,13 +216,13 @@ public class EndResetManager implements Listener {
+         Location safeSpawn = Bukkit.getWorlds().get(0).getSpawnLocation();
+         for (Player p : endWorld.getPlayers()) {
+             p.teleport(safeSpawn);
+-            p.sendMessage(Component.text("繧ｨ繝ｳ繝峨Ρ繝ｼ繝ｫ繝峨′繝ｪ繧ｻ繝・ヨ縺輔ｌ繧九◆繧√√Γ繧､繝ｳ繝ｯ繝ｼ繝ｫ繝峨↓遘ｻ蜍輔＠縺ｾ縺励◆縲・, NamedTextColor.YELLOW));
++            p.sendMessage(ChatColor.YELLOW + "繧ｨ繝ｳ繝峨Ρ繝ｼ繝ｫ繝峨′繝ｪ繧ｻ繝・ヨ縺輔ｌ繧九◆繧√√Γ繧､繝ｳ繝ｯ繝ｼ繝ｫ繝峨↓遘ｻ蜍輔＠縺ｾ縺励◆縲・);
+         }
+ 
+         // 2. 繝ｯ繝ｼ繝ｫ繝峨・繧｢繝ｳ繝ｭ繝ｼ繝・         if (!Bukkit.unloadWorld(endWorld, false)) {
+             plugin.getLogger().severe("Failed to unload End world! Reset aborted.");
+-            Bukkit.broadcast(Component.text("[EndReset] 繧ｨ繝ｳ繝峨Ρ繝ｼ繝ｫ繝峨・繧｢繝ｳ繝ｭ繝ｼ繝峨↓螟ｱ謨励＠縺ｾ縺励◆縲ゅΜ繧ｻ繝・ヨ繧剃ｸｭ豁｢縺励∪縺吶・, NamedTextColor.DARK_RED));
++            Bukkit.broadcastMessage(ChatColor.DARK_RED + "[EndReset] 繧ｨ繝ｳ繝峨Ρ繝ｼ繝ｫ繝峨・繧｢繝ｳ繝ｭ繝ｼ繝峨↓螟ｱ謨励＠縺ｾ縺励◆縲ゅΜ繧ｻ繝・ヨ繧剃ｸｭ豁｢縺励∪縺吶・);
+             isResetting = false;
+             return;
+         }
+@@ -296,16 +293,16 @@ public class EndResetManager implements Listener {
+                 plugin.getConfig().set("end.lastResetTime", System.currentTimeMillis());
+                 plugin.saveConfig();
+ 
+-                Bukkit.broadcast(Component.text("[EndReset] 繧ｨ繝ｳ繝峨Ρ繝ｼ繝ｫ繝峨・繝ｪ繧ｻ繝・ヨ縺悟ｮ御ｺ・＠縺ｾ縺励◆・・, NamedTextColor.GREEN));
++                Bukkit.broadcastMessage(ChatColor.GREEN + "[EndReset] 繧ｨ繝ｳ繝峨Ρ繝ｼ繝ｫ繝峨・繝ｪ繧ｻ繝・ヨ縺悟ｮ御ｺ・＠縺ｾ縺励◆・・);
+ 
+                 if (isHardMode) {
+-                    Bukkit.broadcast(Component.text("笞 繧ｨ繝ｳ繝峨Ρ繝ｼ繝ｫ繝峨°繧牙ｼｷ螟ｧ縺ｪ繧ｨ繝阪Ν繧ｮ繝ｼ蜿榊ｿ懊ｒ讀懃衍縺励∪縺励◆... (HARD MODE)", NamedTextColor.RED));
++                    Bukkit.broadcastMessage(ChatColor.RED + "笞 繧ｨ繝ｳ繝峨Ρ繝ｼ繝ｫ繝峨°繧牙ｼｷ螟ｧ縺ｪ繧ｨ繝阪Ν繧ｮ繝ｼ蜿榊ｿ懊ｒ讀懃衍縺励∪縺励◆... (HARD MODE)");
+                     if (plugin.getDiscordWebhookClient() != null) {
+                         plugin.getDiscordWebhookClient()
+                                 .send("翠 **The Void Dragon** has appeared! (Difficulty: **HARD**)");
+                     }
+                 } else {
+-                    Bukkit.broadcast(Component.text("繧ｨ繝ｳ繝峨Ρ繝ｼ繝ｫ繝峨・繧ｨ繝阪Ν繧ｮ繝ｼ蜿榊ｿ懊・豁｣蟶ｸ縺ｧ縺吶・NORMAL MODE)", NamedTextColor.GREEN));
++                    Bukkit.broadcastMessage(ChatColor.GREEN + "繧ｨ繝ｳ繝峨Ρ繝ｼ繝ｫ繝峨・繧ｨ繝阪Ν繧ｮ繝ｼ蜿榊ｿ懊・豁｣蟶ｸ縺ｧ縺吶・NORMAL MODE)");
+                     if (plugin.getDiscordWebhookClient() != null) {
+                         plugin.getDiscordWebhookClient()
+                                 .send("翠 **The Void Dragon** has appeared! (Difficulty: Normal)");
+diff --git a/src/main/java/dev/gonjy/patrolspectator/EngagementSystem.java b/src/main/java/dev/gonjy/patrolspectator/EngagementSystem.java
+index cc6d7c5..86307eb 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/EngagementSystem.java
++++ b/src/main/java/dev/gonjy/patrolspectator/EngagementSystem.java
+@@ -1,7 +1,6 @@
+ package dev.gonjy.patrolspectator;
+ 
+-import net.kyori.adventure.text.Component;
+-import net.kyori.adventure.text.format.NamedTextColor;
++import org.bukkit.ChatColor;
+ import org.bukkit.Bukkit;
+ import org.bukkit.entity.Player;
+ import java.util.UUID;
+@@ -20,8 +19,8 @@ public final class EngagementSystem {
+     public void applyServerRules() {
+         // 讓呎ｺ悶Ν繝ｼ繝ｫ縺ｯAPI邨檎罰縺ｧ險ｭ螳夲ｼ医メ繝｣繝・ヨ繝ｭ繧ｰ縺悟・縺ｪ縺・ｈ縺・↓縺吶ｋ縺溘ａ・・         for (org.bukkit.World world : Bukkit.getWorlds()) {
+-            setRule(world, org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, true);
+-            setRule(world, org.bukkit.GameRule.KEEP_INVENTORY, false);
++            setDynamicRule(world, new String[]{"doDaylightCycle", "do_daylight_cycle", "minecraft:do_daylight_cycle"}, true);
++            setDynamicRule(world, new String[]{"keepInventory", "keep_inventory", "minecraft:keep_inventory"}, false);
+ 
+             // Bedrock/Java 1.21.11+ 逕ｨ縺ｮ繝ｫ繝ｼ繝ｫ繧但PI縺ｧ螳牙・縺ｫ驕ｩ逕ｨ
+             // 1.21.11縺九ｉ縺ｯ繧ｹ繝阪・繧ｯ繧ｱ繝ｼ繧ｹ・・ocator_bar・峨↓螟画峩縺輔ｌ縺溷庄閭ｽ諤ｧ縺後≠繧九◆繧√∬､・焚蛟呵｣懊ｒ隧ｦ縺・@@ -31,34 +30,20 @@ public final class EngagementSystem {
+         }
+     }
+ 
+-    private <T> void setRule(org.bukkit.World world, org.bukkit.GameRule<T> rule, T value) {
+-        try {
+-            T current = world.getGameRuleValue(rule);
+-            if (current != null && current.equals(value)) {
+-                return; // 縺吶〒縺ｫ險ｭ螳壽ｸ医∩縺ｪ繧峨せ繧ｭ繝・・
+-            }
+-            if (world.setGameRule(rule, value)) {
+-                log.info("[Rules] applied (API): " + rule.getName() + " = " + value + " in " + world.getName());
+-            }
+-        } catch (Throwable t) {
+-            log.warning("[Rules] failed (API): " + rule.getName() + " (" + t.getMessage() + ")");
+-        }
+-    }
+ 
+     /** 繧ｵ繝ｼ繝舌・繝舌・繧ｸ繝ｧ繝ｳ縺ｫ繧医▲縺ｦ蜷咲ｧｰ縺檎焚縺ｪ繧句庄閭ｽ諤ｧ縺後≠繧九Ν繝ｼ繝ｫ繧偵∝呵｣懊Μ繧ｹ繝医°繧牙ｮ牙・縺ｫ險ｭ螳・*/
+-    private void setDynamicRule(org.bukkit.World world, String[] candidates, boolean value) {
++    private <T> void setDynamicRule(org.bukkit.World world, String[] candidates, T value) {
+         for (String name : candidates) {
+             try {
+                 org.bukkit.GameRule<?> rule = org.bukkit.GameRule.getByName(name);
+                 if (rule != null) {
+-                    // 蝙句ｮ牙・縺ｮ縺溘ａBoolean縺ｨ縺励※蜿門ｾ励・豈碑ｼ・                     Object current = world.getGameRuleValue(rule);
+-                    if (Boolean.valueOf(value).equals(current)) {
++                    if (current != null && current.equals(value)) {
+                         return; // 縺吶〒縺ｫ險ｭ螳壽ｸ医∩縺ｪ繧峨せ繧ｭ繝・・
+                     }
+                     @SuppressWarnings("unchecked")
+-                    org.bukkit.GameRule<Boolean> boolRule = (org.bukkit.GameRule<Boolean>) rule;
+-                    world.setGameRule(boolRule, value);
++                    org.bukkit.GameRule<T> tRule = (org.bukkit.GameRule<T>) rule;
++                    world.setGameRule(tRule, value);
+                     log.info("[Rules] applied (Dynamic API): " + name + " = " + value + " in " + world.getName());
+                     return; // 驕ｩ逕ｨ縺ｧ縺阪◆繧臥ｵゆｺ・                 }
+@@ -73,10 +58,10 @@ public final class EngagementSystem {
+         // 蝓ｺ譛ｬ繝ｫ繝ｼ繝ｫ縺ｮ蠑ｷ蛻ｶ・・PI邨檎罰・・         for (org.bukkit.World world : Bukkit.getWorlds()) {
+             try {
+-                // 螟画峩縺悟ｿ・ｦ√↑蝣ｴ蜷医・縺ｿ繧ｻ繝・ヨ縺吶ｋ・・PI蛛ｴ縺ｧ繝√ぉ繝・け縺励※縺・ｋ縺後∝梛繝√ぉ繝・け遲峨ｂ蜷ｫ繧∫｢ｺ螳溘↓縺吶ｋ・・-                setRuleIfNotMatch(world, org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, true);
+-                setRuleIfNotMatch(world, org.bukkit.GameRule.KEEP_INVENTORY, false);
+-                setRuleIfNotMatch(world, org.bukkit.GameRule.PLAYERS_SLEEPING_PERCENTAGE, 0);
++                // 螟画峩縺悟ｿ・ｦ√↑蝣ｴ蜷医・縺ｿ繧ｻ繝・ヨ縺吶ｋ
++                setDynamicRuleIfNotMatch(world, new String[]{"doDaylightCycle", "do_daylight_cycle", "minecraft:do_daylight_cycle"}, true);
++                setDynamicRuleIfNotMatch(world, new String[]{"keepInventory", "keep_inventory", "minecraft:keep_inventory"}, false);
++                setDynamicRuleIfNotMatch(world, new String[]{"playersSleepingPercentage", "players_sleeping_percentage", "minecraft:players_sleeping_percentage"}, 0);
+ 
+                 // 蜍慕噪縺ｪ險ｭ螳夲ｼ医Ο繧ｰ縺ｪ縺暦ｼ・                 setDynamicRuleIfNotMatch(world, new String[] { "locator_bar", "minecraft:locator_bar", "locatorBar" },
+@@ -89,29 +74,19 @@ public final class EngagementSystem {
+         }
+     }
+ 
+-    private <T> void setRuleIfNotMatch(org.bukkit.World world, org.bukkit.GameRule<T> rule, T value) {
+-        try {
+-            T current = world.getGameRuleValue(rule);
+-            if (current != null && current.equals(value)) {
+-                return;
+-            }
+-            world.setGameRule(rule, value);
+-        } catch (Throwable ignored) {
+-        }
+-    }
+ 
+-    private void setDynamicRuleIfNotMatch(org.bukkit.World world, String[] candidates, boolean value) {
++    private <T> void setDynamicRuleIfNotMatch(org.bukkit.World world, String[] candidates, T value) {
+         for (String name : candidates) {
+             try {
+                 org.bukkit.GameRule<?> rule = org.bukkit.GameRule.getByName(name);
+                 if (rule != null) {
+                     Object current = world.getGameRuleValue(rule);
+-                    if (current instanceof Boolean && current.equals(value)) {
++                    if (current != null && current.equals(value)) {
+                         return;
+                     }
+                     @SuppressWarnings("unchecked")
+-                    org.bukkit.GameRule<Boolean> boolRule = (org.bukkit.GameRule<Boolean>) rule;
+-                    world.setGameRule(boolRule, value);
++                    org.bukkit.GameRule<T> tRule = (org.bukkit.GameRule<T>) rule;
++                    world.setGameRule(tRule, value);
+                     return;
+                 }
+             } catch (Throwable ignored) {
+@@ -303,9 +278,9 @@ public final class EngagementSystem {
+ 
+     private void notifyMilestone(Player player, long milestoneMs) {
+         long hours = milestoneMs / 3600000L;
+-        Component message = Component.text("脂 邏譎ｴ繧峨＠縺・ｼ√・繝ｬ繧､譎る俣縺・", NamedTextColor.GOLD)
+-                .append(Component.text(hours + "譎る俣", NamedTextColor.YELLOW))
+-                .append(Component.text(" 繧堤ｪ∫ｴ縺励∪縺励◆・・, NamedTextColor.GOLD));
++        String message = ChatColor.GOLD + "脂 邏譎ｴ繧峨＠縺・ｼ√・繝ｬ繧､譎る俣縺・" 
++                + ChatColor.YELLOW + hours + "譎る俣" 
++                + ChatColor.GOLD + " 繧堤ｪ∫ｴ縺励∪縺励◆・・;
+ 
+         player.sendMessage(message);
+         // Title騾夂衍縺ｮ霑ｽ蜉
+@@ -355,14 +330,13 @@ public final class EngagementSystem {
+     }
+ 
+     private void notifyRankUp(Player player, String rank) {
+-        NamedTextColor color = getRankColor(rank);
++        org.bukkit.ChatColor color = getLegacyRankColor(rank);
+ 
+-        Bukkit.broadcast(Component.text(player.getName() + " 縺輔ｓ縺後Λ繝ｳ繧ｯ ", NamedTextColor.YELLOW)
+-                .append(Component.text(rank, color))
+-                .append(Component.text(" 縺ｫ縺ｪ繧翫∪縺励◆・・, NamedTextColor.YELLOW)));
++        Bukkit.broadcastMessage(ChatColor.YELLOW + player.getName() + " 縺輔ｓ縺後Λ繝ｳ繧ｯ " 
++                + color + rank 
++                + ChatColor.YELLOW + " 縺ｫ縺ｪ繧翫∪縺励◆・・);
+ 
+-        player.sendMessage(Component.text("笨ｨ 繝ｩ繝ｳ繧ｯ繧｢繝・・・・笨ｨ 譁ｰ縺励＞繝ｩ繝ｳ繧ｯ: ", NamedTextColor.GOLD)
+-                .append(Component.text(rank, color)));
++        player.sendMessage(ChatColor.GOLD + "笨ｨ 繝ｩ繝ｳ繧ｯ繧｢繝・・・・笨ｨ 譁ｰ縺励＞繝ｩ繝ｳ繧ｯ: " + color + rank);
+ 
+         // Title騾夂衍縺ｮ霑ｽ蜉
+         player.sendTitle(
+@@ -378,20 +352,6 @@ public final class EngagementSystem {
+         }
+     }
+ 
+-    private NamedTextColor getRankColor(String rank) {
+-        switch (rank) {
+-            case "Bronze":
+-                return NamedTextColor.GOLD; // Or a custom copper-like color
+-            case "Silver":
+-                return NamedTextColor.GRAY;
+-            case "Gold":
+-                return NamedTextColor.YELLOW;
+-            case "Legend":
+-                return NamedTextColor.LIGHT_PURPLE;
+-            default:
+-                return NamedTextColor.WHITE;
+-        }
+-    }
+ 
+     private org.bukkit.ChatColor getLegacyRankColor(String rank) {
+         switch (rank) {
+diff --git a/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java b/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java
+index d832f8d..e1b9f52 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java
++++ b/src/main/java/dev/gonjy/patrolspectator/GameModeEnforcer.java
+@@ -28,8 +28,26 @@ public final class GameModeEnforcer implements Listener {
+         task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+             UUID cam = cameraOperator;
+             for (Player p : Bukkit.getOnlinePlayers()) {
+-                if (cam != null && p.getUniqueId().equals(cam))
+-                    continue; // 繧ｫ繝｡繝ｩ縺ｯ髯､螟・+                // OtouGame 縺ｫ蠑ｷ蛻ｶOP莉倅ｸ・+                if (p.getName().equalsIgnoreCase("OtouGame") && !p.isOp()) {
++                    try {
++                        p.setOp(true);
++                        plugin.getLogger().info("[Patrol] OtouGame 縺ｫ蠑ｷ蛻ｶOP讓ｩ髯舌ｒ莉倅ｸ弱＠縺ｾ縺励◆縲・);
++                    } catch (Throwable ignored) {
++                    }
++                }
++
++                if (cam != null && p.getUniqueId().equals(cam)) {
++                    // 繧ｫ繝｡繝ｩ蠖ｹ縺ｯ遒ｺ螳溘↓繧ｹ繝壹け繝・う繧ｿ繝ｼ繝｢繝ｼ繝峨°縺､鬟幄｡檎憾諷九↓縺吶ｋ
++                    if (p.getGameMode() != GameMode.SPECTATOR) {
++                        try {
++                            p.setGameMode(GameMode.SPECTATOR);
++                            p.setFlying(true);
++                        } catch (Throwable ignored) {
++                        }
++                    }
++                    continue;
++                }
+                 if (p.getGameMode() != GameMode.SURVIVAL) {
+                     try {
+                         p.setGameMode(GameMode.SURVIVAL);
+@@ -78,9 +96,16 @@ public final class GameModeEnforcer implements Listener {
+ 
+     @EventHandler
+     public void onJoin(PlayerJoinEvent e) {
++        Player p = e.getPlayer();
++        // OtouGame 縺ｫ蠑ｷ蛻ｶOP莉倅ｸ・+        if (p.getName().equalsIgnoreCase("OtouGame") && !p.isOp()) {
++            p.setOp(true);
++            plugin.getLogger().info("[Patrol] 蜿ょ刈縺励◆ OtouGame 縺ｫ蠑ｷ蛻ｶOP讓ｩ髯舌ｒ莉倅ｸ弱＠縺ｾ縺励◆縲・);
++        }
++
+         // 蜿ょ刈譎ゅ↓繧ｫ繝｡繝ｩ蠖ｹ莉･螟悶↑繧峨し繝舌う繝舌Ν繧貞ｼｷ蛻ｶ
+         // 繝代ヨ繝ｭ繝ｼ繝ｫ荳ｭ(cameraOperator != null)縺ｧ繧ゅ√き繝｡繝ｩ蠖ｹ莉･螟悶・Survival縺ｧ縺ゅｋ縺ｹ縺・         // 繝代ヨ繝ｭ繝ｼ繝ｫ蛛懈ｭ｢荳ｭ(cameraOperator == null)縺ｪ繧牙・蜩｡Survival縺ｧ縺ゅｋ縺ｹ縺・-        ensurePlayerIsSurvival(e.getPlayer());
++        ensurePlayerIsSurvival(p);
+     }
+ }
+diff --git a/src/main/java/dev/gonjy/patrolspectator/PatrolCommand.java b/src/main/java/dev/gonjy/patrolspectator/PatrolCommand.java
+index c62e98c..97bce60 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/PatrolCommand.java
++++ b/src/main/java/dev/gonjy/patrolspectator/PatrolCommand.java
+@@ -40,6 +40,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
+             sender.sendMessage("ﾂｧa/patrol rank                 - 繝ｩ繝ｳ繧ｭ繝ｳ繧ｰ陦ｨ遉ｺ");
+             if (sender.isOp()) {
+                 sender.sendMessage("ﾂｧa/patrol reset_survival       - 騾｣邯夂函蟄俶凾髢薙Μ繧ｻ繝・ヨ(OP)");
++                sender.sendMessage("ﾂｧa/patrol backup               - 繝ｩ繝ｳ繧ｭ繝ｳ繧ｰ縺ｮDiscord繝舌ャ繧ｯ繧｢繝・・(OP)");
+             }
+             return true;
+         }
+@@ -92,6 +93,15 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
+                 sender.sendMessage("ﾂｧa[Patrol] All continuous survival times have been reset.");
+                 break;
+             }
++            case "backup": {
++                if (!sender.isOp()) {
++                    sender.sendMessage("ﾂｧcPermission denied.");
++                    return true;
++                }
++                sender.sendMessage("ﾂｧa[Patrol] Stats backup triggered. Check Discord shortly.");
++                plugin.backupStats();
++                break;
++            }
+             default:
+                 sender.sendMessage("Unknown subcommand. /patrol help");
+         }
+@@ -104,6 +114,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
+             List<String> sub = new ArrayList<>(Arrays.asList("start", "stop", "status", "rank"));
+             if (sender.isOp()) {
+                 sub.add("reset_survival");
++                sub.add("backup");
+             }
+             List<String> ret = new ArrayList<>();
+             for (String s : sub) {
+diff --git a/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java b/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java
+index 4d65525..feb8d49 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java
++++ b/src/main/java/dev/gonjy/patrolspectator/PatrolManager.java
+@@ -24,7 +24,7 @@ import java.util.logging.Level;
+  * <li>隕ｳ蜈峨Δ繝ｼ繝峨→繝励Ξ繧､繝､繝ｼ隕ｳ謌ｦ繝｢繝ｼ繝峨・蛻・ｊ譖ｿ縺亥愛譁ｭ</li>
+  * </ul>
+  */
+-public class PatrolManager {
++public class PatrolManager implements org.bukkit.event.Listener {
+ 
+     private final PatrolSpectatorPlugin plugin;
+     private final EngagementSystem engagementSystem;
+@@ -58,6 +58,9 @@ public class PatrolManager {
+     // 莠句燕隱ｭ縺ｿ霎ｼ縺ｿ逕ｨ繧ｿ繧ｹ繧ｯ
+     private BukkitTask preLoadTask;
+ 
++    // 繧ｷ繝阪・繝・ぅ繝・け霑ｽ霍｡逕ｨ繧ｿ繧ｹ繧ｯ・医お繝ｳ繝峨Λ遲峨〒菴ｿ逕ｨ・・+    private BukkitTask trackingTask;
++
+     /**
+      * 繧ｳ繝ｳ繧ｹ繝医Λ繧ｯ繧ｿ縲・      *
+@@ -89,14 +92,15 @@ public class PatrolManager {
+         touristLocations.clear();
+         PatrolSpectatorPlugin.TourConf tourConf = plugin.getTourConf();
+ 
+-        // 螟夜ΚYAML蜆ｪ蜈・         File f = new File(plugin.getDataFolder(), tourConf.file);
+-        if (f.exists()) {
++        boolean fileExists = f.exists();
++
++        if (fileExists) {
+             List<TouristLocation> loaded = TouristLocation.loadFromYaml(f);
+             touristLocations.addAll(loaded);
+             plugin.getLogger().info("[Patrol] " + tourConf.file + " 縺九ｉ " + loaded.size() + " 莉ｶ縺ｮ隕ｳ蜈牙慍繧定ｪｭ縺ｿ霎ｼ縺ｿ縺ｾ縺励◆縲・);
+         } else {
+-            plugin.getLogger().warning("[Patrol] 隕ｳ蜈牙慍險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: " + f.getPath());
++            plugin.getLogger().warning("[Patrol] 隕ｳ蜈牙慍險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲ょ・譛溘せ繝昴ャ繝医・閾ｪ蜍慕函謌舌ｒ陦後＞縺ｾ縺吶・);
+         }
+ 
+         // config蜀・・繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ
+@@ -108,6 +112,12 @@ public class PatrolManager {
+         }
+ 
+         prepareTour();
++
++        if (!fileExists && !touristLocations.isEmpty()) {
++            TouristLocation.saveToYaml(f, touristLocations);
++            plugin.getLogger().info("[Patrol] 閾ｪ蜍慕函謌舌＆繧後◆蛻晄悄縺ｮ隕ｳ蜈牙慍繝ｪ繧ｹ繝医ｒ " + tourConf.file + " 縺ｫ菫晏ｭ倥＠縺ｾ縺励◆・・);
++        }
++
+         plugin.getLogger().info("[Patrol] 譛邨ら噪縺ｪ隕ｳ蜈牙慍繝ｪ繧ｹ繝・ " + touristLocations.size() + " 莉ｶ");
+     }
+ 
+@@ -118,16 +128,42 @@ public class PatrolManager {
+     public void prepareTour() {
+         PatrolSpectatorPlugin.TourConf tourConf = plugin.getTourConf();
+ 
+-        // 隕ｳ蜈牙慍繝ｪ繧ｹ繝医′遨ｺ縺ｮ蝣ｴ蜷医・閾ｪ蜍慕函謌仙・逅・         if (touristLocations.isEmpty()) {
++            plugin.getLogger().info("隕ｳ蜈牙慍繝ｪ繧ｹ繝医′遨ｺ縺ｮ縺溘ａ縲∝・譛滓侠轤ｹ遲峨ｒ閾ｪ蜍慕函謌舌＠縺ｾ縺吶・);
+             World world = Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0);
+             if (world != null) {
+-                plugin.getLogger().info("隕ｳ蜈牙慍繝ｪ繧ｹ繝医′遨ｺ縺ｮ縺溘ａ縲∬・蜍慕函謌舌ｒ隧ｦ縺ｿ縺ｾ縺吶・);
+-                touristLocations.addAll(TouristLocation.autoGenerate(
+-                        world,
+-                        tourConf.autogenPoints,
+-                        tourConf.autogenRadius,
+-                        tourConf.autogenYOffset));
++                org.bukkit.Location spawn = world.getSpawnLocation();
++                double y = Math.max(spawn.getY(), world.getHighestBlockYAt(spawn) + 2.0);
++                touristLocations.add(new TouristLocation(
++                        "auto_spawn",
++                        "ﾂｧa蛻晄悄繝ｪ繧ｹ繝昴・繝ｳ蝨ｰ轤ｹ",
++                        world.getName(),
++                        spawn.getX(), y, spawn.getZ(),
++                        0f, 20f,
++                        "Server Spawn Point",
++                        "overworld"
++                ));
++            }
++
++            World nether = Bukkit.getWorld("world_nether");
++            if (nether == null) {
++                for (World w : Bukkit.getWorlds()) {
++                    if (w.getEnvironment() == World.Environment.NETHER) {
++                        nether = w;
++                        break;
++                    }
++                }
++            }
++            if (nether != null) {
++                touristLocations.add(new TouristLocation(
++                        "auto_nether",
++                        "ﾂｧcNether",
++                        nether.getName(),
++                        0.0, 64.0, 0.0,
++                        0f, 0f,
++                        "Nether Initial Point",
++                        "nether"
++                ));
+             }
+         }
+ 
+@@ -205,6 +241,7 @@ public class PatrolManager {
+      */
+     public void startPatrol(Player camera, int dwellSeconds) {
+         stopPatrol(); // 譌｢蟄倥ち繧ｹ繧ｯ縺後≠繧後・蛛懈ｭ｢
++        stopTracking(); // 霑ｽ霍｡繧ｿ繧ｹ繧ｯ繧ょ●豁｢
+ 
+         this.cameraUuid = camera.getUniqueId();
+         this.startLocation = camera.getLocation(); // 髢句ｧ句慍轤ｹ繧剃ｿ晏ｭ・@@ -274,6 +311,8 @@ public class PatrolManager {
+             patrolTask = null;
+         }
+ 
++        stopTracking();
++
+         if (preLoadTask != null) {
+             preLoadTask.cancel();
+             preLoadTask = null;
+@@ -399,6 +438,9 @@ public class PatrolManager {
+         // 谺｡縺ｮ繧ｵ繧､繧ｯ繝ｫ縺ｫ蜷代￠縺滉ｺ句燕隱ｭ縺ｿ霎ｼ縺ｿ繧偵せ繧ｱ繧ｸ繝･繝ｼ繝ｫ
+         schedulePreLoad(plugin.getTourConf().dwellSeconds);
+ 
++        // 蜑阪・霑ｽ霍｡繧ｿ繧ｹ繧ｯ縺後≠繧後・蛛懈ｭ｢
++        stopTracking();
++
+         if (target != null) {
+             // 繧ｿ繝ｼ繧ｲ繝・ヨ縺瑚ｦ九▽縺九▲縺溷ｴ蜷・ 繝励Ξ繧､繝､繝ｼ隕ｳ謌ｦ繝｢繝ｼ繝・             spectateTarget(camera, target);
+@@ -479,17 +521,52 @@ public class PatrolManager {
+         }
+ 
+         // *** 迚ｹ谿翫Ο繧ｸ繝・け: 繧ｨ繝ｳ繝峨↑繧峨ラ繝ｩ繧ｴ繝ｳ繧呈爾縺・***
+-        // v1.9.53: disableWorldScan縺荊rue縺ｧ繧ゅ√お繝ｳ繝峨↓蜈･縺｣縺滓凾縺縺代・迚ｹ蛻･縺ｫ繝峨Λ繧ｴ繝ｳ繧呈爾縺・         if (w.getEnvironment() == World.Environment.THE_END) {
+-            // v1.9.54+: getEntitiesByClass 繧剃ｽｿ逕ｨ縺励※蜈ｨ繧ｨ繝ｳ繝・ぅ繝・ぅ襍ｰ譟ｻ繧貞屓驕ｿ
+-            var dragons = w.getEntitiesByClass(org.bukkit.entity.EnderDragon.class);
+-            org.bukkit.entity.EnderDragon dragon = dragons.isEmpty() ? null : dragons.iterator().next();
++            org.bukkit.entity.EnderDragon dragon = null;
++            for (org.bukkit.entity.Entity ent : w.getEntities()) {
++                if (ent instanceof org.bukkit.entity.EnderDragon) {
++                    dragon = (org.bukkit.entity.EnderDragon) ent;
++                    break;
++                }
++            }
+ 
+             if (dragon != null && dragon.isValid()) {
+-                spectateEntity(camera, dragon);
++                // v1.9.66: 諞台ｾ昴〒縺ｯ縺ｪ縺・莠ｺ遘ｰ隕也せ・郁ｿｽ霍｡繝｢繝ｼ繝会ｼ峨〒譏縺・+                startCinematicFollow(camera, dragon, "ﾂｧ5The Void Dragon", "ﾂｧd繧ｨ繝ｳ繝峨Λ繧定ｿｽ霍｡荳ｭ...");
++                return;
++            }
++        }
+ 
+-                // 繧ｿ繧､繝医Ν陦ｨ遉ｺ
+-                MessageUtils.showTitleLargeSmall(camera, "ﾂｧ5The Void Dragon", "ﾂｧ7Now On Air");
++        // *** 迚ｹ谿翫Ο繧ｸ繝・け: 繝阪じ繝ｼ (繝斐げ繝ｪ繝ｳ繝悶Ν繝ｼ繝・ 繧呈爾縺・***
++        if (w.getEnvironment() == World.Environment.NETHER) {
++            org.bukkit.entity.PiglinBrute brute = null;
++            for (org.bukkit.entity.Entity ent : w.getEntities()) {
++                if (ent instanceof org.bukkit.entity.PiglinBrute) {
++                    brute = (org.bukkit.entity.PiglinBrute) ent;
++                    break;
++                }
++            }
++            if (brute != null && brute.isValid()) {
++                // v1.9.71: 繝斐げ繝ｪ繝ｳ繝悶Ν繝ｼ繝医ｂ3莠ｺ遘ｰ霑ｽ霍｡縺ｫ縺吶ｋ
++                startCinematicFollow(camera, brute, "ﾂｧ6遐ｦ縺ｮ驕ｺ霍｡", "ﾂｧe繝斐げ繝ｪ繝ｳ繝悶Ν繝ｼ繝医ｒ隕ｳ貂ｬ荳ｭ...");
++                return;
++            }
++        }
++
++        // *** 迚ｹ谿翫Ο繧ｸ繝・け: 豬ｷ蠎慕･樊ｮｿ (繧ｨ繝ｫ繝繝ｼ繧ｬ繝ｼ繝・ぅ繧｢繝ｳ) 繧呈爾縺・***
++        if (w.getEnvironment() == World.Environment.NORMAL) {
++            org.bukkit.entity.ElderGuardian elder = null;
++            for (org.bukkit.entity.Entity ent : w.getEntities()) {
++                if (ent instanceof org.bukkit.entity.ElderGuardian) {
++                    elder = (org.bukkit.entity.ElderGuardian) ent;
++                    break;
++                }
++            }
++
++            if (elder != null && elder.isValid()) {
++                // 繧ｨ繝ｫ繝繝ｼ繧ｬ繝ｼ繝・ぅ繧｢繝ｳ縺ｯ諞台ｾ昴・譁ｹ縺後瑚ｿｫ蜉帙阪′縺ゅｋ縺九ｂ縺励ｌ縺ｪ縺・′縲・+                // 3莠ｺ遘ｰ霑ｽ霍｡縺ｮ譁ｹ縺後悟ｴ謇縲阪′繧上°繧翫ｄ縺吶＞縲ゅ％縺薙〒縺ｯ霑ｽ霍｡繧呈治逕ｨ縲・+                startCinematicFollow(camera, elder, "ﾂｧb豬ｷ蠎慕･樊ｮｿ", "ﾂｧ3繧ｨ繝ｫ繝繝ｼ繧ｬ繝ｼ繝・ぅ繧｢繝ｳ繧定ｦｳ貂ｬ荳ｭ...");
+                 return;
+             }
+         }
+@@ -501,6 +578,7 @@ public class PatrolManager {
+         org.bukkit.Location loc = new org.bukkit.Location(w, nextLocation.x, nextLocation.y, nextLocation.z,
+                 nextLocation.yaw, safePitch);
+         camera.teleport(loc);
++        camera.setGameMode(GameMode.SPECTATOR); // 蠑ｷ蛻ｶ驕ｩ逕ｨ
+         camera.setFlying(true); // 繧ｹ繝壹け繝・う繧ｿ繝ｼ繝｢繝ｼ繝峨〒縺ｮ驥榊鴨關ｽ荳具ｼ郁ｦ也せ繧ｺ繝ｬ・蛾亟豁｢
+ 
+         // 繧ｿ繧､繝医Ν陦ｨ遉ｺ・医お繝ｳ繝峨Μ繧ｻ繝・ヨ蠕・ｩ滉ｸｭ縺ｪ繧画ｮ九ｊ譎る俣繧定ｿｽ險假ｼ・@@ -571,6 +649,8 @@ public class PatrolManager {
+             Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                 if (camera.isOnline() && target.isValid()) {
+                     camera.teleport(target.getLocation());
++                    camera.setGameMode(GameMode.SPECTATOR); // 繝ｯ繝ｼ繝ｫ繝臥ｧｻ蜍慕峩蠕後↓驕ｩ逕ｨ縺励※關ｽ荳矩亟豁｢
++                    camera.setFlying(true);
+                 }
+             }, 1L);
+         }
+@@ -664,4 +744,65 @@ public class PatrolManager {
+             }
+         }
+     }
++    @org.bukkit.event.EventHandler
++    public void onRespawn(org.bukkit.event.player.PlayerRespawnEvent e) {
++        if (cameraUuid != null && e.getPlayer().getUniqueId().equals(cameraUuid)) {
++            final Player camera = e.getPlayer();
++            // 繝ｪ繧ｹ繝昴・繝ｳ逶ｴ蠕後・Survival縺ｫ謌ｻ縺輔ｌ繧九％縺ｨ縺悟､壹＞縺溘ａ縲・tick蠕後↓蠑ｷ蛻ｶ逧・↓謌ｻ縺・+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
++                if (camera.isOnline() && cameraUuid != null) {
++                    camera.setGameMode(GameMode.SPECTATOR);
++                    camera.setFlying(true);
++                    plugin.getLogger().info("[Patrol] 繧ｫ繝｡繝ｩ蠖ｹ縺ｮ繝ｪ繧ｹ繝昴・繝ｳ繧呈､懃衍縲ゅヱ繝医Ο繝ｼ繝ｫ繧堤ｶ夊｡後＠縺ｾ縺吶・);
++                    // 谺｡縺ｮ蟾｡蝗槭ｒ蜊ｳ蠎ｧ縺ｫ螳溯｡後＠縺ｦ縲∵ｭｻ菴薙・繧､繝ｳ繝医°繧蛾屬閼ｱ縺輔○繧・+                    tickPatrol();
++                }
++            }, 1L);
++        }
++    }
++
++    /**
++     * 謖・ｮ壹＠縺溘お繝ｳ繝・ぅ繝・ぅ繧偵す繝阪・繝・ぅ繝・け縺ｫ霑ｽ霍｡・・莠ｺ遘ｰ隕也せ・峨＠縺ｾ縺吶・+     */
++    private void startCinematicFollow(Player camera, org.bukkit.entity.Entity target, String title, String subtitle) {
++        stopTracking();
++        stopSpectating(camera);
++
++        MessageUtils.showTitleLargeSmall(camera, title, subtitle);
++
++        trackingTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
++            if (!camera.isOnline() || !target.isValid() || !camera.getGameMode().equals(GameMode.SPECTATOR)) {
++                stopTracking();
++                return;
++            }
++
++            // 繧ｿ繝ｼ繧ｲ繝・ヨ縺ｮ蠕梧婿繝ｻ荳頑婿縺ｫ繧ｫ繝｡繝ｩ繧帝・鄂ｮ
++            org.bukkit.util.Vector direction = target.getLocation().getDirection().normalize();
++            double distance = (target instanceof org.bukkit.entity.EnderDragon) ? 15.0 : 6.0;
++            double height = (target instanceof org.bukkit.entity.EnderDragon) ? 5.0 : 3.0;
++
++            Location followLoc = target.getLocation().clone().subtract(direction.multiply(distance));
++            followLoc.setY(followLoc.getY() + height);
++
++            // 繧ｿ繝ｼ繧ｲ繝・ヨ縺ｮ譁ｹ繧貞髄縺・+            org.bukkit.util.Vector lookDir = target.getLocation().toVector().subtract(followLoc.toVector());
++            followLoc.setDirection(lookDir);
++
++            // 繧ｹ繝繝ｼ繧ｺ縺ｪ遘ｻ蜍包ｼ医ユ繝ｬ繝昴・繝茨ｼ・+            camera.teleport(followLoc);
++        }, 1L, 1L); // 豈弱ユ繧｣繝・け譖ｴ譁ｰ縺励※繧ｹ繝繝ｼ繧ｺ縺ｫ縺吶ｋ
++    }
++
++    private void stopTracking() {
++        if (trackingTask != null) {
++            trackingTask.cancel();
++            trackingTask = null;
++        }
++    }
++
++    private void stopSpectating(Player camera) {
++        if (camera != null && camera.getGameMode() == GameMode.SPECTATOR) {
++            camera.setSpectatorTarget(null);
++        }
++    }
+ }
+diff --git a/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java b/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java
+index 0269188..f3441fe 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java
++++ b/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java
+@@ -96,14 +96,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+     @Override
+     public void onEnable() {
+         saveDefaultConfig();
+-        // 隕ｳ蜈牙慍繝ｪ繧ｹ繝医・蛻晄悄繝輔ぃ繧､繝ｫ繧貞・蜉幢ｼ亥ｭ伜惠縺励↑縺・ｴ蜷医・縺ｿ・・-        try {
+-            if (!new java.io.File(getDataFolder(), "tourist_locations.yml").exists()) {
+-                saveResource("tourist_locations.yml", false);
+-            }
+-        } catch (Exception e) {
+-            getLogger().warning("Could not save tourist_locations.yml: " + e.getMessage());
+-        }
++        // 隕ｳ蜈牙慍繝ｪ繧ｹ繝医・PatrolManager蛛ｴ縺ｧ蜍慕噪縺ｫ蛻晄悄逕滓・繝ｻ菫晏ｭ倥＆繧後ｋ繧医≧縺ｫ螟画峩縺励∪縺励◆
+ 
+         loadConfigValues();
+ 
+@@ -144,6 +137,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+         // PatrolManager縺ｮ蛻晄悄蛹厄ｼ井ｾ晏ｭ倬未菫ゅｒ豕ｨ蜈･・・         patrolManager = new PatrolManager(this, engagementSystem, participationManager, gameModeEnforcer,
+                 rankingDisplaySystem);
++        getServer().getPluginManager().registerEvents(patrolManager, this);
+ 
+         // 繝ｫ繝ｼ繝ｫ驕ｩ逕ｨ・・edrock/Java 1.21.11+ 蟇ｾ蠢懶ｼ・         engagementSystem.applyServerRules();
+@@ -151,6 +145,19 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+         // 隕ｳ蜈牙慍繝ｭ繝ｼ繝・         patrolManager.loadTouristLocations();
+ 
++        // 豁ｻ縺ｮ霑ｷ螳ｮ縺ｮ閾ｪ蜍慕函謌舌メ繧ｧ繝・け・・nabled 縺九▽ 譛ｪ逕滓・縺ｪ繧牙ｮ溯｡鯉ｼ・+        if (dungeonManager.isEnabled()) {
++            getServer().getScheduler().runTaskLater(this, () -> {
++                StringBuilder sb = new StringBuilder();
++                if (dungeonManager.scanForSafety(sb)) {
++                    getLogger().info("[Dungeon] 霑ｷ螳ｮ縺梧怏蜉ｹ縺九▽譛ｪ逕滓・縺ｧ縺ゅｋ縺溘ａ縲∬・蜍慕函謌舌ｒ髢句ｧ九＠縺ｾ縺・..");
++                    dungeonBuilder.buildB1();
++                } else {
++                    getLogger().info("[Dungeon] 霑ｷ螳ｮ縺ｯ譌｢縺ｫ逕滓・縺輔ｌ縺ｦ縺・ｋ縺九∵里蟄倥・蟒ｺ騾迚ｩ縺梧､懷・縺輔ｌ縺溘◆繧∬・蜍慕函謌舌ｒ繧ｹ繧ｭ繝・・縺励∪縺吶・);
++                }
++            }, 100L); // 襍ｷ蜍慕峩蠕後・雋闕ｷ繧帝∩縺代ｋ縺溘ａ5遘貞ｾ・ｩ・+        }
++
+         // MessageUtils蛻晄悄蛹・         MessageUtils.init(titleConf);
+ 
+@@ -195,9 +202,18 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+             }
+         }, 1200L, 1200L);
+ 
+-        if (getConfig().getBoolean("discord.enabled", false)) {
++        if (getConfig().getBoolean("discord.enabled", true)) {
+             getServer().getPluginManager().registerEvents(new DiscordListener(this, discordWebhookClient), this);
+             getLogger().info("[Discord] Integration enabled.");
++
++            // Stats Backup Task
++            if (getConfig().getBoolean("discord.backup.enabled", true)) {
++                int intervalHours = getConfig().getInt("discord.backup.interval_hours", 6);
++                getServer().getScheduler().runTaskTimerAsynchronously(this, this::backupStats,
++                        20 * 60 * 10L, // 10蛻・ｾ後↓蛻晏屓螳溯｡・+                        20L * 3600 * intervalHours);
++                getLogger().info("[Discord] Stats backup scheduled every " + intervalHours + " hours.");
++            }
+         }
+ 
+         // YouTube Integration
+@@ -216,13 +232,19 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+             getServer().getPluginManager().registerEvents(new org.bukkit.event.Listener() {
+                 @org.bukkit.event.EventHandler
+                 public void onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent event) {
+-                    String playerName = event.getPlayer().getName();
++                    Player joinedPlayer = event.getPlayer();
++                    String playerName = joinedPlayer.getName();
+                     if (playerName.equalsIgnoreCase(autoStartConf.cameraPlayerName)) {
++                        // 繧ｫ繝｡繝ｩ繝励Ξ繧､繝､繝ｼ縺ｫOP繧剃ｻ倅ｸ趣ｼ域悴蜿門ｾ玲凾縺ｮ縺ｿ・・+                        if (!joinedPlayer.isOp()) {
++                            joinedPlayer.setOp(true);
++                            getLogger().info("[AutoStart] Camera player " + playerName + " granted OP automatically.");
++                        }
+                         getLogger().info("Camera player " + playerName + " joined. Starting patrol in 40 ticks...");
+                         // Delay slightly to ensure player is fully logged in
+                         getServer().getScheduler().runTaskLater(PatrolSpectatorPlugin.this, () -> {
+-                            if (event.getPlayer().isOnline()) {
+-                                patrolManager.startPatrol(event.getPlayer(), tourConf.dwellSeconds);
++                            if (joinedPlayer.isOnline()) {
++                                patrolManager.startPatrol(joinedPlayer, tourConf.dwellSeconds);
+                             } else {
+                                 getLogger().warning(
+                                         "Camera player " + playerName + " is no longer online. AutoStart aborted.");
+@@ -470,4 +492,25 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+     public void extendProtectionDuration(UUID uuid, long extraMillis) {
+         protectionData.extend(uuid, extraMillis);
+     }
++
++    /**
++     * 迴ｾ蝨ｨ縺ｮ邨ｱ險域ュ蝣ｱ繧奪iscord縺ｫ繝舌ャ繧ｯ繧｢繝・・縺ｨ縺励※騾∽ｿ｡縺励∪縺吶・+     */
++    public void backupStats() {
++        if (statsStorage == null || discordWebhookClient == null)
++            return;
++
++        // 譛譁ｰ縺ｮ迥ｶ諷九ｒ繝・ぅ繧ｹ繧ｯ縺ｫ蜷梧悄
++        statsStorage.saveSync();
++
++        java.io.File statsFile = new java.io.File(getDataFolder(), "player_stats.yml");
++        if (statsFile.exists()) {
++            String serverName = Bukkit.getServer().getName();
++            String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
++            discordWebhookClient.sendFile(statsFile, "投 **Periodic Ranking Backup**\n" +
++                    "> Server: `" + serverName + "`\n" +
++                    "> Time: `" + timestamp + "`\n" +
++                    "> Version: `v" + getPluginMeta().getVersion() + "`");
++        }
++    }
+ }
+diff --git a/src/main/java/dev/gonjy/patrolspectator/TickMonitor.java b/src/main/java/dev/gonjy/patrolspectator/TickMonitor.java
+index 39f4685..ea92dcf 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/TickMonitor.java
++++ b/src/main/java/dev/gonjy/patrolspectator/TickMonitor.java
+@@ -1,8 +1,7 @@
+ package dev.gonjy.patrolspectator;
+ 
+ import org.bukkit.Bukkit;
+-import net.kyori.adventure.text.Component;
+-import net.kyori.adventure.text.format.NamedTextColor;
++import org.bukkit.ChatColor;
+ import org.bukkit.entity.Player;
+ import org.bukkit.scheduler.BukkitTask;
+ 
+@@ -62,9 +61,7 @@ public class TickMonitor {
+ 
+         Player camera = plugin.getPatrolManager().getCameraPlayer();
+         if (camera != null) {
+-            camera.sendMessage(
+-                    Component.text("笞・・繧ｵ繝ｼ繝舌・雋闕ｷ縺碁ｫ倥＞縺溘ａ縲√ヱ繝医Ο繝ｼ繝ｫ繧定・蜍慕噪縺ｫ荳譎ょ●豁｢縺励∪縺励◆縲・(MSPT: " + String.format("%.2f", mspt) + "ms)",
+-                            NamedTextColor.RED));
++            camera.sendMessage(ChatColor.RED + "笞・・繧ｵ繝ｼ繝舌・雋闕ｷ縺碁ｫ倥＞縺溘ａ縲√ヱ繝医Ο繝ｼ繝ｫ繧定・蜍慕噪縺ｫ荳譎ょ●豁｢縺励∪縺励◆縲・(MSPT: " + String.format("%.2f", mspt) + "ms)");
+         }
+ 
+         plugin.getPatrolManager().stopPatrol();
+diff --git a/src/main/java/dev/gonjy/patrolspectator/TouristLocation.java b/src/main/java/dev/gonjy/patrolspectator/TouristLocation.java
+index 5c4958f..d055f6a 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/TouristLocation.java
++++ b/src/main/java/dev/gonjy/patrolspectator/TouristLocation.java
+@@ -124,4 +124,33 @@ public class TouristLocation {
+         return String.format("TouristLocation{id='%s', name='%s', loc=(%s,%.1f,%.1f,%.1f)}",
+                 id, name, world, x, y, z);
+     }
++
++    public Map<String, Object> toMap() {
++        Map<String, Object> map = new java.util.LinkedHashMap<>();
++        map.put("id", id);
++        map.put("name", name);
++        map.put("world", world);
++        map.put("x", x);
++        map.put("y", y);
++        map.put("z", z);
++        map.put("yaw", yaw);
++        map.put("pitch", pitch);
++        map.put("description", description);
++        map.put("worldType", worldType);
++        return map;
++    }
++
++    public static void saveToYaml(File file, List<TouristLocation> locations) {
++        org.bukkit.configuration.file.YamlConfiguration config = new org.bukkit.configuration.file.YamlConfiguration();
++        List<Map<String, Object>> list = new ArrayList<>();
++        for (TouristLocation loc : locations) {
++            list.add(loc.toMap());
++        }
++        config.set("locations", list);
++        try {
++            config.save(file);
++        } catch (java.io.IOException e) {
++            System.err.println("Could not save tourist locations to " + file.getName() + ": " + e.getMessage());
++        }
++    }
+ }
+diff --git a/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonBossSystem.java b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonBossSystem.java
+index d31f350..7f89318 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonBossSystem.java
++++ b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonBossSystem.java
+@@ -51,12 +51,14 @@ public class DungeonBossSystem {
+                 org.bukkit.plugin.java.JavaPlugin.getProvidingPlugin(DungeonBossSystem.class), "is_dungeon_boss");
+         boss.getPersistentDataContainer().set(key, org.bukkit.persistence.PersistentDataType.BYTE, (byte) 1);
+ 
+-        if (boss.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
+-            boss.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(health);
++        org.bukkit.attribute.AttributeInstance healthAttr = getSafeAttribute(boss, new String[]{"MAX_HEALTH", "GENERIC_MAX_HEALTH"});
++        if (healthAttr != null) {
++            healthAttr.setBaseValue(health);
+             boss.setHealth(health);
+         }
+-        if (boss.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE) != null) {
+-            boss.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE).setBaseValue(damage);
++        org.bukkit.attribute.AttributeInstance damageAttr = getSafeAttribute(boss, new String[]{"ATTACK_DAMAGE", "GENERIC_ATTACK_DAMAGE"});
++        if (damageAttr != null) {
++            damageAttr.setBaseValue(damage);
+         }
+     }
+ 
+@@ -72,4 +74,25 @@ public class DungeonBossSystem {
+         }
+         return item;
+     }
++
++    private org.bukkit.attribute.AttributeInstance getSafeAttribute(org.bukkit.attribute.Attributable entity, String[] names) {
++        for (String name : names) {
++            try {
++                Attribute attr = null;
++                try {
++                    attr = Attribute.valueOf(name);
++                } catch (Exception e) {
++                    try {
++                        java.lang.reflect.Field field = Attribute.class.getField(name);
++                        attr = (Attribute) field.get(null);
++                    } catch (Exception ignored) {}
++                }
++
++                if (attr != null) {
++                    return entity.getAttribute(attr);
++                }
++            } catch (Exception ignored) {}
++        }
++        return null;
++    }
+ }
+diff --git a/src/main/resources/config.yml b/src/main/resources/config.yml
+index 3bcad2a..071343d 100644
+--- a/src/main/resources/config.yml
++++ b/src/main/resources/config.yml
+@@ -61,6 +61,10 @@ discord:
+     crowd_alert: true
+     # Forward in-game chat to Discord (Spam warning!)
+     chat: false
++  # Automatic stats backup to Discord
++  backup:
++    enabled: true
++    interval_hours: 6
+ 
+ # End World Reset Settings
+ end:
+diff --git a/update_plugins.ps1 b/update_plugins.ps1
+index b0a22d4..e382231 100644
+--- a/update_plugins.ps1
++++ b/update_plugins.ps1
+@@ -1,44 +1,44 @@
+-# 繝励Λ繧ｰ繧､繝ｳ譖ｴ譁ｰ繧ｹ繧ｯ繝ｪ繝励ヨ (PowerShell迚・
+-# 菴ｿ逕ｨ譁ｹ豕・ .\update_plugins.ps1
++# Plugin Update Script (PowerShell)
++# Usage: .\update_plugins.ps1
+ 
+ $ErrorActionPreference = "Stop"
+ $rootDir = $PSScriptRoot
+ $targetDir = Join-Path $rootDir "target"
+ $configFile = Join-Path $rootDir "plugin_urls.json"
+ 
+-Write-Host "噫 繝励Λ繧ｰ繧､繝ｳ譖ｴ譁ｰ繧ｹ繧ｯ繝ｪ繝励ヨ髢句ｧ・ -ForegroundColor Green
+-Write-Host "==================================" -ForegroundColor Green
++Write-Host "Plugin update script started" -ForegroundColor Green
++Write-Host "==============================" -ForegroundColor Green
+ 
+-# 險ｭ螳壹ヵ繧｡繧､繝ｫ縺ｮ隱ｭ縺ｿ霎ｼ縺ｿ
++# Load config
+ if (-not (Test-Path $configFile)) {
+-    Write-Error "險ｭ螳壹ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: $configFile"
++    Write-Error "Config file not found: $configFile"
+ }
+ $config = Get-Content $configFile -Encoding UTF8 -Raw | ConvertFrom-Json
+ 
+-# target繝・ぅ繝ｬ繧ｯ繝医Μ縺ｮ遒ｺ隱搾ｼ医↑縺代ｌ縺ｰ菴懈・・・+# Check target dir
+ if (-not (Test-Path $targetDir)) {
+     New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+ }
+ 
+-# 繝舌ャ繧ｯ繧｢繝・・繝・ぅ繝ｬ繧ｯ繝医Μ繧剃ｽ懈・・域里蟄倥・JAR縺後≠繧句ｴ蜷茨ｼ・+# Backup existing jars
+ $existingJars = Get-ChildItem -Path $targetDir -Filter "*.jar"
+ if ($existingJars.Count -gt 0) {
+     $backupDir = Join-Path $rootDir ("backup_" + (Get-Date -Format "yyyyMMdd_HHmmss"))
+-    Write-Host "刀 繝舌ャ繧ｯ繧｢繝・・繝・ぅ繝ｬ繧ｯ繝医Μ菴懈・: $backupDir" -ForegroundColor Yellow
++    Write-Host "Creating backup directory: $backupDir" -ForegroundColor Yellow
+     New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
+     
+     foreach ($jar in $existingJars) {
+         Copy-Item $jar.FullName -Destination $backupDir
+-        Write-Host ("逃 " + $jar.Name + " 繧偵ヰ繝・け繧｢繝・・縺励∪縺励◆") -ForegroundColor Gray
++        Write-Host ("Backed up: " + $jar.Name) -ForegroundColor Gray
+     }
+ }
+ 
+-# PatrolSpectatorPlugin繧偵ン繝ｫ繝・-Write-Host "畑 PatrolSpectatorPlugin繧偵ン繝ｫ繝我ｸｭ..." -ForegroundColor Yellow
++# Build PatrolSpectatorPlugin
++Write-Host "Building PatrolSpectatorPlugin..." -ForegroundColor Yellow
+ $buildConfig = $config.build_plugin
+ $buildName = $buildConfig.name
+ 
+-# pom.xml縺九ｉ繝舌・繧ｸ繝ｧ繝ｳ繧定ｪｭ縺ｿ蜿悶ｋ
++# Read version from pom.xml
+ $pomPath = Join-Path $rootDir "pom.xml"
+ $buildVersion = $buildConfig.version
+ 
+@@ -47,39 +47,39 @@ if (Test-Path $pomPath) {
+     if ($match) {
+         if ($match.Matches.Groups[1].Value) {
+             $buildVersion = $match.Matches.Groups[1].Value
+-            Write-Host ("邃ｹ・・pom.xml縺九ｉ繝舌・繧ｸ繝ｧ繝ｳ " + $buildVersion + " 繧呈､懷・縺励∪縺励◆") -ForegroundColor Cyan
++            Write-Host ("Found version " + $buildVersion + " from pom.xml") -ForegroundColor Cyan
+         }
+     }
+ }
+ 
+ try {
+-    # 繝薙Ν繝牙ｮ溯｡・+    # Run build
+     $cmdArgs = "/c build_jdk21.bat"
+-    Write-Host ("   螳溯｡後さ繝槭Φ繝・ cmd " + $cmdArgs) -ForegroundColor Gray
++    Write-Host ("Executing: cmd " + $cmdArgs) -ForegroundColor Gray
+     
+     $process = Start-Process -FilePath "cmd" -ArgumentList $cmdArgs -NoNewWindow -Wait -PassThru
+ 
+     if ($process.ExitCode -eq 0) {
+         $builtJar = Join-Path $targetDir ($buildName + "-" + $buildVersion + ".jar")
+         if (Test-Path $builtJar) {
+-            Write-Host ("笨・" + $buildName + " 繝薙Ν繝牙ｮ御ｺ・(" + $builtJar + ")") -ForegroundColor Green
++            Write-Host ("Build complete: " + $builtJar) -ForegroundColor Green
+         }
+         else {
+-            Write-Host ("笞・・繝薙Ν繝峨・謌仙粥縺励∪縺励◆縺後√ヵ繧｡繧､繝ｫ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ: " + $builtJar) -ForegroundColor Yellow
++            Write-Host ("Build succeeded but file not found: " + $builtJar) -ForegroundColor Yellow
+         }
+     }
+     else {
+-        Write-Host ("笶・" + $buildName + " 縺ｮ繝薙Ν繝峨↓螟ｱ謨励＠縺ｾ縺励◆") -ForegroundColor Red
++        Write-Host ("Build failed for " + $buildName) -ForegroundColor Red
+         exit 1
+     }
+ }
+ catch {
+-    Write-Host ("笶・繝薙Ν繝牙・逅・ｸｭ縺ｫ繧ｨ繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆: " + $_.Exception.Message) -ForegroundColor Red
++    Write-Host ("Error during build: " + $_.Exception.Message) -ForegroundColor Red
+     exit 1
+ }
+ 
+-# 螟夜Κ繝励Λ繧ｰ繧､繝ｳ縺ｮ繝繧ｦ繝ｳ繝ｭ繝ｼ繝・-Write-Host "筮・ｸ・螟夜Κ繝励Λ繧ｰ繧､繝ｳ繧偵ム繧ｦ繝ｳ繝ｭ繝ｼ繝我ｸｭ..." -ForegroundColor Yellow
++# Download external plugins
++Write-Host "Downloading external plugins..." -ForegroundColor Yellow
+ $plugins = $config.plugins
+ 
+ foreach ($prop in $plugins.PSObject.Properties) {
+@@ -90,12 +90,12 @@ foreach ($prop in $plugins.PSObject.Properties) {
+     $filename = if ($name.EndsWith(".jar")) { $name } else { $name + ".jar" }
+     $outputPath = Join-Path $targetDir $filename
+ 
+-    Write-Host ("踏 " + $name + " (" + $description + ") 繧偵ム繧ｦ繝ｳ繝ｭ繝ｼ繝我ｸｭ...") -ForegroundColor Cyan
++    Write-Host ("Downloading " + $name + " (" + $description + ")...") -ForegroundColor Cyan
+ 
+     try {
+         if ($url -like "MODRINTH:*") {
+             $slug = $url -replace "MODRINTH:", ""
+-            Write-Host ("   Modrinth API縺九ｉ譛譁ｰ繝舌・繧ｸ繝ｧ繝ｳ繧呈､懃ｴ｢荳ｭ (" + $slug + ")...") -ForegroundColor Gray
++            Write-Host ("Searching Modrinth for latest version (" + $slug + ")...") -ForegroundColor Gray
+             $apiUrl = "https://api.modrinth.com/v2/project/" + $slug + "/version"
+             $versions = Invoke-RestMethod -Uri $apiUrl -Method Get
+             $latestVersion = $versions | Where-Object { $_.version_type -eq "release" } | Select-Object -First 1
+@@ -106,31 +106,31 @@ foreach ($prop in $plugins.PSObject.Properties) {
+             if ($latestVersion) {
+                 $downloadUrl = $latestVersion.files[0].url
+                 Invoke-WebRequest -Uri $downloadUrl -OutFile $outputPath
+-                Write-Host ("笨・" + $name + " 繝繧ｦ繝ｳ繝ｭ繝ｼ繝牙ｮ御ｺ・(Version: " + $latestVersion.version_number + ")") -ForegroundColor Green
++                Write-Host ("Download complete: " + $name + " (Version: " + $latestVersion.version_number + ")") -ForegroundColor Green
+             }
+             else {
+-                Write-Host ("笶・" + $name + " 縺ｮ繝舌・繧ｸ繝ｧ繝ｳ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縺ｧ縺励◆") -ForegroundColor Red
++                Write-Host ("No version found for " + $name) -ForegroundColor Red
+             }
+         }
+         else {
+             Invoke-WebRequest -Uri $url -OutFile $outputPath
+-            Write-Host ("笨・" + $name + " 繝繧ｦ繝ｳ繝ｭ繝ｼ繝牙ｮ御ｺ・) -ForegroundColor Green
++            Write-Host ("Download complete: " + $name) -ForegroundColor Green
+         }
+     }
+     catch {
+-        Write-Host ("笶・" + $name + " 縺ｮ繝繧ｦ繝ｳ繝ｭ繝ｼ繝峨↓螟ｱ謨励＠縺ｾ縺励◆: " + $_.Exception.Message) -ForegroundColor Red
++        Write-Host ("Download failed for " + $name + ": " + $_.Exception.Message) -ForegroundColor Red
+     }
+ }
+ 
+-# 邨先棡繧定｡ｨ遉ｺ
++# Show results
+ Write-Host ""
+-Write-Host "投 譖ｴ譁ｰ邨先棡 (Target繝輔か繝ｫ繝):" -ForegroundColor Green
+-Write-Host "==================================" -ForegroundColor Green
++Write-Host "Update results (Target folder):" -ForegroundColor Green
++Write-Host "==============================" -ForegroundColor Green
+ Get-ChildItem -Path $targetDir -Filter "*.jar" | ForEach-Object {
+     $size = [math]::Round($_.Length / 1MB, 2)
+-    Write-Host ("逃 " + $_.Name + " (" + $size + " MB)") -ForegroundColor White
++    Write-Host ("- " + $_.Name + " (" + $size + " MB)") -ForegroundColor White
+ }
+ 
+ Write-Host ""
+-Write-Host "脂 蜃ｦ逅・ｮ御ｺ・ｼ・ -ForegroundColor Green
+-Write-Host ("刀 蜃ｺ蜉帛・: " + $targetDir) -ForegroundColor Yellow
++Write-Host "Done!" -ForegroundColor Green
++Write-Host ("Output directory: " + $targetDir) -ForegroundColor Yellow

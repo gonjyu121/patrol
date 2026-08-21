@@ -1,0 +1,1142 @@
+diff --git a/DUNGEON_SPEC.md b/DUNGEON_SPEC.md
+index 46c04b6..ead967f 100644
+--- a/DUNGEON_SPEC.md
++++ b/DUNGEON_SPEC.md
+@@ -16,19 +16,27 @@
+ ## 2. 死亡・記録・奪い合い
+ - **ハイリスク**:
+     - 迷宮内は**ベッド設置不可**。
+-    - 死んだ時は**アイテムをその場に全ドロップ**（ロストあり）。
++    - 死んだ時は**アイテムをその場にドロップ**（バニラ同様、一定時間で消滅）。
+     - 他のプレイヤーが拾うことも自由（ドラマと争いが生まれる設定）。
++- **入口の案内**:
++    - 入口付近に自動で看板またはホログラムを生成。
++    - **内容**: 迷宮の基本ルール（アイテムロスト、再生成サイクル）、およびメリット（超レアアイテム、限定ランキング報酬）。
++    - 迷宮の状態（生成中か、ボス生存中か）を動的に表示。
+ - **記録表示**:
+     - 入口に看板またはホログラムを表示。
+     - 「誰が何階まで行ったか（TOP10）」をリアルタイム（または定期）更新。
+     - 「累計死亡者数」を表示。
++    - **既存の定期ランキング (`RankingDisplaySystem`) にも「迷宮踏破階層」または「迷宮スコア」を追加。**
+ 
+ ## 3. モブ & 罠（Wizardry流の過酷さ）
+ - **強力なモブ**:
+     - ネザー/エンドのモンスター（ブレイズ、ウィザスケ、エンダーマン）を地上迷宮に召喚。
++    - **最下層ボス**: ピグリンブルート、ウィザー、ウォーデン。討伐時に超レアアイテムをドロップ。
++    - **水脈の死神**: 三叉槍を持つドラウンド。水中に入ったプレイヤーを執拗に追撃する。
+ - **凶悪な罠**:
+     - **壁埋まりテレポート**: 罠を踏むと迷宮内のランダムな位置（岩盤の中を含む）へ飛ばされ、窒息死のリスク。
+     - **モンスターハウス**: 罠トリガーで**大量のモブ**が周囲に一斉湧き。
++    - **地下水脈**: 迷宮内に水たまりが生成され、足が遅くなるだけでなくドラウンド出現のトリガーとなる。
+ 
+ ## 5. パフォーマンス要件
+ - 毎tick全走査は厳禁。
+diff --git a/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java b/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java
+index 0c754b1..5cd03cf 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java
++++ b/src/main/java/dev/gonjy/patrolspectator/AutoEventSystem.java
+@@ -171,9 +171,6 @@ public class AutoEventSystem implements Listener {
+         if (plugin instanceof PatrolSpectatorPlugin) {
+             PatrolSpectatorPlugin mainPlugin = (PatrolSpectatorPlugin) plugin;
+             if (plugin.getConfig().getBoolean("discord.notifications.events", true)) {
+-                String ip = plugin.getConfig().getString("discord.server_ip", "your.server.ip");
+-                int port = plugin.getServer().getPort();
+-                String address = ip + ":" + port;
+ 
+                 String discordMsg = String.format("🎮 Event **%s** has started! (15m)", eventName);
+                 mainPlugin.getDiscordWebhookClient().send(discordMsg);
+diff --git a/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java b/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java
+index e3c324d..01cc189 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java
++++ b/src/main/java/dev/gonjy/patrolspectator/EndGameManager.java
+@@ -18,6 +18,8 @@ import org.bukkit.event.entity.EntityDeathEvent;
+ import org.bukkit.plugin.java.JavaPlugin;
+ import org.bukkit.scheduler.BukkitTask;
+ 
++import java.time.LocalDateTime;
++import java.time.format.DateTimeFormatter;
+ import java.util.Comparator;
+ import java.util.Random;
+ import java.util.UUID;
+@@ -25,6 +27,7 @@ import java.util.UUID;
+ @SuppressWarnings("deprecation")
+ public class EndGameManager implements Listener {
+ 
++    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
+     private final JavaPlugin plugin;
+     private final PlayerStatsStorage statsStorage;
+     private final DiscordWebhookClient discordWebhookClient;
+@@ -43,6 +46,56 @@ public class EndGameManager implements Listener {
+         this.statsStorage = statsStorage;
+         this.discordWebhookClient = discordWebhookClient;
+         plugin.getServer().getPluginManager().registerEvents(this, plugin);
++
++        // 起動時および定期的なボスの状態監視タスクを開始
++        startBossVerificationTask();
++    }
++
++    private void startBossVerificationTask() {
++        // 起動10秒後に初回チェック、その後5分ごとに状態を検証して維持する
++        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
++            World endWorld = Bukkit.getWorld("world_the_end");
++            if (endWorld == null)
++                return;
++
++            for (org.bukkit.entity.Entity entity : endWorld.getEntities()) {
++                if (entity instanceof EnderDragon dragon) {
++                    if (isHardMode()) {
++                        verifyAndSetupHardDragon(dragon);
++                    }
++                }
++            }
++        }, 200L, 5 * 60 * 20L);
++    }
++
++    private void verifyAndSetupHardDragon(EnderDragon dragon) {
++        boolean needsSetup = false;
++
++        // 名前が設定されていない、または異なる場合に再適用
++        String expectedName = ChatColor.RED + "Void Dragon";
++        if (dragon.getCustomName() == null || !dragon.getCustomName().equals(expectedName)) {
++            needsSetup = true;
++        }
++
++        // 最大体力が強化値(600)未満の場合に再適用
++        if (dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
++            if (dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue() < 600.0) {
++                needsSetup = true;
++            }
++        }
++
++        if (needsSetup) {
++            plugin.getLogger().info("[EndGameManager] Void Dragon の状態異常を検知しました。再設定を行います。");
++            setupHardDragon(dragon);
++
++            // 各種特殊攻撃タスクが止まっている場合は再開
++            if (minionTask == null || minionTask.isCancelled())
++                startMinionTask(dragon);
++            if (abilityTask == null || abilityTask.isCancelled())
++                startAbilityTask(dragon);
++            if (roarTask == null || roarTask.isCancelled())
++                startRoarTask(dragon);
++        }
+     }
+ 
+     private boolean isHardMode() {
+@@ -66,7 +119,8 @@ public class EndGameManager implements Listener {
+             startAbilityTask(dragon);
+             startRoarTask(dragon);
+ 
+-            String message = "⚠ ヴォイド・ドラゴン (Void Dragon) が出現しました！ (HARD MODE)";
++            String timestamp = LocalDateTime.now().format(TIME_FORMATTER);
++            String message = String.format("[%s] ⚠ ヴォイド・ドラゴン (Void Dragon) が出現しました！ (HARD MODE)", timestamp);
+             Bukkit.broadcastMessage(ChatColor.RED + message);
+             if (discordWebhookClient != null) {
+                 discordWebhookClient.send("🐉 **[ボス出現]** " + message);
+@@ -317,16 +371,17 @@ public class EndGameManager implements Listener {
+             // 称号付与
+             statsStorage.setHardDragonSlayer(killer.getUniqueId(), true);
+ 
++            String timestamp = LocalDateTime.now().format(TIME_FORMATTER);
+             Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+             Bukkit.broadcastMessage(ChatColor.GOLD + "⚔️ 伝説の誕生！ ⚔️");
+             Bukkit.broadcastMessage(ChatColor.YELLOW + killer.getName() + " が " + ChatColor.RED + "ヴォイド・ドラゴン"
+                     + ChatColor.YELLOW + " を討伐しました！ (HARD MODE)");
+-            Bukkit.broadcastMessage(ChatColor.AQUA + "称号 [★] が付与されました！");
++            Bukkit.broadcastMessage(ChatColor.AQUA + "称号 [★] が付与されました！ " + ChatColor.GRAY + "[" + timestamp + "]");
+             Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+ 
+             if (discordWebhookClient != null) {
+                 discordWebhookClient.send(
+-                        "⚔️ **伝説の誕生！**\n" +
++                        "⚔️ **伝説の誕生！** [" + timestamp + "]\n" +
+                                 "**" + killer.getName() + "** が **ヴォイド・ドラゴン** を討伐しました！\n" +
+                                 "称号 **[★]** が付与されました！");
+             }
+diff --git a/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java b/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java
+index bdbba48..66da5ff 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java
++++ b/src/main/java/dev/gonjy/patrolspectator/PatrolSpectatorPlugin.java
+@@ -86,6 +86,12 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+     private PlayerStatsStorage statsStorage;
+ 
+     private TickMonitor tickMonitor;
++    private dev.gonjy.patrolspectator.dungeon.DungeonManager dungeonManager;
++    private dev.gonjy.patrolspectator.dungeon.DungeonStatsStorage dungeonStatsStorage;
++    private dev.gonjy.patrolspectator.dungeon.DungeonBuilder dungeonBuilder;
++    private dev.gonjy.patrolspectator.dungeon.TrapRunner trapRunner;
++    private dev.gonjy.patrolspectator.dungeon.DungeonLootSystem dungeonLootSystem;
++    private dev.gonjy.patrolspectator.dungeon.DungeonBossSystem dungeonBossSystem;
+ 
+     @Override
+     public void onEnable() {
+@@ -111,8 +117,20 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+         endResetManager = new EndResetManager(this);
+         endGameManager = new EndGameManager(this, statsStorage, discordWebhookClient);
+ 
++        // 死の迷宮システム初期化
++        dungeonManager = new dev.gonjy.patrolspectator.dungeon.DungeonManager(this);
++        dungeonStatsStorage = new dev.gonjy.patrolspectator.dungeon.DungeonStatsStorage(this);
++        trapRunner = new dev.gonjy.patrolspectator.dungeon.TrapRunner(this, dungeonManager);
++        dungeonBuilder = new dev.gonjy.patrolspectator.dungeon.DungeonBuilder(this, dungeonManager);
++        dungeonLootSystem = new dev.gonjy.patrolspectator.dungeon.DungeonLootSystem();
++        dungeonBossSystem = new dev.gonjy.patrolspectator.dungeon.DungeonBossSystem();
++
+         // イベントリスナーの登録
+         getServer().getPluginManager().registerEvents(new RankingEventListener(statsStorage, engagementSystem), this);
++        getServer().getPluginManager().registerEvents(
++                new dev.gonjy.patrolspectator.dungeon.DungeonListener(this, dungeonManager, dungeonStatsStorage,
++                        trapRunner),
++                this);
+ 
+         // PatrolManagerの初期化（依存関係を注入）
+         patrolManager = new PatrolManager(this, engagementSystem, participationManager, gameModeEnforcer,
+@@ -135,6 +153,12 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+         // Stats コマンド登録
+         getCommand("stats").setExecutor(new StatsCommand(this, engagementSystem));
+ 
++        // Dungeon コマンド登録
++        dev.gonjy.patrolspectator.dungeon.DungeonCommand dungeonCmd = new dev.gonjy.patrolspectator.dungeon.DungeonCommand(
++                dungeonManager);
++        getCommand("dungeon").setExecutor(dungeonCmd);
++        getCommand("dungeon").setTabCompleter(dungeonCmd);
++
+         // 自動イベントシステムの開始
+         autoEventSystem.startAutoEvents();
+ 
+@@ -387,6 +411,30 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
+         return engagementSystem;
+     }
+ 
++    public dev.gonjy.patrolspectator.dungeon.DungeonManager getDungeonManager() {
++        return dungeonManager;
++    }
++
++    public dev.gonjy.patrolspectator.dungeon.DungeonStatsStorage getDungeonStatsStorage() {
++        return dungeonStatsStorage;
++    }
++
++    public dev.gonjy.patrolspectator.dungeon.DungeonBuilder getDungeonBuilder() {
++        return dungeonBuilder;
++    }
++
++    public dev.gonjy.patrolspectator.dungeon.TrapRunner getTrapRunner() {
++        return trapRunner;
++    }
++
++    public dev.gonjy.patrolspectator.dungeon.DungeonLootSystem getDungeonLootSystem() {
++        return dungeonLootSystem;
++    }
++
++    public dev.gonjy.patrolspectator.dungeon.DungeonBossSystem getDungeonBossSystem() {
++        return dungeonBossSystem;
++    }
++
+     // 死亡保護の延長（存在しなかったので用意）
+     public void extendProtectionDuration(UUID uuid, long extraMillis) {
+         protectionData.extend(uuid, extraMillis);
+diff --git a/src/main/java/dev/gonjy/patrolspectator/RankingDisplaySystem.java b/src/main/java/dev/gonjy/patrolspectator/RankingDisplaySystem.java
+index fb8d764..b396671 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/RankingDisplaySystem.java
++++ b/src/main/java/dev/gonjy/patrolspectator/RankingDisplaySystem.java
+@@ -81,6 +81,7 @@ public class RankingDisplaySystem {
+         List<Map.Entry<UUID, Integer>> kills;
+         List<Map.Entry<UUID, Integer>> dragonKills;
+         List<Map.Entry<UUID, Integer>> eventPoints;
++        List<Map.Entry<UUID, Integer>> dungeonLevels;
+     }
+ 
+     public void displayRankings() {
+@@ -101,7 +102,17 @@ public class RankingDisplaySystem {
+             data.dragonKills = getEnderDragonKillRanking();
+             data.eventPoints = getEventPointsRanking();
+ 
+-            // メインスレッドに戻して順次表示
++            if (plugin instanceof PatrolSpectatorPlugin) {
++                dev.gonjy.patrolspectator.dungeon.DungeonStatsStorage ds = ((PatrolSpectatorPlugin) plugin)
++                        .getDungeonStatsStorage();
++                if (ds != null) {
++                    List<Map.Entry<UUID, Integer>> dungeonRanking = new ArrayList<>(ds.getAllPlayerLevels().entrySet());
++                    dungeonRanking.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
++                    data.dungeonLevels = dungeonRanking;
++                }
++            }
++
++            // メメインスレッドに戻して順次表示
+             Bukkit.getScheduler().runTask(plugin, () -> {
+                 displayAllRankingsSequentially(data);
+             });
+@@ -123,10 +134,16 @@ public class RankingDisplaySystem {
+                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                         displayEventPointsRanking(data.eventPoints);
+ 
+-                        Bukkit.getServer().broadcastMessage("");
+-                        Bukkit.getServer()
+-                                .broadcastMessage(ChatColor.GRAY + "※ " + ChatColor.GOLD + "[★]" + ChatColor.GRAY
+-                                        + " は " + ChatColor.RED + "ヴォイド・ドラゴン" + ChatColor.GRAY + " 討伐の証です");
++                        Bukkit.getScheduler().runTaskLater(plugin, () -> {
++                            if (data.dungeonLevels != null && !data.dungeonLevels.isEmpty()) {
++                                displayDungeonRanking(data.dungeonLevels);
++                            }
++
++                            Bukkit.getServer().broadcastMessage("");
++                            Bukkit.getServer()
++                                    .broadcastMessage(ChatColor.GRAY + "※ " + ChatColor.GOLD + "[★]" + ChatColor.GRAY
++                                            + " は " + ChatColor.RED + "ヴォイド・ドラゴン" + ChatColor.GRAY + " 討伐の証です");
++                        }, 40L);
+                     }, 40L);
+                 }, 40L);
+             }, 40L);
+@@ -359,6 +376,39 @@ public class RankingDisplaySystem {
+         }
+     }
+ 
++    /**
++     * 迷宮踏破ランキングを表示します。
++     */
++    private void displayDungeonRanking(List<Map.Entry<UUID, Integer>> ranking) {
++        // Title表示
++        for (Player player : Bukkit.getOnlinePlayers()) {
++            player.sendTitle(
++                    ChatColor.DARK_RED + "💀 迷宮踏破ランキング 💀",
++                    ChatColor.YELLOW + "地下深く、魔境に挑んだ勇者たちです",
++                    10, 40, 10);
++        }
++
++        // チャット表示
++        Bukkit.getServer().broadcastMessage(ChatColor.DARK_RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
++        Bukkit.getServer().broadcastMessage(ChatColor.DARK_RED + "💀 迷宮踏破ランキング 💀");
++        Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "  地下深く、魔境に挑んだ勇者たちです");
++        Bukkit.getServer().broadcastMessage(ChatColor.DARK_RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
++
++        if (!ranking.isEmpty()) {
++            for (int i = 0; i < Math.min(3, ranking.size()); i++) {
++                Map.Entry<UUID, Integer> entry = ranking.get(i);
++                String playerName = getDisplayName(entry.getKey());
++                int level = entry.getValue();
++                String medal = i == 0 ? "🥇" : i == 1 ? "🥈" : "🥉";
++                String status = Bukkit.getPlayer(entry.getKey()) != null ? "🟢" : "⚫";
++
++                Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "  " + medal + " " + status + " "
++                        + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": " + ChatColor.RED + "地下 " + level
++                        + " 階");
++            }
++        }
++    }
++
+     /**
+      * 累計生存時間ランキングを取得します。
+      * 
+diff --git a/src/main/java/dev/gonjy/patrolspectator/RankingEventListener.java b/src/main/java/dev/gonjy/patrolspectator/RankingEventListener.java
+index 0c51a1b..be14978 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/RankingEventListener.java
++++ b/src/main/java/dev/gonjy/patrolspectator/RankingEventListener.java
+@@ -1,7 +1,5 @@
+ package dev.gonjy.patrolspectator;
+ 
+-import org.bukkit.entity.EnderDragon;
+-import org.bukkit.entity.Entity;
+ import org.bukkit.entity.Player;
+ import org.bukkit.event.EventHandler;
+ import org.bukkit.event.Listener;
+diff --git a/src/main/java/dev/gonjy/patrolspectator/TickMonitor.java b/src/main/java/dev/gonjy/patrolspectator/TickMonitor.java
+index f944613..39f4685 100644
+--- a/src/main/java/dev/gonjy/patrolspectator/TickMonitor.java
++++ b/src/main/java/dev/gonjy/patrolspectator/TickMonitor.java
+@@ -1,7 +1,8 @@
+ package dev.gonjy.patrolspectator;
+ 
+ import org.bukkit.Bukkit;
+-import org.bukkit.ChatColor;
++import net.kyori.adventure.text.Component;
++import net.kyori.adventure.text.format.NamedTextColor;
+ import org.bukkit.entity.Player;
+ import org.bukkit.scheduler.BukkitTask;
+ 
+@@ -62,7 +63,8 @@ public class TickMonitor {
+         Player camera = plugin.getPatrolManager().getCameraPlayer();
+         if (camera != null) {
+             camera.sendMessage(
+-                    ChatColor.RED + "⚠️ サーバー負荷が高いため、パトロールを自動的に一時停止しました。 (MSPT: " + String.format("%.2f", mspt) + "ms)");
++                    Component.text("⚠️ サーバー負荷が高いため、パトロールを自動的に一時停止しました。 (MSPT: " + String.format("%.2f", mspt) + "ms)",
++                            NamedTextColor.RED));
+         }
+ 
+         plugin.getPatrolManager().stopPatrol();
+diff --git a/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonBuilder.java b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonBuilder.java
+new file mode 100644
+index 0000000..7cb4ed8
+--- /dev/null
++++ b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonBuilder.java
+@@ -0,0 +1,208 @@
++package dev.gonjy.patrolspectator.dungeon;
++
++import dev.gonjy.patrolspectator.PatrolSpectatorPlugin;
++import org.bukkit.Bukkit;
++import org.bukkit.Location;
++import org.bukkit.Material;
++import org.bukkit.World;
++import org.bukkit.scheduler.BukkitRunnable;
++
++import java.util.ArrayList;
++import java.util.List;
++
++public class DungeonBuilder {
++    private final PatrolSpectatorPlugin plugin;
++    private final DungeonManager manager;
++
++    public DungeonBuilder(PatrolSpectatorPlugin plugin, DungeonManager manager) {
++        this.plugin = plugin;
++        this.manager = manager;
++    }
++
++    /**
++     * B1階層の生成を開始 (分割設置)
++     */
++    public void buildB1() {
++        Location center = manager.getCenter();
++        if (center == null)
++            return;
++
++        World world = center.getWorld();
++        int size = 60;
++        int half = size / 2;
++        int startX = center.getBlockX() - half;
++        int startZ = center.getBlockZ() - half;
++        int baseY = center.getBlockY();
++
++        List<Location> wallLocs = new ArrayList<>();
++
++        // 外壁・床・天井のリストアップ（重いスキャンはここで行うが、設置はタスク化）
++        // 床 (baseY-1)
++        for (int x = 0; x <= size; x++) {
++            for (int z = 0; z <= size; z++) {
++                wallLocs.add(new Location(world, startX + x, baseY - 1, startZ + z));
++            }
++        }
++        // 天井 (baseY+4)
++        for (int x = 0; x <= size; x++) {
++            for (int z = 0; z <= size; z++) {
++                wallLocs.add(new Location(world, startX + x, baseY + 4, startZ + z));
++            }
++        }
++        // 外壁
++        for (int y = 0; y < 4; y++) {
++            for (int i = 0; i <= size; i++) {
++                wallLocs.add(new Location(world, startX + i, baseY + y, startZ)); // 北
++                wallLocs.add(new Location(world, startX + i, baseY + y, startZ + size)); // 南
++                wallLocs.add(new Location(world, startX, baseY + y, startZ + i)); // 西
++                wallLocs.add(new Location(world, startX + size, baseY + y, startZ + i)); // 東
++            }
++        }
++
++        // 内部を一度すべて石で埋める
++        for (int y = 0; y < 4; y++) {
++            for (int x = 1; x < size; x++) {
++                for (int z = 1; z < size; z++) {
++                    wallLocs.add(new Location(world, startX + x, baseY + y, startZ + z));
++                }
++            }
++        }
++
++        // 分割設置タスクの開始 (1tick 500ブロック)
++        incrementalFill(wallLocs, Material.BEDROCK, "B1 外殻・充填生成", () -> {
++            // 岩盤設置が終わったら通路と部屋を掘る
++            digMaze(world, startX, baseY, startZ, size);
++        });
++    }
++
++    private void digMaze(World world, int startX, int baseY, int startZ, int size) {
++        List<Location> airLocs = new ArrayList<>();
++        // 簡易的なグリッド通路 (10マスおき)
++        for (int i = 10; i < size; i += 10) {
++            for (int j = 1; j < size; j++) {
++                airLocs.add(new Location(world, startX + i, baseY, startZ + j));
++                airLocs.add(new Location(world, startX + i, baseY + 1, startZ + j));
++                airLocs.add(new Location(world, startX + j, baseY, startZ + i));
++                airLocs.add(new Location(world, startX + j, baseY + 1, startZ + i));
++            }
++        }
++        // 部屋の配置 (適当な数カ所)
++        addRoom(airLocs, world, startX + 5, baseY, startZ + 5, 5, 5);
++        addRoom(airLocs, world, startX + 45, baseY, startZ + 10, 8, 8);
++        addRoom(airLocs, world, startX + 10, baseY, startZ + 40, 6, 6);
++        addRoom(airLocs, world, startX + 35, baseY, startZ + 40, 10, 10);
++
++        // 最下層ボスルーム (中心付近)
++        addRoom(airLocs, world, startX + 25, baseY, startZ + 25, 12, 12);
++
++        incrementalFill(airLocs, Material.AIR, "B1 通路・部屋掘削", () -> {
++            // 地下水脈の生成
++            generateWaterVeins(world, startX, baseY, startZ);
++            // 部屋の中に宝箱を置く
++            placeChests(world, startX, baseY, startZ);
++            // ボスの配置 (ボスルーム中心)
++            plugin.getDungeonBossSystem().spawnBoss(new Location(world, startX + 31, baseY + 1, startZ + 31));
++            // 入口の案内掲示
++            placeEntranceSigns(world, manager.getCenter());
++        });
++    }
++
++    private void generateWaterVeins(World world, int startX, int baseY, int startZ) {
++        java.util.Random rand = new java.util.Random();
++        for (int i = 0; i < 8; i++) {
++            int rx = startX + 5 + rand.nextInt(50);
++            int rz = startZ + 5 + rand.nextInt(50);
++            // 2x2 の小さなたまり
++            for (int dx = 0; dx < 2; dx++) {
++                for (int dz = 0; dz < 2; dz++) {
++                    world.getBlockAt(rx + dx, baseY, rz + dz).setType(Material.WATER);
++                }
++            }
++
++            // 演出：水辺に死体（ドクロ）と手記を置く (1箇所目だけ or 確率)
++            if (i == 0) {
++                Location skullLoc = new Location(world, rx - 1, baseY, rz);
++                skullLoc.getBlock().setType(Material.SKELETON_SKULL);
++
++                Location noteLoc = new Location(world, rx - 1, baseY, rz - 1);
++                noteLoc.getBlock().setType(Material.CHEST);
++                org.bukkit.block.Chest chest = (org.bukkit.block.Chest) noteLoc.getBlock().getState();
++                chest.getInventory().addItem(plugin.getDungeonLootSystem().createDeadMansJournal());
++            }
++        }
++    }
++
++    private void placeChests(World world, int startX, int baseY, int startZ) {
++        DungeonLootSystem lootSystem = plugin.getDungeonLootSystem();
++        // 部屋の座標に合わせて宝箱を設置
++        Location[] chestLocs = {
++                new Location(world, startX + 7, baseY, startZ + 7),
++                new Location(world, startX + 48, baseY, startZ + 13),
++                new Location(world, startX + 12, baseY, startZ + 42),
++                new Location(world, startX + 40, baseY, startZ + 45)
++        };
++
++        for (Location loc : chestLocs) {
++            loc.getBlock().setType(Material.CHEST);
++            org.bukkit.block.Chest chest = (org.bukkit.block.Chest) loc.getBlock().getState();
++            for (org.bukkit.inventory.ItemStack item : lootSystem.generateLoot()) {
++                chest.getInventory().addItem(item);
++            }
++        }
++        plugin.getLogger().info("[Dungeon] 宝箱と地下水路が整備されました。");
++    }
++
++    private void addRoom(List<Location> airLocs, World world, int x, int y, int z, int w, int d) {
++        for (int i = 0; i < w; i++) {
++            for (int j = 0; j < d; j++) {
++                for (int h = 0; h < 3; h++) {
++                    airLocs.add(new Location(world, x + i, y + h, z + j));
++                }
++            }
++        }
++    }
++
++    private void placeEntranceSigns(World world, Location center) {
++        Location signLoc = center.clone().add(0, 0, -2); // 入口の少し手前
++        signLoc.getBlock().setType(Material.OAK_SIGN);
++        org.bukkit.block.Sign sign = (org.bukkit.block.Sign) signLoc.getBlock().getState();
++        sign.setLine(0, ChatColor.DARK_RED + "[ 死の迷宮 ]");
++        sign.setLine(1, ChatColor.BLACK + "奥地に超レア報酬");
++        sign.setLine(2, ChatColor.RED + "死はアイテム散布");
++        sign.setLine(3, ChatColor.DARK_BLUE + "ボス討伐で新生");
++        sign.update();
++
++        Location ruleLoc = signLoc.clone().add(1, 0, 0);
++        ruleLoc.getBlock().setType(Material.OAK_SIGN);
++        org.bukkit.block.Sign ruleSign = (org.bukkit.block.Sign) ruleLoc.getBlock().getState();
++        ruleSign.setLine(0, ChatColor.BOLD + "攻略の鍵");
++        ruleSign.setLine(1, "水には近づくな");
++        ruleSign.setLine(2, "宝箱には罠あり");
++        ruleSign.setLine(3, "命を大事に");
++        ruleSign.update();
++    }
++
++    private void incrementalFill(List<Location> locations, Material material, String taskName, Runnable onComplete) {
++        final int blocksPerTick = 1000;
++        final int total = locations.size();
++
++        new BukkitRunnable() {
++            int index = 0;
++
++            @Override
++            public void run() {
++                for (int i = 0; i < blocksPerTick && index < total; i++) {
++                    Location loc = locations.get(index++);
++                    loc.getBlock().setType(material, false);
++                }
++
++                if (index >= total) {
++                    plugin.getLogger().info("[Dungeon] " + taskName + " 完了 (" + total + " blocks)");
++                    if (onComplete != null)
++                        onComplete.run();
++                    this.cancel();
++                }
++            }
++        }.runTaskTimer(plugin, 1L, 1L);
++    }
++}
+diff --git a/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonCommand.java b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonCommand.java
+new file mode 100644
+index 0000000..6f1e513
+--- /dev/null
++++ b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonCommand.java
+@@ -0,0 +1,96 @@
++package dev.gonjy.patrolspectator.dungeon;
++
++import org.bukkit.ChatColor;
++import org.bukkit.command.Command;
++import org.bukkit.command.CommandExecutor;
++import org.bukkit.command.CommandSender;
++import org.bukkit.command.TabCompleter;
++import org.bukkit.entity.Player;
++
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.List;
++import java.util.Locale;
++import java.util.stream.Collectors;
++
++public class DungeonCommand implements CommandExecutor, TabCompleter {
++
++    private final DungeonManager manager;
++
++    public DungeonCommand(DungeonManager manager) {
++        this.manager = manager;
++    }
++
++    @Override
++    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
++        if (!sender.isOp()) {
++            sender.sendMessage(ChatColor.RED + "権限がありません。");
++            return true;
++        }
++
++        if (args.length == 0) {
++            sendHelp(sender);
++            return true;
++        }
++
++        switch (args[0].toLowerCase(Locale.ROOT)) {
++            case "setcenter":
++                if (!(sender instanceof Player)) {
++                    sender.sendMessage("プレイヤーのみ実行可能です。");
++                    return true;
++                }
++                Player p = (Player) sender;
++                manager.setCenter(p.getLocation());
++                sender.sendMessage(ChatColor.GREEN + "迷宮の中心を現在地に設定しました。");
++                break;
++
++            case "enable":
++                manager.setEnabled(true);
++                sender.sendMessage(ChatColor.GREEN + "迷宮を有効化しました。");
++                break;
++
++            case "disable":
++                manager.setEnabled(false);
++                sender.sendMessage(ChatColor.YELLOW + "迷宮を無効化しました。");
++                break;
++
++            case "scan":
++                StringBuilder report = new StringBuilder();
++                sender.sendMessage(ChatColor.YELLOW + "安全スキャンを開始中...");
++                if (manager.scanForSafety(report)) {
++                    sender.sendMessage(ChatColor.GREEN + "安全スキャン完了: 既存の建造物は見つかりませんでした。生成可能です。");
++                } else {
++                    sender.sendMessage(report.toString());
++                    sender.sendMessage(ChatColor.RED + "警告: 既存のブロックが検出されました。build を実行する前に確認してください。");
++                }
++                break;
++
++            default:
++                sendHelp(sender);
++                break;
++        }
++
++        return true;
++    }
++
++    private void sendHelp(CommandSender sender) {
++        sender.sendMessage(ChatColor.GOLD + "========== [ Dungeon Admin Help ] ==========");
++        sender.sendMessage("§a/dungeon setcenter §7- 現在地を迷宮の中心に設定");
++        sender.sendMessage("§a/dungeon scan      §7- 範囲内の建造物チェック");
++        sender.sendMessage("§a/dungeon build b1  §7- B1階層の生成 (分割設置)");
++        sender.sendMessage("§a/dungeon enable    §7- 迷宮の有効化");
++        sender.sendMessage("§a/dungeon disable   §7- 迷宮の無効化");
++    }
++
++    @Override
++    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
++        if (args.length == 1) {
++            return Arrays.asList("setcenter", "enable", "disable", "scan", "build", "stats")
++                    .stream().filter(s -> s.startsWith(args[0].toLowerCase())).collect(Collectors.toList());
++        }
++        if (args.length == 2 && args[0].equalsIgnoreCase("build")) {
++            return Arrays.asList("b1");
++        }
++        return new ArrayList<>();
++    }
++}
+diff --git a/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonListener.java b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonListener.java
+new file mode 100644
+index 0000000..2757523
+--- /dev/null
++++ b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonListener.java
+@@ -0,0 +1,180 @@
++package dev.gonjy.patrolspectator.dungeon;
++
++import dev.gonjy.patrolspectator.PatrolSpectatorPlugin;
++import org.bukkit.Bukkit;
++import org.bukkit.ChatColor;
++import org.bukkit.Location;
++import org.bukkit.entity.Player;
++import org.bukkit.event.EventHandler;
++import org.bukkit.event.EventPriority;
++import org.bukkit.event.Listener;
++import org.bukkit.event.block.Action;
++import org.bukkit.event.block.BlockBreakEvent;
++import org.bukkit.event.block.BlockPlaceEvent;
++import org.bukkit.event.entity.PlayerDeathEvent;
++import org.bukkit.event.player.PlayerInteractEvent;
++import org.bukkit.event.player.PlayerMoveEvent;
++import org.bukkit.Material;
++
++public class DungeonListener implements Listener {
++
++    private final PatrolSpectatorPlugin plugin;
++    private final DungeonManager manager;
++    private final DungeonStatsStorage stats;
++    private final TrapRunner trapRunner;
++
++    public DungeonListener(PatrolSpectatorPlugin plugin, DungeonManager manager, DungeonStatsStorage stats,
++            TrapRunner trapRunner) {
++        this.plugin = plugin;
++        this.manager = manager;
++        this.stats = stats;
++        this.trapRunner = trapRunner;
++    }
++
++    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
++    public void onBreak(BlockBreakEvent event) {
++        if (manager.isInDungeon(event.getBlock().getLocation())) {
++            if (!event.getPlayer().isOp()) {
++                event.setCancelled(true);
++                event.getPlayer().sendMessage(ChatColor.RED + "迷宮の壁を傷つけることはできません…");
++            }
++        }
++    }
++
++    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
++    public void onPlace(BlockPlaceEvent event) {
++        if (manager.isInDungeon(event.getBlock().getLocation())) {
++            if (!event.getPlayer().isOp()) {
++                event.setCancelled(true);
++                event.getPlayer().sendMessage(ChatColor.RED + "迷宮を汚すことは許されません…");
++            }
++        }
++    }
++
++    @EventHandler
++    public void onDeath(PlayerDeathEvent event) {
++        Player player = event.getEntity();
++        Location deathLoc = player.getLocation();
++
++        // 早期リターン: 迷宮外なら何もしない
++        if (!manager.isInDungeon(deathLoc))
++            return;
++
++        // 血のカウント加算
++        stats.incrementGlobalDeathCount();
++        long totalDeaths = stats.getGlobalDeathCount();
++
++        // メッセージ表示 (Wizardry風)
++        Bukkit.broadcastMessage(ChatColor.DARK_RED + "======== [ 迷宮の供物 ] ========");
++        Bukkit.broadcastMessage(ChatColor.RED + player.getName() + " が死の迷宮の糧となりました…");
++        Bukkit.broadcastMessage(
++                ChatColor.GRAY + "この迷宮は既に " + ChatColor.RED + totalDeaths + ChatColor.GRAY + " 人の血を吸いました…");
++        Bukkit.broadcastMessage(ChatColor.DARK_RED + "================================");
++    }
++
++    @EventHandler
++    public void onMove(PlayerMoveEvent event) {
++        // 重くない程度の頻度で判定 (blockが変わった時だけ)
++        if (event.getFrom().getBlockX() == event.getTo().getBlockX() &&
++                event.getFrom().getBlockY() == event.getTo().getBlockY() &&
++                event.getFrom().getBlockZ() == event.getTo().getBlockZ())
++            return;
++
++        Player p = event.getPlayer();
++        Location loc = p.getLocation();
++        if (!manager.isInDungeon(loc))
++            return;
++
++        // 水中なら高確率でドラウンド襲来 (15%)
++        if (loc.getBlock().getType() == Material.WATER
++                || loc.clone().add(0, 1, 0).getBlock().getType() == Material.WATER) {
++            if (new java.util.Random().nextDouble() < 0.15) {
++                trapRunner.runWaterTrap(p, loc);
++            }
++            return;
++        }
++
++        // 踏んでいるブロックが空気（通路）なら低確率で発動
++        if (loc.getBlock().getType() == Material.AIR) {
++            if (new java.util.Random().nextDouble() < 0.05) { // 5% の確率で移動時に何かが起きる
++                trapRunner.triggerTrap(p, loc);
++            }
++        }
++    }
++
++    @EventHandler
++    public void onInteract(PlayerInteractEvent event) {
++        if (event.getClickedBlock() == null)
++            return;
++        if (!manager.isInDungeon(event.getClickedBlock().getLocation()))
++            return;
++
++        Player p = event.getPlayer();
++
++        // 感圧版（自動トラップ）
++        if (event.getAction() == Action.PHYSICAL) {
++            trapRunner.triggerTrap(p, event.getClickedBlock().getLocation());
++            return;
++        }
++
++        // 宝箱の右クリック（報酬と罠）
++        if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock().getType() == Material.CHEST) {
++            DungeonLootSystem lootSystem = plugin.getDungeonLootSystem();
++            if (lootSystem.shouldTriggerTrap()) {
++                triggerChestTrap(p, event.getClickedBlock().getLocation());
++            }
++        }
++    }
++
++    private void triggerChestTrap(Player p, Location loc) {
++        int choice = new java.util.Random().nextInt(3);
++        switch (choice) {
++            case 0: // 爆発
++                loc.getWorld().createExplosion(loc, 2.0f, false, false);
++                p.sendMessage(ChatColor.RED + "宝箱に仕掛けられた爆弾が爆発した！");
++                break;
++            case 1: // 毒・衰弱
++                p.addPotionEffect(
++                        new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.POISON, 200, 1));
++                p.addPotionEffect(
++                        new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.WITHER, 200, 1));
++                p.sendMessage(ChatColor.DARK_PURPLE + "宝箱から毒ガスが噴き出した！");
++                break;
++            case 2: // 奇襲 (MobTrapを流用)
++                trapRunner.triggerTrap(p, loc); // Mobなどの既存Trapを発動
++                p.sendMessage(ChatColor.DARK_RED + "宝箱を開ける音を聞きつけ、魔物が集まってきた！");
++                break;
++        }
++    }
++
++    @EventHandler
++    public void onEntityDeath(org.bukkit.event.entity.EntityDeathEvent event) {
++        org.bukkit.entity.LivingEntity entity = event.getEntity();
++        org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(plugin, "is_dungeon_boss");
++        if (entity.getPersistentDataContainer().has(key, org.bukkit.persistence.PersistentDataType.BYTE)) {
++            // ボスが倒された！
++            Player killer = entity.getKiller();
++            String name = (killer != null) ? killer.getName() : "誰か";
++
++            Bukkit.broadcastMessage(ChatColor.GOLD + "======== [ 迷宮踏破 ] ========");
++            Bukkit.broadcastMessage(ChatColor.YELLOW + name + " が迷宮の守護者 " + ChatColor.RED + entity.getCustomName()
++                    + ChatColor.YELLOW + " を討伐しました！");
++            Bukkit.broadcastMessage(ChatColor.AQUA + "迷宮の魔力が霧散し、構造が再構築され始めます…");
++            Bukkit.broadcastMessage(ChatColor.GOLD + "==============================");
++
++            // 報酬 (ボスの足元)
++            entity.getLocation().getWorld().dropItemNaturally(entity.getLocation(),
++                    plugin.getDungeonBossSystem().getBossLoot());
++
++            // 統計更新 (暫定的にランクポイント付与)
++            if (killer != null) {
++                plugin.addEventPointsToRanking(killer.getUniqueId(), 100, "迷宮ボス討伐");
++            }
++
++            // 迷宮の再生成 (少しディレイを置く)
++            Bukkit.getScheduler().runTaskLater(plugin, () -> {
++                plugin.getDungeonBuilder().buildB1();
++            }, 200L); // 10秒後
++        }
++    }
++}
+diff --git a/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonManager.java b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonManager.java
+new file mode 100644
+index 0000000..79fa360
+--- /dev/null
++++ b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonManager.java
+@@ -0,0 +1,136 @@
++package dev.gonjy.patrolspectator.dungeon;
++
++import dev.gonjy.patrolspectator.PatrolSpectatorPlugin;
++import org.bukkit.Bukkit;
++import org.bukkit.Location;
++import org.bukkit.Material;
++import org.bukkit.World;
++import org.bukkit.block.Block;
++import org.bukkit.configuration.file.FileConfiguration;
++import org.bukkit.configuration.file.YamlConfiguration;
++
++import java.io.File;
++import java.io.IOException;
++
++public class DungeonManager {
++    private final PatrolSpectatorPlugin plugin;
++    private final File configFile;
++    private FileConfiguration config;
++
++    private Location center;
++    private boolean enabled = false;
++    private final int DUNGEON_SIZE = 60;
++
++    public DungeonManager(PatrolSpectatorPlugin plugin) {
++        this.plugin = plugin;
++        this.configFile = new File(plugin.getDataFolder(), "dungeon_config.yml");
++        loadConfig();
++    }
++
++    private void loadConfig() {
++        if (!configFile.exists()) {
++            plugin.saveResource("dungeon_config.yml", false);
++        }
++        config = YamlConfiguration.loadConfiguration(configFile);
++
++        String worldName = config.getString("center.world");
++        if (worldName != null) {
++            World world = Bukkit.getWorld(worldName);
++            if (world != null) {
++                double x = config.getDouble("center.x");
++                double y = config.getDouble("center.y");
++                double z = config.getDouble("center.z");
++                center = new Location(world, x, y, z);
++            }
++        }
++        enabled = config.getBoolean("enabled", false);
++    }
++
++    public void saveConfig() {
++        if (center != null) {
++            config.set("center.world", center.getWorld().getName());
++            config.set("center.x", center.getX());
++            config.set("center.y", center.getY());
++            config.set("center.z", center.getZ());
++        }
++        config.set("enabled", enabled);
++        try {
++            config.save(configFile);
++        } catch (IOException e) {
++            plugin.getLogger().severe("Could not save dungeon_config.yml!");
++        }
++    }
++
++    public void setCenter(Location loc) {
++        this.center = loc;
++        saveConfig();
++    }
++
++    public Location getCenter() {
++        return center;
++    }
++
++    public boolean isEnabled() {
++        return enabled && center != null;
++    }
++
++    public void setEnabled(boolean enabled) {
++        this.enabled = enabled;
++        saveConfig();
++    }
++
++    /**
++     * 指定ロケーションが迷宮の範囲内か判定
++     */
++    public boolean isInDungeon(Location loc) {
++        if (!isEnabled())
++            return false;
++        if (!loc.getWorld().equals(center.getWorld()))
++            return false;
++
++        double half = DUNGEON_SIZE / 2.0;
++        return loc.getX() >= center.getX() - half && loc.getX() <= center.getX() + half &&
++                loc.getZ() >= center.getZ() - half && loc.getZ() <= center.getZ() + half &&
++                loc.getY() >= center.getY() - 10 && loc.getY() <= center.getY() + 10; // 高さ範囲は暫定
++    }
++
++    /**
++     * 迷宮範囲内の安全スキャン（既存建造物の保護）
++     * 岩盤、空気、石、土、砂利 以外のブロックがあれば「建造物あり」とみなす
++     */
++    public boolean scanForSafety(StringBuilder report) {
++        if (center == null)
++            return false;
++        World world = center.getWorld();
++        int minX = center.getBlockX() - (DUNGEON_SIZE / 2);
++        int maxX = center.getBlockX() + (DUNGEON_SIZE / 2);
++        int minZ = center.getBlockZ() - (DUNGEON_SIZE / 2);
++        int maxZ = center.getBlockZ() + (DUNGEON_SIZE / 2);
++        int minY = center.getBlockY() - 2;
++        int maxY = center.getBlockY() + 5;
++
++        for (int x = minX; x <= maxX; x++) {
++            for (int z = minZ; z <= maxZ; z++) {
++                for (int y = minY; y <= maxY; y++) {
++                    Block b = world.getBlockAt(x, y, z);
++                    Material type = b.getType();
++                    if (isSignificantBlock(type)) {
++                        report.append("§c警告: 既存ブロックを発見: ").append(type.name())
++                                .append(" at ").append(x).append(", ").append(y).append(", ").append(z).append("\n");
++                        return false;
++                    }
++                }
++            }
++        }
++        return true;
++    }
++
++    private boolean isSignificantBlock(Material m) {
++        if (m == Material.AIR || m == Material.CAVE_AIR || m == Material.BEDROCK ||
++                m == Material.STONE || m == Material.DIRT || m == Material.GRASS_BLOCK ||
++                m == Material.GRAVEL || m == Material.DEEPSLATE || m == Material.COBBLESTONE) {
++            return false;
++        }
++        return true; // 看板、チェスト、人工的なブロックなど
++    }
++}
+diff --git a/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonStatsStorage.java b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonStatsStorage.java
+new file mode 100644
+index 0000000..69e5d67
+--- /dev/null
++++ b/src/main/java/dev/gonjy/patrolspectator/dungeon/DungeonStatsStorage.java
+@@ -0,0 +1,80 @@
++package dev.gonjy.patrolspectator.dungeon;
++
++import dev.gonjy.patrolspectator.PatrolSpectatorPlugin;
++import org.bukkit.configuration.file.FileConfiguration;
++import org.bukkit.configuration.file.YamlConfiguration;
++
++import java.io.File;
++import java.io.IOException;
++import java.util.UUID;
++
++public class DungeonStatsStorage {
++    private final PatrolSpectatorPlugin plugin;
++    private final File statsFile;
++    private FileConfiguration stats;
++
++    public DungeonStatsStorage(PatrolSpectatorPlugin plugin) {
++        this.plugin = plugin;
++        this.statsFile = new File(plugin.getDataFolder(), "dungeon_stats.yml");
++        loadStats();
++    }
++
++    private void loadStats() {
++        if (!statsFile.exists()) {
++            try {
++                statsFile.createNewFile();
++            } catch (IOException e) {
++                plugin.getLogger().severe("Could not create dungeon_stats.yml!");
++            }
++        }
++        stats = YamlConfiguration.loadConfiguration(statsFile);
++    }
++
++    public void saveStats() {
++        try {
++            stats.save(statsFile);
++        } catch (IOException e) {
++            plugin.getLogger().severe("Could not save dungeon_stats.yml!");
++        }
++    }
++
++    public long getGlobalDeathCount() {
++        return stats.getLong("global.deaths", 0);
++    }
++
++    public void incrementGlobalDeathCount() {
++        stats.set("global.deaths", getGlobalDeathCount() + 1);
++        saveStats();
++    }
++
++    public int getMaxLevel(UUID uuid) {
++        return stats.getInt("players." + uuid.toString() + ".max_level", 0);
++    }
++
++    public void updateMaxLevel(UUID uuid, int level, String name) {
++        int current = getMaxLevel(uuid);
++        if (level > current) {
++            stats.set("players." + uuid.toString() + ".max_level", level);
++            stats.set("players." + uuid.toString() + ".name", name);
++            stats.set("players." + uuid.toString() + ".at", System.currentTimeMillis());
++            saveStats();
++        }
++    }
++
++    public java.util.Map<UUID, Integer> getAllPlayerLevels() {
++        java.util.Map<UUID, Integer> map = new java.util.HashMap<>();
++        if (stats.getConfigurationSection("players") == null)
++            return map;
++        for (String key : stats.getConfigurationSection("players").getKeys(false)) {
++            try {
++                UUID uuid = UUID.fromString(key);
++                int level = stats.getInt("players." + key + ".max_level", 0);
++                if (level > 0) {
++                    map.put(uuid, level);
++                }
++            } catch (IllegalArgumentException ignored) {
++            }
++        }
++        return map;
++    }
++}
+diff --git a/update_plugins.ps1 b/update_plugins.ps1
+index bdbbd69..ce1dced 100644
+--- a/update_plugins.ps1
++++ b/update_plugins.ps1
+@@ -53,25 +53,6 @@ if (Test-Path $pomPath) {
+ }
+ 
+ try {
+-    # Maven Wrapperがあればそれを使う、なければパスのmvn
+-    $mvnCmd = "mvn"
+-    if (Test-Path (Join-Path $rootDir "mvnw.cmd")) {
+-        $mvnCmd = ".\mvnw.cmd"
+-    }
+-    
+-    # ユーザー環境に合わせて .maven ディレクトリの mvn を優先するロジック（既存スクリプト踏襲）
+-    $localMvn = Join-Path $rootDir ".maven\apache-maven-3.9.6\bin\mvn.cmd"
+-    if (Test-Path $localMvn) {
+-        $mvnCmd = $localMvn
+-    }
+-    
+-    # JDK指定（既存環境踏襲）
+-    $javaExec = ""
+-    $localJdk = Join-Path $rootDir ".jdk\jdk-21.0.2+13\bin\javac.exe"
+-    if (Test-Path $localJdk) {
+-        $javaExec = "-Dmaven.compiler.fork=true -Dmaven.compiler.executable=$localJdk"
+-    }
+-
+     # ビルド実行
+     $cmdArgs = "/c build_jdk21.bat"
+     Write-Host "   実行コマンド: cmd $cmdArgs" -ForegroundColor Gray
+@@ -106,7 +87,7 @@ foreach ($name in $plugins.PSObject.Properties.Name) {
+     $pluginInfo = $plugins.$name
+     $url = $pluginInfo.url
+     $description = $pluginInfo.description
+-    $filename = "$name.jar"
++    $filename = if ($name.EndsWith(".jar")) { $name } else { "$name.jar" }
+     $outputPath = Join-Path $targetDir $filename
+ 
+     Write-Host "📥 $name ($description) をダウンロード中..." -ForegroundColor Cyan
+@@ -126,7 +107,6 @@ foreach ($name in $plugins.PSObject.Properties.Name) {
+             
+             if ($latestVersion) {
+                 $downloadUrl = $latestVersion.files[0].url
+-                $actualFileName = $latestVersion.files[0].filename
+                 # ファイル名は指定のもの($name.jar)に統一するか、元ファイル名を使うか。
+                 # ここでは管理しやすくするため $name.jar にリネームして保存する
+                 Invoke-WebRequest -Uri $downloadUrl -OutFile $outputPath

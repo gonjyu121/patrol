@@ -87,7 +87,7 @@ allowedWorlds: []
 exemptPermission: patrolspectator.exempt
 announceToPlayers: true
 useTitle: true
-announceFormat: "&7[Stream]&f Now watching: &a%target%"
+announceFormat: "§7[Stream]&f Now watching: &a%target%"
 
 useArmorStandPOIs: true
 armorStandPOITag: patrol_poi
@@ -102,3 +102,25 @@ touristLocations:
 
 disableLocatorBar: true
 singleSleepEnabled: true
+```
+
+---
+
+# 開発ガイドライン
+
+## コミットメッセージ
+- **必ず日本語で記述すること**
+- 形式: `[種別] 簡潔な説明`
+  - 例: `[機能追加] AFK防止スクリプトを追加`
+  - 例: `[修正] 観光モードの視点問題を修正`
+  - 例: `[更新] プラグイン管理ツールを改善`
+
+## ブランチ戦略
+- `main`: 本番環境用の安定版
+- `feature/*`: 新機能開発用
+- マージ前に必ず動作確認を行うこと
+
+## ビルド・テスト
+- ビルド: `.\update_plugins.ps1` または `mvn clean package`
+- テスト: `mvn test`
+- JDK 21を使用すること
