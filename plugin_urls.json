@@ -31,7 +31,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.98",
+    "version": "1.9.99",
     "description": "配信用パトロールプラグイン（エンドワールド再作成・観光地システム改善版）"
   }
 }

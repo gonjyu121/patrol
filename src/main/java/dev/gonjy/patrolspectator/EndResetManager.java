@@ -91,16 +91,10 @@ public class EndResetManager implements Listener {
     }
 
     /**
-     * ドラゴンがいない場合、リセットを開始する
+     * ドラゴンがいない場合、または討伐済みの場合にリセットを開始する
      */
     private void checkDragonAbsence() {
         if (isResetting || scheduledResetTime > 0) {
-            return;
-        }
-
-        // リセット直後（例えば5分以内）はチェックをスキップして、ドラゴンのスポーン待ち時間を確保する
-        long lastResetTime = plugin.getConfig().getLong("end.lastResetTime", 0);
-        if (System.currentTimeMillis() - lastResetTime < 5 * 60 * 1000L) {
             return;
         }
 
@@ -109,29 +103,60 @@ public class EndResetManager implements Listener {
             return;
         }
 
-        // 誰もいない場合はチャンクがロードされていない可能性が高いためチェックしない
-        // （誤検知による不要なリセットを防ぐ）
-        if (endWorld.getPlayers().isEmpty()) {
+        // リセット直後（例えば5分以内）はチェックをスキップして、ドラゴンのスポーン・初期化時間を確保する
+        long lastResetTime = plugin.getConfig().getLong("end.lastResetTime", 0);
+        long now = System.currentTimeMillis();
+        if (lastResetTime > 0 && (now - lastResetTime < 5 * 60 * 1000L)) {
             return;
         }
 
-        // ドラゴンを探す
-        boolean dragonExists = endWorld.getEntitiesByClass(EnderDragon.class).size() > 0;
+        org.bukkit.boss.DragonBattle battle = endWorld.getEnderDragonBattle();
+        boolean dragonKilled = false;
 
-        if (!dragonExists) {
-            // DragonBattle の状態も確認
-            org.bukkit.boss.DragonBattle battle = endWorld.getEnderDragonBattle();
-            if (battle != null) {
-                // 初回ドラゴンがまだ討伐されていない場合は、未ロードの可能性が高いためスキップ
-                if (!battle.hasBeenPreviouslyKilled()) {
-                    return;
+        if (battle != null) {
+            // DragonBattle が存在する場合: 初回ドラゴンが討伐済みかどうか確認
+            if (battle.hasBeenPreviouslyKilled()) {
+                // 討伐済みの場合、現在生きているドラゴンがいるか、または復活の儀式中か確認
+                boolean hasLiveDragon = !endWorld.getEntitiesByClass(EnderDragon.class).isEmpty();
+                boolean isRespawning = battle.getRespawnPhase() != org.bukkit.boss.DragonBattle.RespawnPhase.NONE;
+
+                if (!hasLiveDragon && !isRespawning) {
+                    dragonKilled = true;
                 }
             }
+        } else {
+            // DragonBattle が取得できない場合、ロード済みエンティティにドラゴンがいないか確認
+            boolean hasLiveDragon = !endWorld.getEntitiesByClass(EnderDragon.class).isEmpty();
+            if (!hasLiveDragon) {
+                dragonKilled = true;
+            }
+        }
 
-            plugin.getLogger().info("[EndReset] Ender Dragon NOT found in " + endWorld.getName() + ". (Players in world: "
-                    + endWorld.getPlayers().size() + ")");
-            plugin.getLogger().info("[EndReset] Scheduling reset due to dragon absence.");
-            startResetCountdown("エンダードラゴンの不在を確認しました。");
+        if (dragonKilled) {
+            // 討伐済みでドラゴンが不在であることを確認
+            // 前回リセット時刻から既に resetDelayMinutes 以上経過している場合（または lastResetTime が未記録の場合）は即リセット
+            this.resetDelayMinutes = plugin.getConfig().getInt("end.resetDelayMinutes", 120);
+            long delayMillis = resetDelayMinutes * 60 * 1000L;
+
+            if (lastResetTime == 0 || (now - lastResetTime >= delayMillis)) {
+                plugin.getLogger().info("[EndReset] Dragon was previously defeated and delay timer has expired. Initiating End recreation in 10 seconds...");
+                Bukkit.broadcastMessage(ChatColor.RED + "[EndReset] " + ChatColor.YELLOW + "エンドワールドが討伐完了状態のため、10秒後に再生成を開始します。");
+                if (plugin.getDiscordWebhookClient() != null) {
+                    plugin.getDiscordWebhookClient().send("🔄 **[End Reset]** エンドワールドが討伐完了状態であることを検知しました。10秒後に再生成を開始します。");
+                }
+                Bukkit.getScheduler().runTaskLater(plugin, this::performReset, 200L); // 10秒後に即リセット
+            } else {
+                // まだリセット猶予時間内であれば、残りの時間でカウントダウンを開始
+                long remainingMillis = (lastResetTime + delayMillis) - now;
+                long delayTicks = remainingMillis / 50;
+                this.scheduledResetTime = now + remainingMillis;
+                plugin.getConfig().set("end.scheduledResetTime", scheduledResetTime);
+                plugin.saveConfig();
+
+                plugin.getLogger().info("[EndReset] Dragon absence detected. Scheduling reset in " + (remainingMillis / 1000 / 60) + " minutes.");
+                scheduleResetTask(delayTicks);
+                scheduleAnnouncements();
+            }
         }
     }
 

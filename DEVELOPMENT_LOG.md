@@ -1,17 +1,19 @@
 # PatrolSpectatorPlugin Development Log
 
 ## Current Status (2026-08-21)
-- **Version**: 1.9.98
+- **Version**: 1.9.99
 - **Branch**: `feature/patrol-logic-update`
 - **Build Status**: Passed (`mvn clean package` with JDK 21)
 - **External Plugins**: Updated all dependencies to latest versions via `update_plugins.ps1`
-- **Key Features & Fixes in v1.9.98**:
-    - **End World Recreation & Auto-Reset Fix**:
+- **Key Features & Fixes in v1.9.99**:
+    - **End World Absence & Expired Timer Immediate Recreation Fix**:
+        - Fixed `checkDragonAbsence()` to use `DragonBattle.hasBeenPreviouslyKilled()` and respawn state directly, removing the blocking `players.isEmpty()` check that prevented End detection on empty/startup servers.
+        - Added immediate End recreation (10-second warning) when a server starts up with an already-defeated Ender Dragon whose reset delay has elapsed.
+        - Fixed scheduled countdown resume on startup if reset timer is within delay window.
+    - **End World Recreation & Auto-Reset Fix (from v1.9.98)**:
         - Fixed `unloadWorld` failure by adding a 20-tick delay after player evacuation to allow cross-dimension transitions and chunk ticket clearing.
         - Fixed file deletion to completely clean up `region/`, `entities/`, `poi/`, `data/`, `level.dat`, `level.dat_old`, and `session.lock` (with Windows retry logic).
         - Removed erroneous `battle.initiateRespawn()` call on newly created worlds to ensure natural initial Ender Dragon generation.
-        - Refined dragon absence detection by checking `DragonBattle.hasBeenPreviouslyKilled()` to prevent false positives when chunk (0,0) is unloaded.
-        - Preserved `scheduledResetTime` state on unload retries rather than prematurely wiping it.
     - **`/patrol` Command Access**: Restricted all `/patrol` subcommands and tab completions strictly to OP (`sender.isOp()`).
     - **`/patrol back` (Manual Start Recovery)**: Saves pre-patrol inventory, armor, and location to `last_manual_start_state.yml` and restores upon `/patrol back`.
     - **Dungeon Built Flag**: Added `built: true` in `dungeon_config.yml` to prevent duplicate auto-generation on restarts.
