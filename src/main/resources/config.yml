@@ -75,6 +75,8 @@ discord:
 end:
   # Minutes to wait before resetting the End after Dragon death or absence
   resetDelayMinutes: 120
+  # End world name (defaults to "world_the_end")
+  worldName: "world_the_end"
 
 # Performance / Low-Spec Optimization
 performance:
