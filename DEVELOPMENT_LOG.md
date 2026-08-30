@@ -1,10 +1,16 @@
 # PatrolSpectatorPlugin Development Log
 
-## Current Status (2026-08-21)
-- **Version**: 1.9.99
+## Current Status (2026-08-30)
+- **Version**: 1.9.100
 - **Branch**: `feature/patrol-logic-update`
 - **Build Status**: Passed (`mvn clean package` with JDK 21)
-- **External Plugins**: Updated all dependencies to latest versions via `update_plugins.ps1`
+- **External Plugins**: Updated all dependencies to latest versions via `build_v2.ps1`
+- **Key Features & Fixes in v1.9.100**:
+    - **Ender Dragon Spawning on End Recreation**:
+        - Fixed missing Ender Dragon after End world recreation by ensuring `battle.generateEndPortal(false)`, `battle.resetCrystals()`, and `battle.setPreviouslyKilled(false)` are initialized, and explicitly spawning an `EnderDragon` entity (with `CIRCLING` phase) if not present.
+        - Fixed `checkDragonAbsence()` to also trigger recreation if no Ender Dragon exists even if `hasBeenPreviouslyKilled()` is false (handling unspawned / corrupted states after grace period).
+        - Updated `EndGameManager` to look up the End world dynamically instead of using a hardcoded `"world_the_end"` string.
+        - Added `EndResetManagerTest` unit tests.
 - **Key Features & Fixes in v1.9.99**:
     - **End World Absence & Expired Timer Immediate Recreation Fix**:
         - Fixed `checkDragonAbsence()` to use `DragonBattle.hasBeenPreviouslyKilled()` and respawn state directly, removing the blocking `players.isEmpty()` check that prevented End detection on empty/startup servers.

@@ -114,15 +114,17 @@ public class EndResetManager implements Listener {
         boolean dragonKilled = false;
 
         if (battle != null) {
-            // DragonBattle が存在する場合: 初回ドラゴンが討伐済みかどうか確認
-            if (battle.hasBeenPreviouslyKilled()) {
-                // 討伐済みの場合、現在生きているドラゴンがいるか、または復活の儀式中か確認
-                boolean hasLiveDragon = !endWorld.getEntitiesByClass(EnderDragon.class).isEmpty();
-                boolean isRespawning = battle.getRespawnPhase() != org.bukkit.boss.DragonBattle.RespawnPhase.NONE;
+            // DragonBattle が存在する場合: 初回ドラゴンが討伐済みかどうか確認、または生存ドラゴン不在を確認
+            boolean hasLiveDragon = !endWorld.getEntitiesByClass(EnderDragon.class).isEmpty() || battle.getEnderDragon() != null;
+            boolean isRespawning = battle.getRespawnPhase() != org.bukkit.boss.DragonBattle.RespawnPhase.NONE;
 
+            if (battle.hasBeenPreviouslyKilled()) {
                 if (!hasLiveDragon && !isRespawning) {
                     dragonKilled = true;
                 }
+            } else if (!hasLiveDragon && !isRespawning) {
+                // 初回状態でもドラゴンが存在せず復活中でもない場合（未スポーン・異常状態）
+                dragonKilled = true;
             }
         } else {
             // DragonBattle が取得できない場合、ロード済みエンティティにドラゴンがいないか確認
@@ -386,9 +388,40 @@ public class EndResetManager implements Listener {
         World newEndWorld = Bukkit.createWorld(new org.bukkit.WorldCreator(worldName).environment(World.Environment.THE_END));
 
         if (newEndWorld != null) {
-            // 初期島チャンク (0, 0) をロードしてワールド生成と初代ドラゴンの自然スポーンをトリガー
-            newEndWorld.loadChunk(0, 0);
-            plugin.getLogger().info("[EndReset] End world recreated and spawn chunk loaded.");
+            // 初期島チャンク (0, 0) をロード
+            newEndWorld.loadChunk(0, 0, true);
+
+            // DragonBattle の初期状態をセットアップ
+            org.bukkit.boss.DragonBattle battle = newEndWorld.getEnderDragonBattle();
+            if (battle != null) {
+                try {
+                    battle.generateEndPortal(false);
+                } catch (Exception e) {
+                    plugin.getLogger().warning("[EndReset] Error generating end portal: " + e.getMessage());
+                }
+                try {
+                    battle.resetCrystals();
+                } catch (Exception e) {
+                    plugin.getLogger().warning("[EndReset] Error resetting crystals: " + e.getMessage());
+                }
+                try {
+                    battle.setPreviouslyKilled(false);
+                } catch (Exception e) {
+                    plugin.getLogger().warning("[EndReset] Error setting previously killed flag: " + e.getMessage());
+                }
+            }
+
+            // エンダードラゴンがワールド内に存在しない場合、確実にスポーンさせる
+            boolean hasDragon = !newEndWorld.getEntitiesByClass(EnderDragon.class).isEmpty();
+            if (!hasDragon) {
+                Location dragonSpawnLoc = new Location(newEndWorld, 0.5, 100.0, 0.5);
+                EnderDragon dragon = newEndWorld.spawn(dragonSpawnLoc, EnderDragon.class, d -> {
+                    d.setPhase(EnderDragon.Phase.CIRCLING);
+                });
+                plugin.getLogger().info("[EndReset] Spawned new Ender Dragon at: " + dragon.getLocation());
+            }
+
+            plugin.getLogger().info("[EndReset] End world recreated, DragonBattle initialized, and spawn chunk loaded.");
         } else {
             plugin.getLogger().severe("[EndReset] Failed to recreate End world!");
         }
