@@ -51,10 +51,24 @@ public class EndGameManager implements Listener {
         startBossVerificationTask();
     }
 
+    private World getEndWorld() {
+        String configuredName = plugin.getConfig().getString("end.worldName", "world_the_end");
+        World endWorld = Bukkit.getWorld(configuredName);
+        if (endWorld != null) {
+            return endWorld;
+        }
+        for (World w : Bukkit.getWorlds()) {
+            if (w.getEnvironment() == World.Environment.THE_END) {
+                return w;
+            }
+        }
+        return Bukkit.getWorld("world_the_end");
+    }
+
     private void startBossVerificationTask() {
         // 起動10秒後に初回チェック、その後5分ごとに状態を検証して維持する
         Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            World endWorld = Bukkit.getWorld("world_the_end");
+            World endWorld = getEndWorld();
             if (endWorld == null)
                 return;
 
