@@ -1,10 +1,18 @@
 # PatrolSpectatorPlugin Development Log
 
-## Current Status (2026-08-30)
-- **Version**: 1.9.100
+## Current Status (2026-08-31)
+- **Version**: 1.9.101
 - **Branch**: `feature/patrol-logic-update`
 - **Build Status**: Passed (`mvn clean package` with JDK 21)
 - **External Plugins**: Updated all dependencies to latest versions via `build_v2.ps1`
+- **Key Features & Fixes in v1.9.101**:
+    - **Ender Dragon BossBar (HP Bar) Management**:
+        - Fixed missing Ender Dragon BossBar by implementing dedicated `BossBar` lifecycle management in `EndGameManager`.
+        - Added periodic 1-second sync task to track Ender Dragon health, mode (Normal vs Hard "Void Dragon"), and dynamically register/unregister End world players.
+        - Added instant BossBar health update on `EntityDamageEvent` (damage/hit) and automatic cleanup on `EntityDeathEvent` (kill) or End world reset.
+        - Handled player dimension transit & join/quit events (`PlayerChangedWorldEvent`, `PlayerJoinEvent`, `PlayerQuitEvent`, `PlayerTeleportEvent`, `PlayerRespawnEvent`) for real-time BossBar visibility.
+        - Integrated BossBar reset & immediate recreation synchronization in `EndResetManager`.
+        - Added unit tests in `EndGameManagerTest`.
 - **Key Features & Fixes in v1.9.100**:
     - **Ender Dragon Spawning on End Recreation**:
         - Fixed missing Ender Dragon after End world recreation by ensuring `battle.generateEndPortal(false)`, `battle.resetCrystals()`, and `battle.setPreviouslyKilled(false)` are initialized, and explicitly spawning an `EnderDragon` entity (with `CIRCLING` phase) if not present.
