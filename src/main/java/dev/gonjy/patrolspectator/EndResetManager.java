@@ -274,6 +274,10 @@ public class EndResetManager implements Listener {
         resetTask = null;
         isResetting = true;
 
+        if (plugin.getEndGameManager() != null) {
+            plugin.getEndGameManager().shutdown();
+        }
+
         World endWorld = getEndWorld();
         String endWorldName = endWorld != null ? endWorld.getName() : getEndWorldName();
 
@@ -429,6 +433,11 @@ public class EndResetManager implements Listener {
         // 難易度をランダムに決定 (50%の確率でハードモード)
         boolean isHardMode = new java.util.Random().nextBoolean();
         plugin.getConfig().set("end.difficulty", isHardMode ? "HARD" : "NORMAL");
+
+        // EndGameManager の初期化と BossBar の即時セットアップ
+        if (plugin.getEndGameManager() != null) {
+            plugin.getEndGameManager().onEndRecreated(newEndWorld);
+        }
 
         // リセット成功時にスケジュール情報をクリア＆完了時刻を記録
         scheduledResetTime = 0;

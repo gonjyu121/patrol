@@ -39,6 +39,9 @@ public class EndGameManager implements Listener {
     private final java.util.List<org.bukkit.entity.Entity> activeMinions = new java.util.ArrayList<>();
     // ドラゴンへのダメージを追跡
     private final java.util.Map<UUID, Double> dragonDamageMap = new java.util.HashMap<>();
+    // エンダードラゴンのボスバー管理
+    private org.bukkit.boss.BossBar bossBar;
+    private BukkitTask bossBarSyncTask;
 
     public EndGameManager(JavaPlugin plugin, PlayerStatsStorage statsStorage,
             DiscordWebhookClient discordWebhookClient) {
@@ -49,6 +52,8 @@ public class EndGameManager implements Listener {
 
         // 起動時および定期的なボスの状態監視タスクを開始
         startBossVerificationTask();
+        // ボスバーの同期タスクを開始（1秒毎）
+        startBossBarSyncTask();
     }
 
     private World getEndWorld() {
@@ -63,6 +68,113 @@ public class EndGameManager implements Listener {
             }
         }
         return Bukkit.getWorld("world_the_end");
+    }
+
+    private void startBossBarSyncTask() {
+        if (bossBarSyncTask != null && !bossBarSyncTask.isCancelled()) {
+            bossBarSyncTask.cancel();
+        }
+        bossBarSyncTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            World endWorld = getEndWorld();
+            if (endWorld == null) {
+                removeBossBar();
+                return;
+            }
+
+            EnderDragon dragon = null;
+            for (org.bukkit.entity.Entity entity : endWorld.getEntities()) {
+                if (entity instanceof EnderDragon d && !d.isDead() && d.isValid()) {
+                    dragon = d;
+                    break;
+                }
+            }
+
+            if (dragon != null) {
+                updateBossBar(dragon);
+            } else {
+                removeBossBar();
+            }
+        }, 20L, 20L); // 1秒ごとに同期
+    }
+
+    /**
+     * エンダードラゴンのHPバーを更新し、エンド内のプレイヤーに表示します。
+     */
+    public synchronized void updateBossBar(EnderDragon dragon) {
+        if (dragon == null || dragon.isDead() || !dragon.isValid()) {
+            removeBossBar();
+            return;
+        }
+
+        World world = dragon.getWorld();
+        boolean hard = isHardMode();
+        String title = hard ? (ChatColor.RED + "☠ Void Dragon ☠") : (ChatColor.LIGHT_PURPLE + "エンダードラゴン");
+        org.bukkit.boss.BarColor color = hard ? org.bukkit.boss.BarColor.PURPLE : org.bukkit.boss.BarColor.PINK;
+        org.bukkit.boss.BarStyle style = hard ? org.bukkit.boss.BarStyle.SEGMENTED_10 : org.bukkit.boss.BarStyle.SOLID;
+
+        if (bossBar == null) {
+            bossBar = Bukkit.createBossBar(title, color, style);
+        } else {
+            bossBar.setTitle(title);
+            bossBar.setColor(color);
+            bossBar.setStyle(style);
+        }
+
+        // HP計算
+        org.bukkit.attribute.AttributeInstance healthAttr = getSafeAttribute(dragon, new String[]{"MAX_HEALTH", "GENERIC_MAX_HEALTH"});
+        double maxHealth = (healthAttr != null) ? healthAttr.getValue() : 200.0;
+        double currentHealth = Math.max(0.0, Math.min(dragon.getHealth(), maxHealth));
+        double progress = maxHealth > 0 ? (currentHealth / maxHealth) : 0.0;
+        bossBar.setProgress(Math.max(0.0, Math.min(1.0, progress)));
+        bossBar.setVisible(true);
+
+        // プレイヤーの同期
+        java.util.List<Player> endPlayers = world.getPlayers();
+        java.util.Set<UUID> endPlayerUuids = new java.util.HashSet<>();
+        for (Player p : endPlayers) {
+            endPlayerUuids.add(p.getUniqueId());
+            if (!bossBar.getPlayers().contains(p)) {
+                bossBar.addPlayer(p);
+            }
+        }
+        for (Player p : new java.util.ArrayList<>(bossBar.getPlayers())) {
+            if (!endPlayerUuids.contains(p.getUniqueId())) {
+                bossBar.removePlayer(p);
+            }
+        }
+    }
+
+    /**
+     * ボスバーを非表示にし、破棄します。
+     */
+    public synchronized void removeBossBar() {
+        if (bossBar != null) {
+            bossBar.removeAll();
+            bossBar.setVisible(false);
+            bossBar = null;
+        }
+    }
+
+    /**
+     * エンドワールド再生成時に呼び出され、状態をリセットして即時セットアップを行います。
+     */
+    public void onEndRecreated(World newEndWorld) {
+        shutdown();
+        startBossBarSyncTask();
+        if (newEndWorld == null) return;
+
+        for (org.bukkit.entity.Entity entity : newEndWorld.getEntities()) {
+            if (entity instanceof EnderDragon dragon && !dragon.isDead() && dragon.isValid()) {
+                if (isHardMode()) {
+                    setupHardDragon(dragon);
+                    startMinionTask(dragon);
+                    startAbilityTask(dragon);
+                    startRoarTask(dragon);
+                }
+                updateBossBar(dragon);
+                break;
+            }
+        }
     }
 
     private void startBossVerificationTask() {
@@ -127,8 +239,8 @@ public class EndGameManager implements Listener {
             return;
         }
 
+        EnderDragon dragon = (EnderDragon) event.getEntity();
         if (isHardMode()) {
-            EnderDragon dragon = (EnderDragon) event.getEntity();
             setupHardDragon(dragon);
             startMinionTask(dragon);
             startAbilityTask(dragon);
@@ -141,6 +253,7 @@ public class EndGameManager implements Listener {
                 discordWebhookClient.send("🐉 **[ボス出現]** " + message);
             }
         }
+        updateBossBar(dragon);
     }
 
     private void setupHardDragon(EnderDragon dragon) {
@@ -311,6 +424,9 @@ public class EndGameManager implements Listener {
             return;
         }
 
+        // ダメージ直後に BossBar の進捗を更新
+        Bukkit.getScheduler().runTask(plugin, () -> updateBossBar(dragon));
+
         Player damager = null;
 
         if (event instanceof EntityDamageByEntityEvent ebee) {
@@ -339,6 +455,9 @@ public class EndGameManager implements Listener {
         if (event.getEntityType() != EntityType.ENDER_DRAGON) {
             return;
         }
+
+        // ボスバーの非表示
+        removeBossBar();
 
         // 共通処理: 討伐数をカウント
         Player killer = event.getEntity().getKiller();
@@ -406,6 +525,62 @@ public class EndGameManager implements Listener {
         shutdown();
     }
 
+    @EventHandler
+    public void onPlayerChangedWorld(org.bukkit.event.player.PlayerChangedWorldEvent event) {
+        Player player = event.getPlayer();
+        if (bossBar != null) {
+            if (player.getWorld().getEnvironment() == World.Environment.THE_END) {
+                bossBar.addPlayer(player);
+            } else {
+                bossBar.removePlayer(player);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        if (bossBar != null && player.getWorld().getEnvironment() == World.Environment.THE_END) {
+            bossBar.addPlayer(player);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+        if (bossBar != null) {
+            bossBar.removePlayer(event.getPlayer());
+        }
+    }
+
+    @EventHandler
+    public void onPlayerTeleport(org.bukkit.event.player.PlayerTeleportEvent event) {
+        if (event.getTo() != null && event.getFrom() != null
+                && event.getTo().getWorld() != null && !event.getTo().getWorld().equals(event.getFrom().getWorld())) {
+            Player player = event.getPlayer();
+            if (bossBar != null) {
+                if (event.getTo().getWorld().getEnvironment() == World.Environment.THE_END) {
+                    bossBar.addPlayer(player);
+                } else {
+                    bossBar.removePlayer(player);
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerRespawn(org.bukkit.event.player.PlayerRespawnEvent event) {
+        if (event.getRespawnLocation() != null && event.getRespawnLocation().getWorld() != null) {
+            Player player = event.getPlayer();
+            if (bossBar != null) {
+                if (event.getRespawnLocation().getWorld().getEnvironment() == World.Environment.THE_END) {
+                    bossBar.addPlayer(player);
+                } else {
+                    bossBar.removePlayer(player);
+                }
+            }
+        }
+    }
+
     private org.bukkit.attribute.AttributeInstance getSafeAttribute(org.bukkit.attribute.Attributable entity, String[] names) {
         for (String name : names) {
             try {
@@ -433,6 +608,12 @@ public class EndGameManager implements Listener {
     }
 
     public void shutdown() {
+        if (bossBarSyncTask != null) {
+            bossBarSyncTask.cancel();
+            bossBarSyncTask = null;
+        }
+        removeBossBar();
+
         if (minionTask != null) {
             minionTask.cancel();
             minionTask = null;
