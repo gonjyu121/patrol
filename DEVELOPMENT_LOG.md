@@ -1,10 +1,21 @@
 # PatrolSpectatorPlugin Development Log
 
 ## Current Status (2026-08-31)
-- **Version**: 1.9.101
+- **Version**: 1.9.102
 - **Branch**: `feature/patrol-logic-update`
 - **Build Status**: Passed (`mvn clean package` with JDK 21)
-- **External Plugins**: Updated all dependencies to latest versions via `build_v2.ps1`
+- **External Plugins**: Updated all dependencies to latest versions via `build_v2.ps1` (Removed duplicate `Floodgate.jar`, keeping `Floodgate-Spigot.jar`)
+- **Key Features & Fixes in v1.9.102**:
+    - **Multi-Perspective Dynamic Player Spectating Sequence**:
+        - Implemented 3-stage dynamic camera perspective transitions during player patrolling:
+          1. **Third-Person Front View (35%)**: Positions camera in front of player facing their face/skin right as the Title "◯◯ さんの視点 (Now On Air)" appears.
+          2. **Third-Person Back View (35%)**: Transitions to follow camera behind/above player showing movement and surroundings.
+          3. **First-Person View (30%)**: Transitions to natural player first-person spectator view (`setSpectatorTarget(player)`).
+        - Smooth real-time position and angle tracking via lightweight invisible armor stand.
+        - Solid block occlusion detection to prevent camera clipping inside blocks.
+        - Clean cancellation & task cleanup on patrol switch, entity death, world change, or spectator stop.
+    - **External Plugin Duplicate Fix**:
+        - Removed legacy `Floodgate.jar` from build/plugins pipeline to eliminate duplicate collision with `Floodgate-Spigot.jar`.
 - **Key Features & Fixes in v1.9.101**:
     - **Ender Dragon BossBar (HP Bar) Management**:
         - Fixed missing Ender Dragon BossBar by implementing dedicated `BossBar` lifecycle management in `EndGameManager`.

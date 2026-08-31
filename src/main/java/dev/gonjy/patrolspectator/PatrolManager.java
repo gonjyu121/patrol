@@ -63,6 +63,15 @@ public class PatrolManager implements org.bukkit.event.Listener {
     private BukkitTask trackingTask;
     private org.bukkit.entity.ArmorStand cinematicCameraStand;
 
+    // 視点切り替え（三人称前方 -> 三人称後方 -> 一人称）用フィールド
+    private final List<BukkitTask> perspectiveTasks = new ArrayList<>();
+    private enum PerspectivePhase {
+        FRONT_VIEW,   // 三人称前方視点（顔・正面）
+        BACK_VIEW,    // 三人称後方視点（背後）
+        FIRST_PERSON  // 一人称視点
+    }
+    private PerspectivePhase currentPerspective = PerspectivePhase.FRONT_VIEW;
+
     /**
      * コンストラクタ。
      *
@@ -549,13 +558,13 @@ public class PatrolManager implements org.bukkit.event.Listener {
         stopTracking();
 
         if (target != null) {
-            // ターゲットが見つかった場合: プレイヤー観戦モード
-            spectateTarget(camera, target);
+            // ターゲットが見つかった場合: プレイヤー観戦モード（三人称前方 -> 三人称後方 -> 一人称のシーケンス）
+            spectateTarget(camera, target, staySeconds);
 
             // 参加（映ったこと）を記録
             participationManager.noteParticipation(target.getUniqueId(), target.getName());
 
-            // タイトル表示：プレイヤー名を大きく強調
+            // タイトル表示：プレイヤー名を大きく強調（正面視点で顔が見えるタイミング）
             MessageUtils.showTitleLargeSmall(camera, "§b" + target.getName() + " §7さんの視点", "§aNow On Air");
             return staySeconds;
         }
@@ -724,12 +733,181 @@ public class PatrolManager implements org.bukkit.event.Listener {
 
     /**
      * 指定したターゲットプレイヤーを観戦（スペクテイター）します。
+     * 三人称前方視点（顔） -> 三人称後方視点（背後） -> 一人称視点の順に切り替えます。
      *
-     * @param camera カメラ役プレイヤー
-     * @param target 観戦対象プレイヤー
+     * @param camera       カメラ役プレイヤー
+     * @param target       観戦対象プレイヤー
+     * @param dwellSeconds 滞在秒数
      */
-    private void spectateTarget(Player camera, Player target) {
-        spectateEntity(camera, target);
+    private void spectateTarget(Player camera, Player target, int dwellSeconds) {
+        if (camera == null || target == null)
+            return;
+
+        // プレイヤーの場合は記録更新（ローテーション用）
+        lastSpectatedUuid = target.getUniqueId();
+
+        // 既存の追跡・視点タスクを停止
+        stopTracking();
+        stopSpectating(camera);
+
+        // 1. まず同じ場所にテレポートさせる（ワールド読み込み・チャンク同期のため）
+        Location targetLoc = target.getLocation();
+        if (camera.getWorld().equals(targetLoc.getWorld())) {
+            camera.teleport(targetLoc);
+        } else {
+            camera.setGameMode(GameMode.SPECTATOR);
+            camera.teleport(targetLoc);
+            camera.setFlying(true);
+        }
+
+        // サウンド再生
+        PatrolSpectatorPlugin.SoundConf soundConf = plugin.getSpectateSoundConf();
+        if (soundConf != null && soundConf.enabled) {
+            try {
+                engagementSystem.playNamedSound(camera, soundConf.type, soundConf.volume, soundConf.pitch);
+            } catch (Throwable ignored) {
+            }
+        }
+
+        // 時間配分の計算（ticks）
+        int totalTicks = Math.max(60, dwellSeconds * 20); // 最低3秒
+        int frontTicks = Math.max(30, (int) Math.round(totalTicks * 0.35)); // 前方視点 (約35%)
+        int backTicks = Math.max(30, (int) Math.round(totalTicks * 0.35));  // 後方視点 (約35%)
+        int firstPersonStartTick = frontTicks + backTicks;                // 一人称開始 (残り約30%)
+
+        // フェーズ1: 三人称前方視点（フロントビュー）の開始
+        BukkitTask initTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!camera.isOnline() || !target.isValid())
+                return;
+
+            if (camera.getGameMode() != GameMode.SPECTATOR) {
+                camera.setGameMode(GameMode.SPECTATOR);
+            }
+
+            // カメラ用アーマースタンドの生成
+            Location initialCamLoc = calculateCameraLocation(target, PerspectivePhase.FRONT_VIEW);
+            cinematicCameraStand = initialCamLoc.getWorld().spawn(initialCamLoc, org.bukkit.entity.ArmorStand.class, stand -> {
+                stand.setVisible(false);
+                stand.setGravity(false);
+                stand.setMarker(false);
+                stand.setInvulnerable(true);
+                stand.setSmall(true);
+                stand.setBasePlate(false);
+                stand.addScoreboardTag("patrol_cinematic_camera");
+            });
+
+            camera.setSpectatorTarget(cinematicCameraStand);
+            currentPerspective = PerspectivePhase.FRONT_VIEW;
+
+            // 追従タスクの開始 (1tick毎に滑らかに追従)
+            int updateInterval = Math.max(1, plugin.getConfig().getInt("patrol.trackingUpdateIntervalTicks", 1));
+            trackingTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+                if (!camera.isOnline() || !target.isValid() || !camera.getGameMode().equals(GameMode.SPECTATOR)) {
+                    stopTracking();
+                    return;
+                }
+
+                if (currentPerspective != PerspectivePhase.FIRST_PERSON) {
+                    updateCameraPosition(camera, target, currentPerspective);
+                }
+            }, 1L, (long) updateInterval);
+
+        }, 2L);
+        perspectiveTasks.add(initTask);
+
+        // フェーズ2: 三人称後方視点（バックビュー）への移行
+        BukkitTask switchBackTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!camera.isOnline() || !target.isValid())
+                return;
+            currentPerspective = PerspectivePhase.BACK_VIEW;
+        }, (long) frontTicks);
+        perspectiveTasks.add(switchBackTask);
+
+        // フェーズ3: 一人称視点（ファーストパーソン）への移行
+        BukkitTask switchFirstPersonTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!camera.isOnline() || !target.isValid())
+                return;
+
+            currentPerspective = PerspectivePhase.FIRST_PERSON;
+            stopTracking(); // アーマースタンド停止 & 削除
+
+            try {
+                if (camera.getGameMode() != GameMode.SPECTATOR) {
+                    camera.setGameMode(GameMode.SPECTATOR);
+                }
+                camera.setSpectatorTarget(target);
+            } catch (Throwable t) {
+                camera.teleport(target.getLocation());
+            }
+        }, (long) firstPersonStartTick);
+        perspectiveTasks.add(switchFirstPersonTask);
+    }
+
+    /**
+     * ターゲットに対するカメラ位置と視線方向を計算します。
+     */
+    private Location calculateCameraLocation(Player target, PerspectivePhase phase) {
+        Location targetLoc = target.getLocation();
+        Location targetEye = target.getEyeLocation();
+
+        // ターゲットの視線水平ベクトル（yawから計算）
+        double yawRad = Math.toRadians(targetLoc.getYaw());
+        double dirX = -Math.sin(yawRad);
+        double dirZ = Math.cos(yawRad);
+        org.bukkit.util.Vector horizontalDir = new org.bukkit.util.Vector(dirX, 0, dirZ).normalize();
+
+        Location camLoc;
+        if (phase == PerspectivePhase.FRONT_VIEW) {
+            // 三人称前方視点: ターゲットの前方 2.6 ブロック、高さは目線 -0.1 (顔・スキンを正面から捉える)
+            double distance = 2.6;
+            camLoc = targetLoc.clone().add(horizontalDir.clone().multiply(distance));
+            camLoc.setY(targetEye.getY() - 0.1);
+
+            // ターゲットの顔（目線）を向く
+            org.bukkit.util.Vector lookAt = targetEye.toVector().subtract(camLoc.toVector());
+            camLoc.setDirection(lookAt);
+        } else { // BACK_VIEW
+            // 三人称後方視点: ターゲットの後方 3.0 ブロック、高さは目線 +0.5 (背後上方から捉える)
+            double distance = 3.0;
+            camLoc = targetLoc.clone().subtract(horizontalDir.clone().multiply(distance));
+            camLoc.setY(targetEye.getY() + 0.5);
+
+            // ターゲットの背中・進行方向（目線 +0.2）を向く
+            org.bukkit.util.Vector lookAt = targetLoc.clone().add(0, 1.4, 0).toVector().subtract(camLoc.toVector());
+            camLoc.setDirection(lookAt);
+        }
+
+        // 障害物（固体ブロック）に埋まるのを防ぐ
+        if (camLoc.getBlock().getType().isSolid()) {
+            camLoc.setY(targetEye.getY());
+        }
+
+        return camLoc;
+    }
+
+    /**
+     * カメラ用アーマースタンドの座標をターゲットに合わせて更新します。
+     */
+    private void updateCameraPosition(Player camera, Player target, PerspectivePhase phase) {
+        if (cinematicCameraStand == null || !cinematicCameraStand.isValid() || !target.isValid() || !camera.isOnline()) {
+            return;
+        }
+        if (!cinematicCameraStand.getWorld().equals(target.getWorld())) {
+            stopTracking();
+            return;
+        }
+
+        Location followLoc = calculateCameraLocation(target, phase);
+
+        // 距離が極端に近い場合はテレポートをスキップしてパケット節約
+        if (cinematicCameraStand.getLocation().distanceSquared(followLoc) < 0.0001) {
+            return;
+        }
+
+        cinematicCameraStand.teleport(followLoc);
+        if (camera.getSpectatorTarget() != cinematicCameraStand) {
+            camera.setSpectatorTarget(cinematicCameraStand);
+        }
     }
 
     /**
@@ -977,6 +1155,13 @@ public class PatrolManager implements org.bukkit.event.Listener {
             trackingTask.cancel();
             trackingTask = null;
         }
+        for (BukkitTask task : perspectiveTasks) {
+            if (task != null && !task.isCancelled()) {
+                task.cancel();
+            }
+        }
+        perspectiveTasks.clear();
+
         if (cinematicCameraStand != null) {
             cinematicCameraStand.remove();
             cinematicCameraStand = null;

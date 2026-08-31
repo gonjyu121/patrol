@@ -81,6 +81,21 @@ catch {
 
 # Download External Plugins
 Write-Host "Downloading external plugins..." -ForegroundColor Yellow
+
+# クリーンアップ: 古い重複ファイル (Floodgate.jar 等) があれば削除
+$obsoleteFiles = @("Floodgate.jar")
+foreach ($obs in $obsoleteFiles) {
+    $obsTarget = Join-Path $targetDir $obs
+    if (Test-Path $obsTarget) {
+        Remove-Item $obsTarget -Force
+        Write-Host "Removed obsolete file: $obs" -ForegroundColor DarkGray
+    }
+    $obsPlugin = Join-Path (Join-Path $rootDir "plugins") $obs
+    if (Test-Path $obsPlugin) {
+        Remove-Item $obsPlugin -Force
+    }
+}
+
 $plugins = $config.plugins
 
 foreach ($name in $plugins.PSObject.Properties.Name) {

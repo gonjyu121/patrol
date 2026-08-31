@@ -31,7 +31,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.101",
-    "description": "配信用パトロールプラグイン（エンドラHPバー表示・エンドワールド再作成改善版）"
+    "version": "1.9.102",
+    "description": "配信用パトロールプラグイン（三人称前方・三人称後方・一人称視点切り替え対応版）"
   }
 }
