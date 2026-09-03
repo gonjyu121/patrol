@@ -396,6 +396,8 @@ public class EndResetManager implements Listener {
             newEndWorld.loadChunk(0, 0, true);
 
             // DragonBattle の初期状態をセットアップ
+            // ※ setPreviouslyKilled(false) を呼ぶとバニラが DragonBattle 経由でドラゴンを
+            //   自動スポーンする。手動スポーンと重複しないよう、スポーンは遅延チェックに委ねる。
             org.bukkit.boss.DragonBattle battle = newEndWorld.getEnderDragonBattle();
             if (battle != null) {
                 try {
@@ -415,16 +417,6 @@ public class EndResetManager implements Listener {
                 }
             }
 
-            // エンダードラゴンがワールド内に存在しない場合、確実にスポーンさせる
-            boolean hasDragon = !newEndWorld.getEntitiesByClass(EnderDragon.class).isEmpty();
-            if (!hasDragon) {
-                Location dragonSpawnLoc = new Location(newEndWorld, 0.5, 100.0, 0.5);
-                EnderDragon dragon = newEndWorld.spawn(dragonSpawnLoc, EnderDragon.class, d -> {
-                    d.setPhase(EnderDragon.Phase.CIRCLING);
-                });
-                plugin.getLogger().info("[EndReset] Spawned new Ender Dragon at: " + dragon.getLocation());
-            }
-
             plugin.getLogger().info("[EndReset] End world recreated, DragonBattle initialized, and spawn chunk loaded.");
         } else {
             plugin.getLogger().severe("[EndReset] Failed to recreate End world!");
@@ -433,11 +425,6 @@ public class EndResetManager implements Listener {
         // 難易度をランダムに決定 (50%の確率でハードモード)
         boolean isHardMode = new java.util.Random().nextBoolean();
         plugin.getConfig().set("end.difficulty", isHardMode ? "HARD" : "NORMAL");
-
-        // EndGameManager の初期化と BossBar の即時セットアップ
-        if (plugin.getEndGameManager() != null) {
-            plugin.getEndGameManager().onEndRecreated(newEndWorld);
-        }
 
         // リセット成功時にスケジュール情報をクリア＆完了時刻を記録
         scheduledResetTime = 0;
@@ -459,7 +446,47 @@ public class EndResetManager implements Listener {
             }
         }
 
-        isResetting = false;
+        // バニラの DragonBattle がドラゴンをスポーンするまで 3 秒 (60 tick) 待ち、
+        // 存在しない場合のみフォールバックとして 1 体スポーンする。
+        // これにより「DragonBattle 自動スポーン + 手動スポーン」による二重スポーンを防ぐ。
+        final String finalWorldName = worldName;
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            World world = Bukkit.getWorld(finalWorldName);
+            if (world == null) {
+                plugin.getLogger().warning("[EndReset] End world not found after recreation for dragon check.");
+                isResetting = false;
+                return;
+            }
+
+            java.util.Collection<EnderDragon> dragons = world.getEntitiesByClass(EnderDragon.class);
+            if (dragons.isEmpty()) {
+                // DragonBattle がスポーンしなかった場合のフォールバック
+                plugin.getLogger().info("[EndReset] No Ender Dragon found 3s after world creation. Spawning fallback dragon.");
+                Location dragonSpawnLoc = new Location(world, 0.5, 100.0, 0.5);
+                EnderDragon dragon = world.spawn(dragonSpawnLoc, EnderDragon.class, d -> {
+                    d.setPhase(EnderDragon.Phase.CIRCLING);
+                });
+                plugin.getLogger().info("[EndReset] Spawned fallback Ender Dragon at: " + dragon.getLocation());
+            } else {
+                plugin.getLogger().info("[EndReset] Ender Dragon already present (" + dragons.size() + " entity). No fallback spawn needed.");
+                if (dragons.size() > 1) {
+                    // 万が一複数いた場合は1体を残して除去（安全策）
+                    plugin.getLogger().warning("[EndReset] Multiple dragons detected (" + dragons.size() + "). Removing extras.");
+                    boolean first = true;
+                    for (EnderDragon d : dragons) {
+                        if (first) { first = false; continue; }
+                        d.remove();
+                    }
+                }
+            }
+
+            // EndGameManager の初期化と BossBar のセットアップ（ドラゴン確定後に実行）
+            if (plugin.getEndGameManager() != null) {
+                plugin.getEndGameManager().onEndRecreated(Bukkit.getWorld(finalWorldName));
+            }
+
+            isResetting = false;
+        }, 60L); // 3 秒後にドラゴン存在確認
     }
 
     private void deleteDirectoryWithRetry(File dir) {
