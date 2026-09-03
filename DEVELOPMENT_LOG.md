@@ -1,5 +1,16 @@
 # PatrolSpectatorPlugin Development Log
 
+## Current Status (2026-09-04)
+- **Version**: 1.9.104
+- **Branch**: `feature/saved-patrol-homes`
+- **Issue**: パトロール停止時の帰還安定化と常設帰還地点2枠
+- **Changes**:
+    - `/patrol stop` と `/patrol back` が復帰先チャンクをロードし、テレポート成功時だけ一時状態を削除するよう改善。
+    - 別のカメラ役の古い復帰状態を誤用しないようUUIDを検証。
+    - プレイヤーごとに2枠を `patrol_homes.yml` へ保存する `/patrol sethome <1|2>` を追加。
+    - `/patrol home <1|2>` と `/patrol homes` を追加。
+    - `PatrolHomeStorageTest` で2枠の独立保存と範囲外スロット拒否をテスト。
+
 ## Current Status (2026-08-31)
 - **Version**: 1.9.102
 - **Branch**: `feature/patrol-logic-update`

@@ -50,6 +50,7 @@ protections.yml
 dungeon_stats.yml
 temp_patrol_state.yml
 last_manual_start_state.yml
+patrol_homes.yml
 
 # Credentials and local configuration
 .env

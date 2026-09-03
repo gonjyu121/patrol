@@ -57,19 +57,19 @@ Minecraft Paper / Spigot 向けの多機能サーバー運営支援プラグイ�
 
 # Commands
 
-- `/spectate` — toggle spectator/survival (OP権限必要)  
-- `/patrol` or `/patrol next` — switch to next target (OP権限必要)  
-- `/patrol start [seconds]` — start auto-patrol with interval (default from config) (OP権限必要)  
-- `/patrol stop` — stop auto-patrol (OP権限必要)  
-- `/patrol rebuild` — rebuild target order from current eligible players (OP権限必要)  
-- `/patrol list` — show current patrol order (OP権限必要)  
-- `/patrol reload` — reload config (OP権限必要)  
-- `/patrol dragon <プレイヤー名>` — 手動でエンドラ討伐を記録 (OP権限必要)  
-- `/patrol diag` — 現在のモード/対象/観光設定を表示 (OP権限必要)  
-- `/patrol resetpoints` — 全プレイヤーのイベントポイントをリセット（配布済み報酬は回収しない）(OP権限必要)  
-  - エイリアス: `/patrol reseteventpoints`  
-- `/patrol autoevent status|start|stop` — 自動イベント制御  
-- `/patrol listlocations|reloadlocations|teleportlocation <番号>` — 観光地関連  
+- `/patrol start [seconds]` — 現在地を復帰先として保存し、パトロールを開始 (OP専用)
+- `/patrol stop` — パトロールを停止し、開始地点へ帰還 (OP専用)
+- `/patrol back` — 最後に手動で開始した地点と状態を復元 (OP専用)
+- `/patrol where` / `/patrol tpback` — 開始地点の確認・手動帰還 (OP専用)
+- `/patrol sethome <1|2>` — 現在地を常設帰還地点として2枠のいずれかに登録 (OP専用)
+- `/patrol home <1|2>` — 登録した常設帰還地点へ移動 (OP専用)
+- `/patrol homes` — 常設帰還地点2枠の登録状況を表示 (OP専用)
+- `/patrol spawn` / `/patrol travel` — 初期スポーン・遠方への移動 (OP専用)
+- `/patrol status` / `/patrol rank` — 状態・ランキング表示 (OP専用)
+- `/patrol reset_survival` / `/patrol backup` / `/patrol reload` — 管理操作 (OP専用)
+- `/stats` — 自分の統計とランク進捗を表示
+- `/bounty list|add` — 賞金首の表示・登録
+- `/dungeon tp|setcenter|scan|build|enable|disable` — 迷宮管理 (OP専用)
 
 ---
 
