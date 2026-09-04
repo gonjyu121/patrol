@@ -45,6 +45,9 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage("§a/patrol back                 - 最後に手動開始した地点と状態に復帰");
             sender.sendMessage("§a/patrol where                - 保存済みの開始地点(復帰地点)を表示");
             sender.sendMessage("§a/patrol tpback               - 保存済みの開始地点に手動でTP");
+            sender.sendMessage("§a/patrol sethome <1|2>        - 現在地を常設の帰還地点に登録");
+            sender.sendMessage("§a/patrol home <1|2>           - 登録した帰還地点へ移動");
+            sender.sendMessage("§a/patrol homes                - 登録した帰還地点を表示");
             sender.sendMessage("§a/patrol spawn                - 初期スポーン地点へ戻り、開始地点をリセット");
             sender.sendMessage("§a/patrol travel               - 初期リスから遠く離れた村(またはランダム地点)へTP");
             sender.sendMessage("§a/patrol status               - 状態表示");
@@ -92,10 +95,12 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                 break;
             }
             case "stop": {
-                patrolManager.stopPatrol();
-                sender.sendMessage("§e[Patrol] パトロールを停止しました。");
-                // 停止後の複帰地点を案内（及び自分でTPできるTPBACKコマンドを案内）
-                // 注意: stopPatrol()内部で自動TP済みなので、ここでは案内のみ
+                boolean returned = patrolManager.stopPatrol();
+                if (returned) {
+                    sender.sendMessage("§a[Patrol] パトロールを停止し、開始地点へ戻りました。");
+                } else {
+                    sender.sendMessage("§c[Patrol] パトロールは停止しましたが、開始地点への帰還に失敗しました。復帰情報は保持されています。");
+                }
                 break;
             }
             case "status": {
@@ -193,10 +198,79 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                         patrolManager.stopPatrol();
                         sender.sendMessage("§e[Patrol] パトロールを停止してからTPします...");
                     }
-                    p.teleport(loc);
+                    if (patrolManager.teleportSafely(p, loc, "保存済みの開始地点")) {
+                        sender.sendMessage(String.format(
+                                "§a[Patrol] 保存済みの戻り地点 §f%s §a(%.1f, %.1f, %.1f) §aにTPしました！",
+                                loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ()));
+                    } else {
+                        sender.sendMessage("§c[Patrol] 保存済みの開始地点へのTPに失敗しました。ワールドの状態を確認してください。");
+                    }
+                }
+                break;
+            }
+            case "sethome": {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage("§cプレイヤーのみ実行できます。");
+                    return true;
+                }
+                Integer slot = parseHomeSlot(args);
+                if (slot == null) {
+                    sender.sendMessage("§c使い方: /patrol sethome <1|2>");
+                    return true;
+                }
+                if (patrolManager.isRunning()) {
+                    sender.sendMessage("§c[Patrol] パトロール中のカメラ位置は登録できません。先に /patrol stop を実行してください。");
+                    return true;
+                }
+                Player player = (Player) sender;
+                if (patrolManager.saveHome(player, slot)) {
+                    org.bukkit.Location home = player.getLocation();
                     sender.sendMessage(String.format(
-                            "§a[Patrol] 保存済みの戻り地点 §f%s §a(%.1f, %.1f, %.1f) §aにTPしました！",
-                            loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ()));
+                            "§a[Patrol] 帰還地点%dを登録しました: §f%s §7(%.1f, %.1f, %.1f)",
+                            slot, home.getWorld().getName(), home.getX(), home.getY(), home.getZ()));
+                } else {
+                    sender.sendMessage("§c[Patrol] 帰還地点の保存に失敗しました。サーバーログを確認してください。");
+                }
+                break;
+            }
+            case "home": {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage("§cプレイヤーのみ実行できます。");
+                    return true;
+                }
+                Integer slot = parseHomeSlot(args);
+                if (slot == null) {
+                    sender.sendMessage("§c使い方: /patrol home <1|2>");
+                    return true;
+                }
+                Player player = (Player) sender;
+                org.bukkit.Location home = patrolManager.getHome(player, slot);
+                if (home == null) {
+                    sender.sendMessage("§c[Patrol] 帰還地点" + slot + "は未登録か、保存先ワールドが読み込まれていません。");
+                    return true;
+                }
+                if (patrolManager.teleportHome(player, slot)) {
+                    sender.sendMessage("§a[Patrol] 帰還地点" + slot + "へ移動しました。");
+                } else {
+                    sender.sendMessage("§c[Patrol] 帰還地点" + slot + "への移動に失敗しました。");
+                }
+                break;
+            }
+            case "homes": {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage("§cプレイヤーのみ実行できます。");
+                    return true;
+                }
+                Player player = (Player) sender;
+                sender.sendMessage("§6===== 登録済み帰還地点 =====");
+                for (int slot = PatrolHomeStorage.MIN_SLOT; slot <= PatrolHomeStorage.MAX_SLOT; slot++) {
+                    org.bukkit.Location home = patrolManager.getHome(player, slot);
+                    if (home == null) {
+                        sender.sendMessage("§e" + slot + ": §7未登録");
+                    } else {
+                        sender.sendMessage(String.format("§e%d: §f%s §7(%.1f, %.1f, %.1f)",
+                                slot, home.getWorld().getName(), home.getX(), home.getY(), home.getZ()));
+                    }
                 }
                 break;
             }
@@ -221,7 +295,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             return Collections.emptyList();
         }
         if (args.length == 1) {
-            List<String> sub = Arrays.asList("start", "stop", "back", "where", "tpback", "travel", "status", "rank", "spawn", "reset_survival", "backup", "reload");
+            List<String> sub = Arrays.asList("start", "stop", "back", "where", "tpback", "sethome", "home", "homes", "travel", "status", "rank", "spawn", "reset_survival", "backup", "reload");
             List<String> ret = new ArrayList<>();
             for (String s : sub) {
                 if (s.startsWith(args[0].toLowerCase())) {
@@ -230,7 +304,24 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             }
             return ret;
         }
+        if (args.length == 2 && (args[0].equalsIgnoreCase("sethome") || args[0].equalsIgnoreCase("home"))) {
+            return Arrays.asList("1", "2").stream()
+                    .filter(slot -> slot.startsWith(args[1]))
+                    .toList();
+        }
         return Collections.emptyList();
+    }
+
+    private Integer parseHomeSlot(String[] args) {
+        if (args.length < 2) {
+            return null;
+        }
+        try {
+            int slot = Integer.parseInt(args[1]);
+            return PatrolHomeStorage.isValidSlot(slot) ? slot : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private void travelToFarVillage(Player player) {

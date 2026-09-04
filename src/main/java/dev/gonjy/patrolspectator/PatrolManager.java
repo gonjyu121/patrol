@@ -31,6 +31,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
     private final ParticipationManager participationManager;
     private final GameModeEnforcer gameModeEnforcer;
     private final RankingDisplaySystem rankingDisplaySystem;
+    private final PatrolHomeStorage homeStorage;
 
     // 観光地リスト
     private final List<TouristLocation> touristLocations = new ArrayList<>();
@@ -91,6 +92,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
         this.participationManager = participationManager;
         this.gameModeEnforcer = gameModeEnforcer;
         this.rankingDisplaySystem = rankingDisplaySystem;
+        this.homeStorage = new PatrolHomeStorage(plugin);
     }
 
     /**
@@ -269,18 +271,24 @@ public class PatrolManager implements org.bukkit.event.Listener {
         org.bukkit.inventory.ItemStack[] newSavedInventory = null;
         org.bukkit.inventory.ItemStack[] newSavedArmor = null;
 
-        // 1. メモリ上にすでに開始地点がある場合、それを最優先
-        if (this.startLocation != null) {
+        // 1. 同じカメラ役の復帰状態がメモリ上にある場合、それを最優先
+        if (this.startLocation != null && camera.getUniqueId().equals(this.cameraUuid)) {
             newStartLocation = this.startLocation;
             newSavedInventory = this.savedInventory;
             newSavedArmor = this.savedArmor;
         } else {
             // 2. メモリ上になければファイルからの復旧を試みる
             loadPatrolState();
-            if (this.startLocation != null) {
+            if (this.startLocation != null && camera.getUniqueId().equals(this.cameraUuid)) {
                 newStartLocation = this.startLocation;
                 newSavedInventory = this.savedInventory;
                 newSavedArmor = this.savedArmor;
+            } else if (this.cameraUuid != null && !camera.getUniqueId().equals(this.cameraUuid)) {
+                plugin.getLogger().warning("[Patrol] 別のカメラ役の復帰状態が残っているため、現在地を新しい開始地点として使用します。");
+                this.cameraUuid = null;
+                this.startLocation = null;
+                this.savedInventory = null;
+                this.savedArmor = null;
             }
         }
 
@@ -380,7 +388,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
      * 定期タスクをキャンセルし、カメラ役以外の全プレイヤーをサバイバルモードに戻します。
      * （以前発生した「全員スペクテイター化事故」への安全策）
      */
-    public void stopPatrol() {
+    public boolean stopPatrol() {
         if (plugin.getTickMonitor() != null) {
             plugin.getTickMonitor().resetPauseState();
         }
@@ -422,25 +430,87 @@ public class PatrolManager implements org.bukkit.event.Listener {
             } catch (Throwable ignored) {}
 
             // camera.setReducedDebugInfo(false); // IDE error workaround
-            if (startLocation != null) {
-                camera.teleport(startLocation);
-            }
-            if (savedInventory != null) {
-                camera.getInventory().setContents(savedInventory);
-            }
-            if (savedArmor != null) {
-                camera.getInventory().setArmorContents(savedArmor);
-            }
+            boolean returned = startLocation == null || teleportSafely(camera, startLocation, "パトロール開始地点");
+            if (returned) {
+                if (savedInventory != null) {
+                    camera.getInventory().setContents(savedInventory);
+                }
+                if (savedArmor != null) {
+                    camera.getInventory().setArmorContents(savedArmor);
+                }
 
-            cameraUuid = null;
-            startLocation = null;
-            savedInventory = null;
-            savedArmor = null;
-            lastSpectatedUuid = null;
-            clearPatrolState();
-            plugin.getLogger().info("パトロールを停止し、プレイヤーを元の位置に戻しました。");
+                cameraUuid = null;
+                startLocation = null;
+                savedInventory = null;
+                savedArmor = null;
+                lastSpectatedUuid = null;
+                clearPatrolState();
+                plugin.getLogger().info("パトロールを停止し、プレイヤーを元の位置に戻しました。");
+                return true;
+            } else {
+                camera.sendMessage("§c[Patrol] 開始地点への帰還に失敗しました。復帰情報は保持しています。§e/patrol tpback §cまたは §e/patrol home <1|2> §cを試してください。");
+                plugin.getLogger().warning("[Patrol] 開始地点への帰還に失敗したため、復帰状態を保持します。");
+                return false;
+            }
         } else {
             plugin.getLogger().info("[Patrol] カメラ役がオフラインのため、復帰用状態ファイルを維持したままパトロールタスクのみ停止します。");
+            return cameraUuid == null;
+        }
+    }
+
+    /**
+     * 常設帰還地点を保存します。
+     */
+    public boolean saveHome(Player player, int slot) {
+        return player != null && homeStorage.save(player.getUniqueId(), slot, player.getLocation());
+    }
+
+    /**
+     * 常設帰還地点を取得します。未登録またはワールド未ロードの場合は null を返します。
+     */
+    public Location getHome(Player player, int slot) {
+        return player == null ? null : homeStorage.load(player.getUniqueId(), slot);
+    }
+
+    /**
+     * 常設帰還地点へ安全にテレポートします。
+     */
+    public boolean teleportHome(Player player, int slot) {
+        Location home = getHome(player, slot);
+        if (home == null) {
+            return false;
+        }
+        if (isRunning()) {
+            stopPatrol();
+        }
+        return teleportSafely(player, home, "保存地点" + slot);
+    }
+
+    /**
+     * 復帰先チャンクをロードしてからテレポートし、失敗時は状態を消さずに再試行可能にします。
+     */
+    public boolean teleportSafely(Player player, Location destination, String destinationName) {
+        if (player == null || destination == null || destination.getWorld() == null) {
+            return false;
+        }
+
+        try {
+            World world = destination.getWorld();
+            int chunkX = destination.getBlockX() >> 4;
+            int chunkZ = destination.getBlockZ() >> 4;
+            if (!world.isChunkLoaded(chunkX, chunkZ)) {
+                world.getChunkAt(chunkX, chunkZ).load(true);
+            }
+
+            stopSpectating(player);
+            boolean success = player.teleport(destination);
+            if (!success) {
+                plugin.getLogger().warning("[Patrol] " + destinationName + "へのテレポートが拒否されました: " + player.getName());
+            }
+            return success;
+        } catch (Throwable t) {
+            plugin.getLogger().log(Level.SEVERE, "[Patrol] " + destinationName + "へのテレポートに失敗しました。", t);
+            return false;
         }
     }
 
@@ -1348,8 +1418,9 @@ public class PatrolManager implements org.bukkit.event.Listener {
                 player.setAllowFlight(false);
             } catch (Throwable ignored) {}
 
-            if (loc != null) {
-                player.teleport(loc);
+            if (loc != null && !teleportSafely(player, loc, "最後の手動開始地点")) {
+                player.sendMessage("§c[Patrol] 手動開始地点への帰還に失敗しました。復帰情報は保持しています。");
+                return false;
             }
             if (savedInv != null) {
                 player.getInventory().setContents(savedInv);
