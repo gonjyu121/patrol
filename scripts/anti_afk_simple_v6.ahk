@@ -272,7 +272,7 @@ ClickTemplate(name, count, generation) {
 
 PrepareTemplates() {
     global dataDir
-    assets := A_ScriptDir "\anti_afk_simple_v6_assets"
+    assets := A_ScriptDir "\anti_afk_simple_assets"
     SaveRegion(assets "\disconnect.png", 490, 528, 276, 32, dataDir "\back.bmp")
     SaveRegion(assets "\server-list.png", 286, 248, 318, 32, dataDir "\server.bmp")
 }
