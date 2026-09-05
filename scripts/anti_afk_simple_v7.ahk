@@ -8,7 +8,8 @@ global gameDir := ""
 global templateSizes := Map("back", [276, 32], "server", [318, 32])
 global armed := false, busy := false, used := 0, epoch := 0, targetHwnd := 0
 global offset := 0, pending := "", seen := Map(), deadline := 0, phase := "idle"
-global statusGui := "", statusText := "", pulse := false
+global statusGui := "", statusText := "", statusModeText := "", pulse := false
+global motionStep := 0
 
 if (A_Args.Length && A_Args[1] = "--self-test") {
     try SelfTest()
@@ -30,7 +31,7 @@ SetupStatusOverlay()
 SetTimer(Tick, 1000)
 SetTimer(UpdateStatusOverlay, 500)
 SetTimer(VisualHeartbeat, 15000)
-MsgBox("再接続 v7：画像登録・ログフォルダ指定は不要です。`n旧AHKは終了してください。`n`nMinecraftを前面にしてF6: 監視開始`n監視中は左上の表示が点滅し、15秒ごとに視点が少し往復します。`nF7: 全停止（手動切断前にも押す）`nF8: 終了`n`n撮影時と同じGUIスケールで使用してください。`n移動キー・クリックの定期送信やFalixの起動は行いません。")
+MsgBox("再接続 v7：画像登録・ログフォルダ指定は不要です。`n旧AHKは終了してください。`n`nMinecraftを前面にしてF6: 監視開始`n監視中は左上の表示が点滅し、15秒ごとに小さな視点・左右移動の演出を行います。`nF7: 全停止（手動切断前にも押す）`nF8: 終了`n`n撮影時と同じGUIスケールで使用してください。`nFalixの起動操作は行いません。")
 
 F6::Arm()
 F7::Halt("手動停止")
@@ -55,19 +56,22 @@ Halt(reason) {
     armed := false
     phase := "idle"
     epoch += 1
+    Send("{a up}{d up}")
     if IsObject(statusGui)
         statusGui.Hide()
     Tell(reason)
 }
 
 SetupStatusOverlay() {
-    global statusGui, statusText
+    global statusGui, statusText, statusModeText
     statusGui := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20")
     statusGui.BackColor := "202020"
     statusGui.MarginX := 10
     statusGui.MarginY := 6
     statusGui.SetFont("s10 Bold cFFFFFF", "Yu Gothic UI")
     statusText := statusGui.AddText("w245 h22 Center", "● 再接続監視中  0/3")
+    statusGui.SetFont("s7 Norm cAAAAAA", "Yu Gothic UI")
+    statusModeText := statusGui.AddText("xp y+0 w245 h14 Center", "自動演出中")
 }
 
 UpdateStatusOverlay() {
@@ -86,23 +90,40 @@ UpdateStatusOverlay() {
     statusText.Text := marker " " label "  " used "/3"
     try {
         WinGetClientPos(&left, &top, , , "ahk_id " targetHwnd)
-        statusGui.Show("NA x" (left + 12) " y" (top + 12) " w265 h34")
+        statusGui.Show("NA x" (left + 12) " y" (top + 12) " w265 h48")
         WinSetTransparent(225, "ahk_id " statusGui.Hwnd)
     } catch {
         statusGui.Hide()
     }
 }
 
-; A small reversible camera nudge confirms that this script still controls the
-; focused Minecraft window. It runs only during ordinary monitoring, never
-; while a reconnect click is pending or while another application has focus.
+; A small, disclosed presentation motion confirms that this script still
+; controls the focused Minecraft window. It never runs during reconnect work
+; or while another application has focus.
 VisualHeartbeat() {
-    global armed, targetHwnd, phase
+    global armed, targetHwnd, phase, motionStep
     if (!armed || phase != "idle" || MinecraftActive() != targetHwnd)
         return
+    motionStep := Mod(motionStep + 1, 2)
     MouseMove(6, 0, 0, "R")
     Sleep(120)
     MouseMove(-6, 0, 0, "R")
+    first := motionStep ? "a" : "d"
+    second := motionStep ? "d" : "a"
+    try {
+        if (!armed || phase != "idle" || MinecraftActive() != targetHwnd)
+            return
+        Send("{" first " down}")
+        Sleep(180)
+        Send("{" first " up}")
+        if (!armed || phase != "idle" || MinecraftActive() != targetHwnd)
+            return
+        Sleep(100)
+        Send("{" second " down}")
+        Sleep(180)
+    } finally {
+        Send("{a up}{d up}")
+    }
 }
 
 ; Parse only the target process command line; never log credentials or tokens.
