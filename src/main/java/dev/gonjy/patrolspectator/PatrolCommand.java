@@ -224,10 +224,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                 }
                 Player player = (Player) sender;
                 if (patrolManager.saveHome(player, slot)) {
-                    org.bukkit.Location home = player.getLocation();
-                    sender.sendMessage(String.format(
-                            "§a[Patrol] 帰還地点%dを登録しました: §f%s §7(%.1f, %.1f, %.1f)",
-                            slot, home.getWorld().getName(), home.getX(), home.getY(), home.getZ()));
+                    sender.sendMessage(homeSavedMessage(slot));
                 } else {
                     sender.sendMessage("§c[Patrol] 帰還地点の保存に失敗しました。サーバーログを確認してください。");
                 }
@@ -266,10 +263,9 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                 for (int slot = PatrolHomeStorage.MIN_SLOT; slot <= PatrolHomeStorage.MAX_SLOT; slot++) {
                     org.bukkit.Location home = patrolManager.getHome(player, slot);
                     if (home == null) {
-                        sender.sendMessage("§e" + slot + ": §7未登録");
+                        sender.sendMessage(homeStatusMessage(slot, false));
                     } else {
-                        sender.sendMessage(String.format("§e%d: §f%s §7(%.1f, %.1f, %.1f)",
-                                slot, home.getWorld().getName(), home.getX(), home.getY(), home.getZ()));
+                        sender.sendMessage(homeStatusMessage(slot, true));
                     }
                 }
                 break;
@@ -310,6 +306,14 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                     .toList();
         }
         return Collections.emptyList();
+    }
+
+    static String homeSavedMessage(int slot) {
+        return "§a[Patrol] 帰還地点" + slot + "を登録しました。";
+    }
+
+    static String homeStatusMessage(int slot, boolean registered) {
+        return "§e" + slot + (registered ? ": §a登録済み" : ": §7未登録");
     }
 
     private Integer parseHomeSlot(String[] args) {
