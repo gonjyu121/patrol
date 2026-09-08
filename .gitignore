@@ -80,6 +80,10 @@ DISCORD_INFO.md
 STREAM_INFO.local.md
 YOUTUBE_TEMPLATE.local.txt
 
+# Stream-PC automation lives in gonjyu121/patrol-stream-automation
+scripts/anti_afk_simple*
+scripts/*.lnk
+
 # Backups / extracted copies
 backup/
 backup_*/
