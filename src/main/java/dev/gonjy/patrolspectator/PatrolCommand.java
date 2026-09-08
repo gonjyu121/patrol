@@ -108,12 +108,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage("§b[Patrol] 状態=" + running + ", 地点数=" + patrolManager.getLocationCount());
                 // 状態表示時に保存地点も表示
                 org.bukkit.Location savedLoc = patrolManager.getStartLocation();
-                if (savedLoc != null) {
-                    sender.sendMessage(String.format("§b[Patrol] 保存地点: %s (%.1f, %.1f, %.1f)",
-                            savedLoc.getWorld().getName(), savedLoc.getX(), savedLoc.getY(), savedLoc.getZ()));
-                } else {
-                    sender.sendMessage("§b[Patrol] 保存地点: 未設定");
-                }
+                sender.sendMessage(startLocationStatusMessage(savedLoc != null));
                 break;
             }
             case "rank": {
@@ -176,9 +171,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                 if (loc == null) {
                     sender.sendMessage("§c[Patrol] 保存済みの戻り地点がありません。パトロールを開始してください。");
                 } else {
-                    sender.sendMessage(String.format(
-                            "§a[Patrol] 保存済みの戻り地点: §f%s §7(%.1f, %.1f, %.1f)",
-                            loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ()));
+                    sender.sendMessage(savedReturnLocationMessage());
                     sender.sendMessage("§7返るには: §e/patrol tpback §7を実行してください");
                 }
                 break;
@@ -199,9 +192,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                         sender.sendMessage("§e[Patrol] パトロールを停止してからTPします...");
                     }
                     if (patrolManager.teleportSafely(p, loc, "保存済みの開始地点")) {
-                        sender.sendMessage(String.format(
-                                "§a[Patrol] 保存済みの戻り地点 §f%s §a(%.1f, %.1f, %.1f) §aにTPしました！",
-                                loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ()));
+                        sender.sendMessage(teleportBackSuccessMessage());
                     } else {
                         sender.sendMessage("§c[Patrol] 保存済みの開始地点へのTPに失敗しました。ワールドの状態を確認してください。");
                     }
@@ -314,6 +305,18 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
 
     static String homeStatusMessage(int slot, boolean registered) {
         return "§e" + slot + (registered ? ": §a登録済み" : ": §7未登録");
+    }
+
+    static String startLocationStatusMessage(boolean registered) {
+        return "§b[Patrol] 保存地点: " + (registered ? "§a登録済み" : "§7未設定");
+    }
+
+    static String savedReturnLocationMessage() {
+        return "§a[Patrol] 保存済みの戻り地点があります。";
+    }
+
+    static String teleportBackSuccessMessage() {
+        return "§a[Patrol] 保存済みの戻り地点へTPしました！";
     }
 
     private Integer parseHomeSlot(String[] args) {

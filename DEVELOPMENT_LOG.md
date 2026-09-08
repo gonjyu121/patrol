@@ -2,11 +2,13 @@
 
 ## Current Status (2026-09-06)
 - **Version**: 1.9.105
-- **Branch**: `fix/hide-patrol-home-coordinates`
-- **Issue**: 配信画面への常設帰還地点の座標漏えい防止
+- **Branch**: `fix/hide-patrol-coordinates-v1.9.105`
+- **Issue**: 配信画面へのPatrol帰還地点の座標漏えい防止
 - **Changes**:
     - `/patrol sethome <1|2>` の完了メッセージからワールド名とXYZ座標を削除。
     - `/patrol homes` は座標を表示せず、各枠の登録済み・未登録のみを表示。
+    - `/patrol status` と `/patrol where` は開始地点の有無だけを表示。
+    - `/patrol tpback` の成功メッセージからワールド名とXYZ座標を削除。
 
 ## Current Status (2026-09-04)
 - **Version**: 1.9.104
