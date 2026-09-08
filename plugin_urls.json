@@ -31,7 +31,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.104",
-    "description": "配信用パトロールプラグイン（安定した帰還と常設帰還地点2枠対応版）"
+    "version": "1.9.105",
+    "description": "配信用パトロールプラグイン（帰還地点の座標非表示対応版）"
   }
 }
