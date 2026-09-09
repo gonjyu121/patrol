@@ -1,5 +1,15 @@
 # PatrolSpectatorPlugin Development Log
 
+## Current Status (2026-09-09)
+- **Version**: 1.9.106
+- **Branch**: `feature/provider-neutral-sftp-deploy-v1.9.106`
+- **Issue**: ホスティング事業者を変更可能な安全なデプロイ機構
+- **Changes**:
+    - 接続先をローカル設定へ分離したOpenSSH SFTPデプロイスクリプトを追加。
+    - サーバー停止確認、リモート旧JARの日時付き退避、一時名アップロード、最終名への切り替えを実装。
+    - SSH鍵とknown_hostsを必須にし、接続情報をGit・ログ・コマンドラインへ露出させない構成に変更。
+    - `Transport` 設定を導入し、将来の別ホスティング事業者・転送方式追加に備えた。
+
 ## Current Status (2026-09-06)
 - **Version**: 1.9.105
 - **Branch**: `fix/hide-patrol-coordinates-v1.9.105`
