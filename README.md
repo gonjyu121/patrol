@@ -63,7 +63,7 @@ Minecraft Paper / Spigot 向けの多機能サーバー運営支援プラグイ�
 - `/patrol where` / `/patrol tpback` — 開始地点の確認・手動帰還 (OP専用)
 - `/patrol sethome <1|2>` — 現在地を常設帰還地点として2枠のいずれかに登録 (OP専用)
 - `/patrol home <1|2>` — 登録した常設帰還地点へ移動 (OP専用)
-- `/patrol homes` — 常設帰還地点2枠の登録状況を表示 (OP専用)
+- `/patrol homes` — 座標を伏せたまま常設帰還地点2枠の登録状況を表示 (OP専用)
 - `/patrol spawn` / `/patrol travel` — 初期スポーン・遠方への移動 (OP専用)
 - `/patrol status` / `/patrol rank` — 状態・ランキング表示 (OP専用)
 - `/patrol reset_survival` / `/patrol backup` / `/patrol reload` — 管理操作 (OP専用)
