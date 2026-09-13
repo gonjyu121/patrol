@@ -1,5 +1,15 @@
 # PatrolSpectatorPlugin Development Log
 
+## Current Status (2026-09-13)
+- **Version**: 1.9.107
+- **Branch**: `fix/prevent-live-dragon-reset-v1.9.107`
+- **Issue**: 生存中のエンダードラゴンがいる状態での誤リセット・複数スポーン防止
+- **Changes**:
+    - 自動リセット予約を実際のエンダードラゴン死亡イベントに限定。
+    - 別個体の生存、ドラゴン再出現、起動時の予約復元、実行直前に再検証して自動予約を解除。
+    - 原因情報のない旧バージョン由来の予約を起動時に破棄。
+    - 手動リセットは生存ドラゴンがいても従来どおり明示実行可能。
+
 ## Current Status (2026-09-09)
 - **Version**: 1.9.106
 - **Branch**: `feature/provider-neutral-sftp-deploy-v1.9.106`
