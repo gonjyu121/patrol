@@ -1,6 +1,17 @@
 # PatrolSpectatorPlugin Development Log
 
 ## Current Status (2026-09-13)
+- **Version**: 1.9.108
+- **Branch**: `fix/dungeon-softlock-reset-v1.9.108`
+- **Issue**: 死の迷宮での窒息・通路封鎖・攻略後再構築の安定化
+- **Changes**:
+    - 通路を3ブロック高にし、罠Mobを安全な空間だけに出現させて一時Mobを自動撤去。
+    - 壁内テレポートと岩盤内への落とし穴を廃止し、脱出不能な窒息を防止。
+    - ボス討伐時の未構築状態を永続化し、失敗時は次回起動で再試行。
+    - 重複構築を防止し、管理者向け `/dungeon reset` を追加。
+    - 生成済みの旧迷宮でも起動時に正面入口を補修し、観光巡りへ現在座標で必ず再登録。
+
+## Current Status (2026-09-13)
 - **Version**: 1.9.107
 - **Branch**: `fix/prevent-live-dragon-reset-v1.9.107`
 - **Issue**: 生存中のエンダードラゴンがいる状態での誤リセット・複数スポーン防止
