@@ -74,6 +74,9 @@ config.production.yml
 src/main/resources/config.local.yml
 src/main/resources/config.production.yml
 plugin_urls.local.json
+deployment.local.psd1
+.deploy/
+known_hosts.deploy
 
 # Private operational documents
 DISCORD_INFO.md
