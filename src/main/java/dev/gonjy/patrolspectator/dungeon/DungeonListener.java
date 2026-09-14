@@ -235,8 +235,11 @@ public class DungeonListener implements Listener {
             }
 
             // 迷宮の再生成 (少しディレイを置く)
+            manager.setBuilt(false);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                plugin.getDungeonBuilder().buildB1();
+                if (!plugin.getDungeonBuilder().buildB1()) {
+                    plugin.getLogger().warning("[Dungeon] 迷宮の自動再構築を開始できませんでした。次回起動時に再試行します。");
+                }
             }, 200L); // 10秒後
         }
     }

@@ -31,7 +31,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.106",
-    "description": "配信用パトロールプラグイン（安全なSFTPデプロイ対応版）"
+    "version": "1.9.108",
+    "description": "配信用パトロールプラグイン（死の迷宮ソフトロック・再構築修正版）"
   }
 }

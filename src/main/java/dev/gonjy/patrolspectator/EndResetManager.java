@@ -8,6 +8,7 @@ import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -27,6 +28,24 @@ public class EndResetManager implements Listener {
     private BukkitTask resetTask;
     private boolean isResetting = false; // リセット処理中フラグ
     private long scheduledResetTime = 0; // リセット予定時刻（ミリ秒）
+    private ResetCause resetCause = ResetCause.NONE;
+
+    private enum ResetCause {
+        NONE,
+        DRAGON_DEATH,
+        MANUAL;
+
+        static ResetCause fromConfig(String value) {
+            if (value == null || value.isBlank()) {
+                return NONE;
+            }
+            try {
+                return valueOf(value);
+            } catch (IllegalArgumentException ignored) {
+                return NONE;
+            }
+        }
+    }
 
     public EndResetManager(PatrolSpectatorPlugin plugin) {
         this.plugin = plugin;
@@ -35,6 +54,7 @@ public class EndResetManager implements Listener {
 
         // 保存されたリセット時刻のロード
         this.scheduledResetTime = plugin.getConfig().getLong("end.scheduledResetTime", 0);
+        this.resetCause = ResetCause.fromConfig(plugin.getConfig().getString("end.scheduledResetCause"));
 
         // 起動時のチェック
         checkOnStartup();
@@ -66,22 +86,47 @@ public class EndResetManager implements Listener {
     }
 
     private void checkOnStartup() {
+        if (scheduledResetTime > 0 && resetCause == ResetCause.NONE) {
+            plugin.getLogger().warning("[EndReset] Discarding a legacy reset reservation without a trusted cause.");
+            clearResetSchedule();
+        }
+
         if (scheduledResetTime > 0) {
-            long now = System.currentTimeMillis();
-            if (now >= scheduledResetTime) {
-                // 時間が過ぎているので即リセット（サーバー起動安定のため5秒遅延）
-                plugin.getLogger().info("[EndReset] Pending end reset found. Resetting shortly...");
-                Bukkit.getScheduler().runTaskLater(plugin, this::performReset, 100L);
-            } else {
-                // まだなのでタスク再スケジュール
-                long delayTicks = (scheduledResetTime - now) / 50;
-                plugin.getLogger().info("[EndReset] Pending end reset found. Rescheduling in " + (delayTicks / 20) + " seconds.");
-                scheduleResetTask(delayTicks);
-                scheduleAnnouncements();
-            }
+            // ワールドと既存ドラゴンがロードされるまで待ってから予約を再検証する。
+            Bukkit.getScheduler().runTaskLater(plugin, this::resumePendingReset, 200L);
         } else {
             // リセット予定がない場合、ドラゴンの不在をチェック
             Bukkit.getScheduler().runTaskLater(plugin, this::checkDragonAbsence, 200L); // 10秒後
+        }
+    }
+
+    private void resumePendingReset() {
+        if (scheduledResetTime <= 0 || isResetting) {
+            return;
+        }
+
+        World endWorld = getEndWorld();
+        if (resetCause == ResetCause.DRAGON_DEATH) {
+            if (endWorld == null) {
+                plugin.getLogger().warning("[EndReset] End world is not ready; postponing pending reset validation.");
+                Bukkit.getScheduler().runTaskLater(plugin, this::resumePendingReset, 1200L);
+                return;
+            }
+            if (hasLiveDragon(endWorld)) {
+                cancelAutomaticReset("a live Ender Dragon was found during startup validation");
+                return;
+            }
+        }
+
+        long now = System.currentTimeMillis();
+        if (now >= scheduledResetTime) {
+            plugin.getLogger().info("[EndReset] Valid pending end reset found. Resetting shortly...");
+            resetTask = Bukkit.getScheduler().runTaskLater(plugin, this::performReset, 100L);
+        } else {
+            long delayTicks = Math.max(1L, (scheduledResetTime - now) / 50L);
+            plugin.getLogger().info("[EndReset] Valid pending end reset found. Rescheduling in " + (delayTicks / 20) + " seconds.");
+            scheduleResetTask(delayTicks);
+            scheduleAnnouncements();
         }
     }
 
@@ -93,8 +138,8 @@ public class EndResetManager implements Listener {
     /**
      * ドラゴンがいない場合、または討伐済みの場合にリセットを開始する
      */
-    private void checkDragonAbsence() {
-        if (isResetting || scheduledResetTime > 0) {
+    void checkDragonAbsence() {
+        if (isResetting) {
             return;
         }
 
@@ -103,63 +148,39 @@ public class EndResetManager implements Listener {
             return;
         }
 
-        // リセット直後（例えば5分以内）はチェックをスキップして、ドラゴンのスポーン・初期化時間を確保する
-        long lastResetTime = plugin.getConfig().getLong("end.lastResetTime", 0);
-        long now = System.currentTimeMillis();
-        if (lastResetTime > 0 && (now - lastResetTime < 5 * 60 * 1000L)) {
+        if (scheduledResetTime > 0) {
+            if (resetCause == ResetCause.DRAGON_DEATH && hasLiveDragon(endWorld)) {
+                cancelAutomaticReset("a live Ender Dragon was found during periodic validation");
+            }
             return;
         }
 
+        if (!hasLiveDragon(endWorld) && !isDragonRespawning(endWorld)) {
+            // チャンク未ロードを「討伐」と誤認しないよう、不在推測だけではリセットしない。
+            plugin.getLogger().warning("[EndReset] No loaded Ender Dragon was found, but no reset will be scheduled without a death event.");
+        }
+    }
+
+    boolean hasLiveDragon(World endWorld) {
+        if (endWorld == null) {
+            return false;
+        }
+        for (EnderDragon dragon : endWorld.getEntitiesByClass(EnderDragon.class)) {
+            if (dragon != null && dragon.isValid() && !dragon.isDead()) {
+                return true;
+            }
+        }
         org.bukkit.boss.DragonBattle battle = endWorld.getEnderDragonBattle();
-        boolean dragonKilled = false;
-
-        if (battle != null) {
-            // DragonBattle が存在する場合: 初回ドラゴンが討伐済みかどうか確認、または生存ドラゴン不在を確認
-            boolean hasLiveDragon = !endWorld.getEntitiesByClass(EnderDragon.class).isEmpty() || battle.getEnderDragon() != null;
-            boolean isRespawning = battle.getRespawnPhase() != org.bukkit.boss.DragonBattle.RespawnPhase.NONE;
-
-            if (battle.hasBeenPreviouslyKilled()) {
-                if (!hasLiveDragon && !isRespawning) {
-                    dragonKilled = true;
-                }
-            } else if (!hasLiveDragon && !isRespawning) {
-                // 初回状態でもドラゴンが存在せず復活中でもない場合（未スポーン・異常状態）
-                dragonKilled = true;
-            }
-        } else {
-            // DragonBattle が取得できない場合、ロード済みエンティティにドラゴンがいないか確認
-            boolean hasLiveDragon = !endWorld.getEntitiesByClass(EnderDragon.class).isEmpty();
-            if (!hasLiveDragon) {
-                dragonKilled = true;
-            }
+        if (battle == null) {
+            return false;
         }
+        EnderDragon battleDragon = battle.getEnderDragon();
+        return battleDragon != null && battleDragon.isValid() && !battleDragon.isDead();
+    }
 
-        if (dragonKilled) {
-            // 討伐済みでドラゴンが不在であることを確認
-            // 前回リセット時刻から既に resetDelayMinutes 以上経過している場合（または lastResetTime が未記録の場合）は即リセット
-            this.resetDelayMinutes = plugin.getConfig().getInt("end.resetDelayMinutes", 120);
-            long delayMillis = resetDelayMinutes * 60 * 1000L;
-
-            if (lastResetTime == 0 || (now - lastResetTime >= delayMillis)) {
-                plugin.getLogger().info("[EndReset] Dragon was previously defeated and delay timer has expired. Initiating End recreation in 10 seconds...");
-                Bukkit.broadcastMessage(ChatColor.RED + "[EndReset] " + ChatColor.YELLOW + "エンドワールドが討伐完了状態のため、10秒後に再生成を開始します。");
-                if (plugin.getDiscordWebhookClient() != null) {
-                    plugin.getDiscordWebhookClient().send("🔄 **[End Reset]** エンドワールドが討伐完了状態であることを検知しました。10秒後に再生成を開始します。");
-                }
-                Bukkit.getScheduler().runTaskLater(plugin, this::performReset, 200L); // 10秒後に即リセット
-            } else {
-                // まだリセット猶予時間内であれば、残りの時間でカウントダウンを開始
-                long remainingMillis = (lastResetTime + delayMillis) - now;
-                long delayTicks = remainingMillis / 50;
-                this.scheduledResetTime = now + remainingMillis;
-                plugin.getConfig().set("end.scheduledResetTime", scheduledResetTime);
-                plugin.saveConfig();
-
-                plugin.getLogger().info("[EndReset] Dragon absence detected. Scheduling reset in " + (remainingMillis / 1000 / 60) + " minutes.");
-                scheduleResetTask(delayTicks);
-                scheduleAnnouncements();
-            }
-        }
+    private boolean isDragonRespawning(World endWorld) {
+        org.bukkit.boss.DragonBattle battle = endWorld.getEnderDragonBattle();
+        return battle != null && battle.getRespawnPhase() != org.bukkit.boss.DragonBattle.RespawnPhase.NONE;
     }
 
     /**
@@ -171,15 +192,42 @@ public class EndResetManager implements Listener {
             World endWorld = getEndWorld();
             String endName = endWorld != null ? endWorld.getName() : getEndWorldName();
             if (event.getEntity().getWorld().getName().equals(endName)) {
-                startResetCountdown("エンダードラゴンが討伐されました！");
+                World deathWorld = event.getEntity().getWorld();
+                // 死亡した個体がエンティティ一覧から除かれた次のtickで、他の生存個体を確認する。
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (hasLiveDragon(deathWorld)) {
+                        plugin.getLogger().warning("[EndReset] A dragon died, but another live dragon remains. Reset was not scheduled.");
+                        return;
+                    }
+                    startAutomaticResetCountdown("エンダードラゴンが討伐されました！");
+                });
             }
         }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onDragonSpawn(CreatureSpawnEvent event) {
+        if (!(event.getEntity() instanceof EnderDragon dragon)
+                || dragon.getWorld().getEnvironment() != World.Environment.THE_END
+                || isResetting
+                || resetCause != ResetCause.DRAGON_DEATH) {
+            return;
+        }
+        cancelAutomaticReset("a new Ender Dragon spawned");
     }
 
     /**
      * リセットカウントダウンを開始
      */
     public void startResetCountdown(String reason) {
+        startResetCountdown(reason, ResetCause.MANUAL);
+    }
+
+    void startAutomaticResetCountdown(String reason) {
+        startResetCountdown(reason, ResetCause.DRAGON_DEATH);
+    }
+
+    private void startResetCountdown(String reason, ResetCause cause) {
         if (scheduledResetTime > 0) {
             return; // 既にスケジュール済み
         }
@@ -187,9 +235,11 @@ public class EndResetManager implements Listener {
         this.resetDelayMinutes = plugin.getConfig().getInt("end.resetDelayMinutes", 120);
         long delayTicks = resetDelayMinutes * 60 * 20L;
         this.scheduledResetTime = System.currentTimeMillis() + (resetDelayMinutes * 60 * 1000L);
+        this.resetCause = cause;
 
         // 設定保存
         plugin.getConfig().set("end.scheduledResetTime", scheduledResetTime);
+        plugin.getConfig().set("end.scheduledResetCause", resetCause.name());
         plugin.saveConfig();
 
         // リセットタスクのスケジュール
@@ -259,6 +309,7 @@ public class EndResetManager implements Listener {
             resetTask.cancel();
             resetTask = null;
         }
+        resetCause = ResetCause.MANUAL;
         performReset();
     }
 
@@ -268,6 +319,18 @@ public class EndResetManager implements Listener {
     private void performReset() {
         if (isResetting) {
             plugin.getLogger().warning("[EndReset] Reset is already in progress.");
+            return;
+        }
+
+        if (resetCause == ResetCause.NONE) {
+            plugin.getLogger().warning("[EndReset] Reset aborted because its cause is missing or untrusted.");
+            clearResetSchedule();
+            return;
+        }
+
+        World validationWorld = getEndWorld();
+        if (resetCause == ResetCause.DRAGON_DEATH && hasLiveDragon(validationWorld)) {
+            cancelAutomaticReset("a live Ender Dragon was found immediately before reset execution");
             return;
         }
 
@@ -428,7 +491,9 @@ public class EndResetManager implements Listener {
 
         // リセット成功時にスケジュール情報をクリア＆完了時刻を記録
         scheduledResetTime = 0;
+        resetCause = ResetCause.NONE;
         plugin.getConfig().set("end.scheduledResetTime", 0);
+        plugin.getConfig().set("end.scheduledResetCause", ResetCause.NONE.name());
         plugin.getConfig().set("end.lastResetTime", System.currentTimeMillis());
         plugin.saveConfig();
 
@@ -533,14 +598,25 @@ public class EndResetManager implements Listener {
     }
 
     public void cancelReset() {
+        clearResetSchedule();
+        isResetting = false;
+    }
+
+    private void cancelAutomaticReset(String reason) {
+        plugin.getLogger().warning("[EndReset] Automatic reset cancelled because " + reason + ".");
+        clearResetSchedule();
+    }
+
+    private void clearResetSchedule() {
         if (resetTask != null) {
             resetTask.cancel();
             resetTask = null;
         }
         scheduledResetTime = 0;
+        resetCause = ResetCause.NONE;
         plugin.getConfig().set("end.scheduledResetTime", 0);
+        plugin.getConfig().set("end.scheduledResetCause", ResetCause.NONE.name());
         plugin.saveConfig();
-        isResetting = false;
     }
 
     /**

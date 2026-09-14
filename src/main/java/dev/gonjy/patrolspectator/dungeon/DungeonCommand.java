@@ -99,6 +99,25 @@ public class DungeonCommand implements CommandExecutor, TabCompleter {
                 break;
             }
 
+            case "reset": {
+                if (!manager.isEnabled()) {
+                    sender.sendMessage(ChatColor.RED + "エラー: 迷宮が有効化されていません。");
+                    return true;
+                }
+                dev.gonjy.patrolspectator.PatrolSpectatorPlugin resetPlugin = manager.getPlugin();
+                if (resetPlugin == null || resetPlugin.getDungeonBuilder() == null) {
+                    sender.sendMessage(ChatColor.RED + "システムエラー: DungeonBuilderが初期化されていません。");
+                    return true;
+                }
+                manager.setBuilt(false);
+                if (resetPlugin.getDungeonBuilder().buildB1()) {
+                    sender.sendMessage(ChatColor.YELLOW + "迷宮の安全な再構築を開始しました。");
+                } else {
+                    sender.sendMessage(ChatColor.RED + "迷宮は既に再構築中です。");
+                }
+                break;
+            }
+
             case "tp":
             case "entrance": {
                 if (!(sender instanceof Player)) {
@@ -156,6 +175,7 @@ public class DungeonCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage("§a/dungeon setcenter     §7- 現在地を迷宮の中心に設定");
         sender.sendMessage("§a/dungeon scan          §7- 範囲内の建造物チェック");
         sender.sendMessage("§a/dungeon build b1      §7- B1階層の生成 (分割設置)");
+        sender.sendMessage("§a/dungeon reset         §7- 攻略状況・敵・宝箱を初期化して再構築");
         sender.sendMessage("§a/dungeon enable        §7- 迷宮の有効化");
         sender.sendMessage("§a/dungeon disable       §7- 迷宮の無効化");
     }
@@ -163,7 +183,7 @@ public class DungeonCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("tp", "entrance", "build_entrance", "setcenter", "enable", "disable", "scan", "build")
+            return Arrays.asList("tp", "entrance", "build_entrance", "setcenter", "enable", "disable", "scan", "build", "reset")
                     .stream().filter(s -> s.startsWith(args[0].toLowerCase())).collect(Collectors.toList());
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("build")) {

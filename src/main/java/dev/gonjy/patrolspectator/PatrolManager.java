@@ -202,11 +202,8 @@ public class PatrolManager implements org.bukkit.event.Listener {
         }
 
         // 死の迷宮追加
-        boolean hasDungeon = touristLocations.stream()
-                .anyMatch(l -> "auto_dungeon_entrance".equals(l.id));
-        if (!hasDungeon) {
-            addDungeonLocations(plugin.getDungeonManager());
-        }
+        // 設定に残った古い座標も置き換え、起動ごとに現在の迷宮入口を確実に登録する。
+        addDungeonLocations(plugin.getDungeonManager());
     }
 
     /**
