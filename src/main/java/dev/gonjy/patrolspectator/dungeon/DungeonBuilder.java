@@ -10,10 +10,12 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DungeonBuilder {
     private final PatrolSpectatorPlugin plugin;
     private final DungeonManager manager;
+    private final AtomicBoolean building = new AtomicBoolean(false);
 
     public DungeonBuilder(PatrolSpectatorPlugin plugin, DungeonManager manager) {
         this.plugin = plugin;
@@ -23,10 +25,17 @@ public class DungeonBuilder {
     /**
      * B1階層の生成を開始 (分割設置)
      */
-    public void buildB1() {
+    public boolean buildB1() {
+        if (!building.compareAndSet(false, true)) {
+            plugin.getLogger().warning("[Dungeon] 迷宮は既に再構築中です。重複した生成要求を無視します。");
+            return false;
+        }
+
         Location center = manager.getCenter();
-        if (center == null)
-            return;
+        if (center == null || center.getWorld() == null) {
+            building.set(false);
+            return false;
+        }
 
         cleanupEntities(center);
 
@@ -96,6 +105,7 @@ public class DungeonBuilder {
         };
 
         calcTask.runTaskAsynchronously(plugin);
+        return true;
     }
 
     private void digMaze(World world, int startX, int baseY, int startZ, int size) {
@@ -109,13 +119,13 @@ public class DungeonBuilder {
         org.bukkit.scheduler.BukkitRunnable digCalcTask = new org.bukkit.scheduler.BukkitRunnable() {
             @Override
             public void run() {
-                // 簡易的なグリッド通路 (10マスおき)
+                // 簡易的なグリッド通路 (10マスおき)。大型Mobが窒息しない3ブロック高。
                 for (int i = 10; i < finalSize; i += 10) {
                     for (int j = 1; j < finalSize; j++) {
-                        airLocs.add(new Location(finalWorld, finalStartX + i, finalBaseY, finalStartZ + j));
-                        airLocs.add(new Location(finalWorld, finalStartX + i, finalBaseY + 1, finalStartZ + j));
-                        airLocs.add(new Location(finalWorld, finalStartX + j, finalBaseY, finalStartZ + i));
-                        airLocs.add(new Location(finalWorld, finalStartX + j, finalBaseY + 1, finalStartZ + i));
+                        for (int h = 0; h < 3; h++) {
+                            airLocs.add(new Location(finalWorld, finalStartX + i, finalBaseY + h, finalStartZ + j));
+                            airLocs.add(new Location(finalWorld, finalStartX + j, finalBaseY + h, finalStartZ + i));
+                        }
                     }
                 }
                 // 部屋の配置 (適当な数カ所)
@@ -157,6 +167,7 @@ public class DungeonBuilder {
 
                             // 生成完了フラグを保存（次回起動時の重複生成を防ぐ）
                             manager.setBuilt(true);
+                            building.set(false);
                             plugin.getLogger().info("[Dungeon] 迷宮の全生成が完了しました。built=true を保存しました。");
                         });
                     }
@@ -165,6 +176,10 @@ public class DungeonBuilder {
         };
 
         digCalcTask.runTaskAsynchronously(plugin);
+    }
+
+    public boolean isBuilding() {
+        return building.get();
     }
 
     /**
@@ -248,7 +263,7 @@ public class DungeonBuilder {
         );
         plugin.getPatrolManager().addTouristLocation(entranceTourLoc);
 
-        plugin.getLogger().info("[Dungeon] 北側正面入口門（アーチ・看板・壁くり抜き）を生成しました。 (X: " + centerX + ", Z: " + entranceZ + ")");
+        plugin.getLogger().info("[Dungeon] 北側正面入口門（アーチ・看板・壁くり抜き）を生成しました。");
     }
 
     private void generateWaterVeins(World world, int startX, int baseY, int startZ) {

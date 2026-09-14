@@ -1,6 +1,7 @@
 package dev.gonjy.patrolspectator;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -172,7 +173,16 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
                 dungeonBuilder.buildB1();
             }, 100L); // 起動直後の負荷を避けるため5秒待機
         } else if (dungeonManager.isEnabled()) {
-            getLogger().info("[Dungeon] 迷宮は生成済みです。スキップします。");
+            // built=true の旧迷宮にも入口が存在するとは限らないため、小範囲の入口だけ毎回補修する。
+            getServer().getScheduler().runTaskLater(this, () -> {
+                Location center = dungeonManager.getCenter();
+                if (center != null && center.getWorld() != null) {
+                    dungeonBuilder.buildEntranceGate(center.getWorld(), center.getBlockX() - 30,
+                            center.getBlockY(), center.getBlockZ() - 30);
+                    patrolManager.addDungeonLocations(dungeonManager);
+                    getLogger().info("[Dungeon] 生成済み迷宮の正面入口を確認・補修しました。");
+                }
+            }, 100L);
         }
 
         // MessageUtils初期化
