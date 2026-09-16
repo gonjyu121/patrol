@@ -20,7 +20,8 @@ public class DungeonManager {
     private Location center;
     private boolean enabled = false;
     private boolean built = false;
-    private final int DUNGEON_SIZE = 60;
+    static final int DUNGEON_SIZE = 60;
+    static final int FLOOR_HEIGHT = 6;
 
     public DungeonManager(PatrolSpectatorPlugin plugin) {
         this.plugin = plugin;
@@ -87,11 +88,14 @@ public class DungeonManager {
     }
 
     public boolean isBuilt() {
-        return built;
+        return built && config.getInt("floors.builtCount", 1) >= getFloorCount();
     }
 
     public void setBuilt(boolean built) {
         this.built = built;
+        if (built) {
+            config.set("floors.builtCount", getFloorCount());
+        }
         saveConfig();
     }
 
@@ -107,7 +111,36 @@ public class DungeonManager {
         double half = DUNGEON_SIZE / 2.0;
         return loc.getX() >= center.getX() - half && loc.getX() <= center.getX() + half &&
                 loc.getZ() >= center.getZ() - half && loc.getZ() <= center.getZ() + half &&
-                loc.getY() >= center.getY() - 10 && loc.getY() <= center.getY() + 10; // 高さ範囲は暫定
+                loc.getY() >= getDeepestBaseY() - 1 && loc.getY() <= center.getY() + 4;
+    }
+
+    public int getFloorCount() {
+        if (center == null || center.getWorld() == null)
+            return 1;
+        int configuredLimit = Math.max(1, config.getInt("floors.max", 100));
+        return calculateFloorCount(center.getBlockY(), center.getWorld().getMinHeight(), configuredLimit);
+    }
+
+    static int calculateFloorCount(int baseY, int minHeight, int configuredLimit) {
+        int safetyBottomY = minHeight + 2;
+        int possible = Math.floorDiv(baseY - safetyBottomY, FLOOR_HEIGHT) + 1;
+        return Math.max(1, Math.min(possible, Math.max(1, configuredLimit)));
+    }
+
+    public int getFloorBaseY(int floor) {
+        int normalized = Math.max(1, Math.min(floor, getFloorCount()));
+        return center.getBlockY() - ((normalized - 1) * FLOOR_HEIGHT);
+    }
+
+    public int getFloor(Location location) {
+        if (!isInDungeon(location))
+            return 0;
+        int floor = Math.floorDiv(center.getBlockY() - location.getBlockY() + 1, FLOOR_HEIGHT) + 1;
+        return Math.max(1, Math.min(floor, getFloorCount()));
+    }
+
+    private int getDeepestBaseY() {
+        return getFloorBaseY(getFloorCount());
     }
 
     /**
@@ -122,6 +155,8 @@ public class DungeonManager {
         int maxX = center.getBlockX() + (DUNGEON_SIZE / 2);
         int minZ = center.getBlockZ() - (DUNGEON_SIZE / 2);
         int maxZ = center.getBlockZ() + (DUNGEON_SIZE / 2);
+        // 同期スキャンで全深度を走査するとサーバーを停止させるため、入口階のみ確認する。
+        // 下層は現在の迷宮と同じXZ範囲内へ分割生成する。
         int minY = center.getBlockY() - 2;
         int maxY = center.getBlockY() + 5;
 

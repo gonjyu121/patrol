@@ -127,3 +127,12 @@
 - Next session entrypoint: Read this file (`DEVELOPMENT_LOG.md`) and run `git status -s` first.
 - Avoid large unconstrained `git diff` or full directory scans unless specific details are needed.
 
+## Current Status (2026-09-17)
+- **Version**: 1.9.111
+- **Branch**: `feature/dungeon-multifloor-v1.9.111`
+- **Issue**: 現在の死の迷宮の真下へ可能な範囲で地下階層を追加
+- **Changes**:
+    - ワールド最低高度と中心Yから安全な最大階数を自動計算。
+    - 全階をtick分割生成し、各階に迷路・宝箱・罠・ボス部屋・階層ボスを配置。
+    - ボス討伐で次階の梯子を解放し、最高到達階ランキングを更新。
+    - 最下層攻略時のみ全体を再構築し、旧B1構造は起動時に自動移行。

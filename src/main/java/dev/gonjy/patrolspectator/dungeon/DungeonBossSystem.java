@@ -17,6 +17,10 @@ public class DungeonBossSystem {
      * 指定された場所にランダムなボスをスポーンさせる
      */
     public void spawnBoss(Location loc) {
+        spawnBoss(loc, 1);
+    }
+
+    public void spawnBoss(Location loc, int floor) {
         int choice = random.nextInt(3);
         LivingEntity boss;
         String bossName;
@@ -25,31 +29,34 @@ public class DungeonBossSystem {
             case 0:
                 boss = (LivingEntity) loc.getWorld().spawnEntity(loc, EntityType.PIGLIN_BRUTE);
                 bossName = ChatColor.GOLD + "迷宮の狂守護者 (Piglin Brute)";
-                setupBossAttributes(boss, bossName, 100.0, 10.0);
+                setupBossAttributes(boss, bossName, 100.0 + floor * 8.0, 10.0 + floor * 0.5, floor);
                 break;
             case 1:
                 boss = (LivingEntity) loc.getWorld().spawnEntity(loc, EntityType.WARDEN);
                 bossName = ChatColor.DARK_AQUA + "深淵の這い寄る影 (Warden)";
-                setupBossAttributes(boss, bossName, 500.0, 30.0);
+                setupBossAttributes(boss, bossName, 500.0 + floor * 12.0, 30.0 + floor * 0.5, floor);
                 break;
             default:
                 boss = (LivingEntity) loc.getWorld().spawnEntity(loc, EntityType.WITHER);
                 bossName = ChatColor.GRAY + "死の宣告者 (Wither)";
-                setupBossAttributes(boss, bossName, 300.0, 15.0);
+                setupBossAttributes(boss, bossName, 300.0 + floor * 10.0, 15.0 + floor * 0.5, floor);
                 break;
         }
 
         loc.getWorld().strikeLightningEffect(loc);
     }
 
-    private void setupBossAttributes(LivingEntity boss, String name, double health, double damage) {
-        boss.setCustomName(name);
+    private void setupBossAttributes(LivingEntity boss, String name, double health, double damage, int floor) {
+        boss.setCustomName(ChatColor.DARK_RED + "地下" + floor + "階 " + name);
         boss.setCustomNameVisible(true);
 
         // ボス識別タグの付与
         org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(
                 org.bukkit.plugin.java.JavaPlugin.getProvidingPlugin(DungeonBossSystem.class), "is_dungeon_boss");
         boss.getPersistentDataContainer().set(key, org.bukkit.persistence.PersistentDataType.BYTE, (byte) 1);
+        org.bukkit.NamespacedKey floorKey = new org.bukkit.NamespacedKey(
+                org.bukkit.plugin.java.JavaPlugin.getProvidingPlugin(DungeonBossSystem.class), "dungeon_floor");
+        boss.getPersistentDataContainer().set(floorKey, org.bukkit.persistence.PersistentDataType.INTEGER, floor);
 
         org.bukkit.attribute.AttributeInstance healthAttr = getSafeAttribute(boss, new String[]{"MAX_HEALTH", "GENERIC_MAX_HEALTH"});
         if (healthAttr != null) {

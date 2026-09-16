@@ -27,9 +27,7 @@ public class DungeonBuilder {
         this.manager = manager;
     }
 
-    /**
-     * B1階層の生成を開始 (分割設置)
-     */
+    /** 現在地の最低高度まで、収まる階層をすべて分割生成します。 */
     public boolean buildB1() {
         if (!building.compareAndSet(false, true)) {
             plugin.getLogger().warning("[Dungeon] 迷宮は既に再構築中です。重複した生成要求を無視します。");
@@ -50,6 +48,7 @@ public class DungeonBuilder {
         int startX = center.getBlockX() - half;
         int startZ = center.getBlockZ() - half;
         int baseY = center.getBlockY();
+        int floorCount = manager.getFloorCount();
 
         List<Location> wallLocs = new ArrayList<>();
 
@@ -62,35 +61,19 @@ public class DungeonBuilder {
         org.bukkit.scheduler.BukkitRunnable calcTask = new org.bukkit.scheduler.BukkitRunnable() {
             @Override
             public void run() {
-                // 床 (baseY-1)
-                for (int x = 0; x <= finalSize; x++) {
-                    for (int z = 0; z <= finalSize; z++) {
-                        wallLocs.add(new Location(finalWorld, finalStartX + x, finalBaseY - 1, finalStartZ + z));
+                for (int floor = 1; floor <= floorCount; floor++) {
+                    int floorY = finalBaseY - ((floor - 1) * DungeonManager.FLOOR_HEIGHT);
+                    for (int x = 0; x <= finalSize; x++) {
+                        for (int z = 0; z <= finalSize; z++) {
+                            wallLocs.add(new Location(finalWorld, finalStartX + x, floorY - 1, finalStartZ + z));
+                            wallLocs.add(new Location(finalWorld, finalStartX + x, floorY + 4, finalStartZ + z));
+                        }
                     }
-                }
-                // 天井 (baseY+4)
-                for (int x = 0; x <= finalSize; x++) {
-                    for (int z = 0; z <= finalSize; z++) {
-                        wallLocs.add(new Location(finalWorld, finalStartX + x, finalBaseY + 4, finalStartZ + z));
-                    }
-                }
-                // 外壁
-                for (int y = 0; y < 4; y++) {
-                    for (int i = 0; i <= finalSize; i++) {
-                        wallLocs.add(new Location(finalWorld, finalStartX + i, finalBaseY + y, finalStartZ)); // 北
-                        wallLocs.add(
-                                new Location(finalWorld, finalStartX + i, finalBaseY + y, finalStartZ + finalSize)); // 南
-                        wallLocs.add(new Location(finalWorld, finalStartX, finalBaseY + y, finalStartZ + i)); // 西
-                        wallLocs.add(
-                                new Location(finalWorld, finalStartX + finalSize, finalBaseY + y, finalStartZ + i)); // 東
-                    }
-                }
-
-                // 内部を一度すべて石で埋める
-                for (int y = 0; y < 4; y++) {
-                    for (int x = 1; x < finalSize; x++) {
-                        for (int z = 1; z < finalSize; z++) {
-                            wallLocs.add(new Location(finalWorld, finalStartX + x, finalBaseY + y, finalStartZ + z));
+                    for (int y = 0; y < 4; y++) {
+                        for (int x = 0; x <= finalSize; x++) {
+                            for (int z = 0; z <= finalSize; z++) {
+                                wallLocs.add(new Location(finalWorld, finalStartX + x, floorY + y, finalStartZ + z));
+                            }
                         }
                     }
                 }
@@ -100,9 +83,9 @@ public class DungeonBuilder {
                     @Override
                     public void run() {
                         // 分割設置タスクの開始 (1tick 500ブロック)
-                        incrementalFill(wallLocs, Material.BEDROCK, "B1 外殻・充填生成", () -> {
+                        incrementalFill(wallLocs, Material.BEDROCK, floorCount + "階層 外殻・充填生成", () -> {
                             // 岩盤設置が終わったら通路と部屋を掘る
-                            digMaze(finalWorld, finalStartX, finalBaseY, finalStartZ, finalSize);
+                            digMaze(finalWorld, finalStartX, finalBaseY, finalStartZ, finalSize, floorCount);
                         });
                     }
                 }.runTask(plugin);
@@ -113,7 +96,7 @@ public class DungeonBuilder {
         return true;
     }
 
-    private void digMaze(World world, int startX, int baseY, int startZ, int size) {
+    private void digMaze(World world, int startX, int baseY, int startZ, int size, int floorCount) {
         List<Location> airLocs = new ArrayList<>();
         final World finalWorld = world;
         final int finalStartX = startX;
@@ -124,43 +107,52 @@ public class DungeonBuilder {
         org.bukkit.scheduler.BukkitRunnable digCalcTask = new org.bukkit.scheduler.BukkitRunnable() {
             @Override
             public void run() {
-                // 簡易的なグリッド通路 (10マスおき)。大型Mobが窒息しない3ブロック高。
-                for (int i = 10; i < finalSize; i += 10) {
-                    for (int j = 1; j < finalSize; j++) {
-                        for (int h = 0; h < 3; h++) {
-                            airLocs.add(new Location(finalWorld, finalStartX + i, finalBaseY + h, finalStartZ + j));
-                            airLocs.add(new Location(finalWorld, finalStartX + j, finalBaseY + h, finalStartZ + i));
+                for (int floor = 1; floor <= floorCount; floor++) {
+                    int floorY = finalBaseY - ((floor - 1) * DungeonManager.FLOOR_HEIGHT);
+                    for (int i = 10; i < finalSize; i += 10) {
+                        for (int j = 1; j < finalSize; j++) {
+                            for (int h = 0; h < 3; h++) {
+                                airLocs.add(new Location(finalWorld, finalStartX + i, floorY + h, finalStartZ + j));
+                                airLocs.add(new Location(finalWorld, finalStartX + j, floorY + h, finalStartZ + i));
+                            }
                         }
                     }
+                    addRoom(airLocs, finalWorld, finalStartX + 5, floorY, finalStartZ + 5, 5, 5);
+                    addRoom(airLocs, finalWorld, finalStartX + 45, floorY, finalStartZ + 10, 8, 8);
+                    addRoom(airLocs, finalWorld, finalStartX + 10, floorY, finalStartZ + 40, 6, 6);
+                    addRoom(airLocs, finalWorld, finalStartX + 35, floorY, finalStartZ + 40, 10, 10);
+                    addRoom(airLocs, finalWorld, finalStartX + 25, floorY, finalStartZ + 25, 12, 12);
+                    if (floor < floorCount) {
+                        addDescentShaft(airLocs, finalWorld, finalStartX + 10, floorY, finalStartZ + 10);
+                    }
                 }
-                // 部屋の配置 (適当な数カ所)
-                addRoom(airLocs, finalWorld, finalStartX + 5, finalBaseY, finalStartZ + 5, 5, 5);
-                addRoom(airLocs, finalWorld, finalStartX + 45, finalBaseY, finalStartZ + 10, 8, 8);
-                addRoom(airLocs, finalWorld, finalStartX + 10, finalBaseY, finalStartZ + 40, 6, 6);
-                addRoom(airLocs, finalWorld, finalStartX + 35, finalBaseY, finalStartZ + 40, 10, 10);
-
-                // 最下層ボスルーム (中心付近)
-                addRoom(airLocs, finalWorld, finalStartX + 25, finalBaseY, finalStartZ + 25, 12, 12);
 
                 new org.bukkit.scheduler.BukkitRunnable() {
                     @Override
                     public void run() {
-                        incrementalFill(airLocs, Material.AIR, "B1 通路・部屋掘削", () -> {
-                            // 地下水脈の生成
-                            generateWaterVeins(finalWorld, finalStartX, finalBaseY, finalStartZ);
-                            // 部屋の中に宝箱を置く
-                            placeChests(finalWorld, finalStartX, finalBaseY, finalStartZ);
-                            // ボスの配置 (ボスルーム中心)
-                            plugin.getDungeonBossSystem().spawnBoss(
-                                    new Location(finalWorld, finalStartX + 31, finalBaseY + 1, finalStartZ + 31));
+                        incrementalFill(airLocs, Material.AIR, floorCount + "階層 通路・部屋掘削", () -> {
+                            for (int floor = 1; floor <= floorCount; floor++) {
+                                int floorY = finalBaseY - ((floor - 1) * DungeonManager.FLOOR_HEIGHT);
+                                generateWaterVeins(finalWorld, finalStartX, floorY, finalStartZ);
+                                placeChests(finalWorld, finalStartX, floorY, finalStartZ);
+                                // 同じチャンクに全階ボスを常駐させない。最初はB1のみ生成し、以降は攻略時に出現させる。
+                                if (floor == 1) {
+                                    plugin.getDungeonBossSystem().spawnBoss(
+                                            new Location(finalWorld, finalStartX + 31, floorY + 1, finalStartZ + 31), floor);
+                                }
+                                if (floor < floorCount) {
+                                    placeDescentLadder(finalWorld, finalStartX + 10, floorY, finalStartZ + 10);
+                                }
+                            }
                             // 入口のくり抜きと門・看板の整備
                             buildEntranceGate(finalWorld, finalStartX, finalBaseY, finalStartZ);
                             
                             // 観光案内へダンジョン最下層を動的に登録
-                            Location bossLoc = new Location(finalWorld, finalStartX + 31, finalBaseY + 1, finalStartZ + 31);
+                            int deepestY = finalBaseY - ((floorCount - 1) * DungeonManager.FLOOR_HEIGHT);
+                            Location bossLoc = new Location(finalWorld, finalStartX + 31, deepestY + 1, finalStartZ + 31);
                             dev.gonjy.patrolspectator.TouristLocation bossTourLoc = new dev.gonjy.patrolspectator.TouristLocation(
                                     "auto_dungeon_boss",
-                                    "§4死の迷宮 - 最下層(B1)",
+                                    "§4死の迷宮 - 最下層(B" + floorCount + ")",
                                     finalWorld.getName(),
                                     bossLoc.getX() - 5.0, bossLoc.getY() + 3.0, bossLoc.getZ() - 5.0,
                                     -45f, 20f,
@@ -173,7 +165,7 @@ public class DungeonBuilder {
                             // 生成完了フラグを保存（次回起動時の重複生成を防ぐ）
                             manager.setBuilt(true);
                             building.set(false);
-                            plugin.getLogger().info("[Dungeon] 迷宮の全生成が完了しました。built=true を保存しました。");
+                            plugin.getLogger().info("[Dungeon] B1〜B" + floorCount + " の生成が完了しました。built=true を保存しました。");
                         });
                     }
                 }.runTask(plugin);
@@ -181,6 +173,47 @@ public class DungeonBuilder {
         };
 
         digCalcTask.runTaskAsynchronously(plugin);
+    }
+
+    private void addDescentShaft(List<Location> airLocs, World world, int x, int upperBaseY, int z) {
+        int lowerBaseY = upperBaseY - DungeonManager.FLOOR_HEIGHT;
+        for (int y = lowerBaseY; y <= upperBaseY + 2; y++) {
+            airLocs.add(new Location(world, x, y, z));
+            airLocs.add(new Location(world, x, y, z + 1));
+        }
+    }
+
+    private void placeDescentLadder(World world, int x, int upperBaseY, int z) {
+        int lowerBaseY = upperBaseY - DungeonManager.FLOOR_HEIGHT;
+        for (int y = lowerBaseY; y <= upperBaseY; y++) {
+            org.bukkit.block.Block support = world.getBlockAt(x - 1, y, z);
+            support.setType(Material.BEDROCK, false);
+            org.bukkit.block.Block ladder = world.getBlockAt(x, y, z);
+            ladder.setType(Material.LADDER, false);
+            if (ladder.getBlockData() instanceof org.bukkit.block.data.type.Ladder data) {
+                data.setFacing(org.bukkit.block.BlockFace.EAST);
+                ladder.setBlockData(data, false);
+            }
+        }
+        // 階層ボスを倒すまでは入口を不可視壁で封鎖する。
+        world.getBlockAt(x, upperBaseY, z).setType(Material.BARRIER, false);
+        world.getBlockAt(x, upperBaseY, z + 1).setType(Material.BARRIER, false);
+    }
+
+    public void unlockNextFloor(int clearedFloor) {
+        Location center = manager.getCenter();
+        if (center == null || center.getWorld() == null || clearedFloor >= manager.getFloorCount())
+            return;
+        int x = center.getBlockX() - 20;
+        int z = center.getBlockZ() - 20;
+        int y = manager.getFloorBaseY(clearedFloor);
+        org.bukkit.block.Block ladder = center.getWorld().getBlockAt(x, y, z);
+        ladder.setType(Material.LADDER, false);
+        if (ladder.getBlockData() instanceof org.bukkit.block.data.type.Ladder data) {
+            data.setFacing(org.bukkit.block.BlockFace.EAST);
+            ladder.setBlockData(data, false);
+        }
+        center.getWorld().strikeLightningEffect(new Location(center.getWorld(), x, y, z));
     }
 
     public boolean isBuilding() {
@@ -385,7 +418,8 @@ public class DungeonBuilder {
 
     private void cleanupEntities(Location center) {
         int half = 30; // DUNGEON_SIZE / 2
-        center.getWorld().getNearbyEntities(center, half, 10, half).forEach(entity -> {
+        double downwardRange = Math.max(10, (manager.getFloorCount() - 1) * DungeonManager.FLOOR_HEIGHT + 5);
+        center.getWorld().getNearbyEntities(center, half, downwardRange, half).forEach(entity -> {
             if (!(entity instanceof org.bukkit.entity.Player)) {
                 entity.remove();
             }

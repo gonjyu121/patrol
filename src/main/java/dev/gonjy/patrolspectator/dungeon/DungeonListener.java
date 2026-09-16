@@ -82,8 +82,7 @@ public class DungeonListener implements Listener {
         Location location = player.getLocation();
         if (center == null || !manager.isInDungeon(location))
             return false;
-        return location.getY() >= center.getBlockY() - 1
-                && location.getY() <= center.getBlockY() + 3;
+        return manager.getFloor(location) > 0;
     }
 
     static boolean shouldScheduleEmptyReset(boolean wasOccupied, boolean occupied, boolean resetPending) {
@@ -182,8 +181,9 @@ public class DungeonListener implements Listener {
 
         // 早期リターン: 迷宮内でも外でもない（遠い）なら無視
         if (loc.getWorld().equals(manager.getCenter().getWorld())) {
-            double distSq = loc.distanceSquared(manager.getCenter());
-            if (distSq > 50 * 50)
+            double dxFar = loc.getX() - manager.getCenter().getX();
+            double dzFar = loc.getZ() - manager.getCenter().getZ();
+            if ((dxFar * dxFar) + (dzFar * dzFar) > 50 * 50)
                 return; // 迷宮のさらに外側
         }
 
@@ -278,23 +278,32 @@ public class DungeonListener implements Listener {
         org.bukkit.entity.LivingEntity entity = event.getEntity();
         org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(plugin, "is_dungeon_boss");
         if (entity.getPersistentDataContainer().has(key, org.bukkit.persistence.PersistentDataType.BYTE)) {
+            org.bukkit.NamespacedKey floorKey = new org.bukkit.NamespacedKey(plugin, "dungeon_floor");
+            int floor = entity.getPersistentDataContainer().getOrDefault(
+                    floorKey, org.bukkit.persistence.PersistentDataType.INTEGER, 1);
+            int deepestFloor = manager.getFloorCount();
+            boolean dungeonCompleted = floor >= deepestFloor;
             cancelEmptyReset();
-            completionResetPending = true;
-            observedCompletionBuild = false;
+            if (dungeonCompleted) {
+                completionResetPending = true;
+                observedCompletionBuild = false;
+            }
             // ボスが倒された！
             Player killer = entity.getKiller();
             String name = (killer != null) ? killer.getName() : "誰か";
 
-            Bukkit.broadcastMessage(ChatColor.GOLD + "======== [ 迷宮踏破 ] ========");
-            Bukkit.broadcastMessage(ChatColor.YELLOW + name + " が迷宮の守護者 " + ChatColor.RED + entity.getCustomName()
+            Bukkit.broadcastMessage(ChatColor.GOLD + "======== [ 地下" + floor + "階 踏破 ] ========");
+            Bukkit.broadcastMessage(ChatColor.YELLOW + name + " が " + ChatColor.RED + entity.getCustomName()
                     + ChatColor.YELLOW + " を討伐しました！");
-            Bukkit.broadcastMessage(ChatColor.AQUA + "迷宮の魔力が霧散し、構造が再構築され始めます…");
+            Bukkit.broadcastMessage(dungeonCompleted
+                    ? ChatColor.AQUA + "最下層が攻略され、迷宮の再構築が始まります…"
+                    : ChatColor.AQUA + "地下" + (floor + 1) + "階への道が開かれました。梯子を探してください。");
             Bukkit.broadcastMessage(ChatColor.GOLD + "==============================");
 
             // 全体Titleアニメーションとファンファーレサウンド
             for (Player p : Bukkit.getOnlinePlayers()) {
-                p.sendTitle(ChatColor.GOLD + "迷宮踏破！",
-                        ChatColor.YELLOW + name + " が " + entity.getCustomName() + " を討伐！",
+                p.sendTitle(ChatColor.GOLD + "地下" + floor + "階 踏破！",
+                        ChatColor.YELLOW + name + " が階層ボスを討伐！",
                         10, 100, 20);
                 p.playSound(p.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
             }
@@ -303,9 +312,20 @@ public class DungeonListener implements Listener {
             entity.getLocation().getWorld().dropItemNaturally(entity.getLocation(),
                     plugin.getDungeonBossSystem().getBossLoot());
 
-            // 迷宮内にいるプレイヤーを退避させる (SAO style extraction)
+            if (!dungeonCompleted) {
+                plugin.getDungeonBuilder().unlockNextFloor(floor);
+                int nextFloor = floor + 1;
+                Location dungeonCenter = manager.getCenter();
+                Location nextBossLocation = new Location(dungeonCenter.getWorld(),
+                        dungeonCenter.getBlockX() + 1, manager.getFloorBaseY(nextFloor) + 1,
+                        dungeonCenter.getBlockZ() + 1);
+                Bukkit.getScheduler().runTaskLater(plugin,
+                        () -> plugin.getDungeonBossSystem().spawnBoss(nextBossLocation, nextFloor), 40L);
+            }
+
+            // 最下層攻略時だけ、迷宮内にいるプレイヤーを退避させる
             Location center = manager.getCenter();
-            if (center != null) {
+            if (dungeonCompleted && center != null) {
                 // 入口付近 (南側に少し離れた位置を暫定出口とする)
                 Location exitLoc = center.clone().add(0, 0, -35); // 入口案内の近く
                 exitLoc.setY(center.getWorld().getHighestBlockYAt(exitLoc) + 1.0);
@@ -322,8 +342,12 @@ public class DungeonListener implements Listener {
 
             // 統計更新 (暫定的にランクポイント付与)
             if (killer != null) {
-                plugin.addEventPointsToRanking(killer.getUniqueId(), 100, "迷宮ボス討伐");
+                stats.updateMaxLevel(killer.getUniqueId(), floor, killer.getName());
+                plugin.addEventPointsToRanking(killer.getUniqueId(), 25 + floor * 5, "迷宮 地下" + floor + "階踏破");
             }
+
+            if (!dungeonCompleted)
+                return;
 
             // 迷宮の再生成 (少しディレイを置く)
             manager.setBuilt(false);
