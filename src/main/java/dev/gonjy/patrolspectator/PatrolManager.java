@@ -218,18 +218,18 @@ public class PatrolManager implements org.bukkit.event.Listener {
         // 既存のダンジョン入口を削除
         touristLocations.removeIf(l -> "auto_dungeon_entrance".equals(l.id));
 
-        // 入口は北側外壁 (Z = center.getZ() - 30)
-        double entranceX = center.getX();
-        double entranceY = center.getY() + 1.0;
-        double entranceZ = center.getZ() - 30.0;
+        // 実際に掘削される進入路内へカメラを置く。目線が天井を突き抜けない高さに固定する。
+        org.bukkit.Location entranceCamera = dev.gonjy.patrolspectator.dungeon.DungeonBuilder
+                .createEntranceCameraLocation(center);
+        if (entranceCamera == null) return;
 
         // 入口を追加 (北側正面を向く)
         touristLocations.add(new TouristLocation(
                 "auto_dungeon_entrance",
                 "§4死の迷宮 - 正面入口",
-                center.getWorld().getName(),
-                entranceX, entranceY + 2.0, entranceZ - 6.0,
-                0f, 15f,
+                entranceCamera.getWorld().getName(),
+                entranceCamera.getX(), entranceCamera.getY(), entranceCamera.getZ(),
+                entranceCamera.getYaw(), entranceCamera.getPitch(),
                 "Death Dungeon North Entrance",
                 "overworld",
                 null, null));
@@ -734,17 +734,6 @@ public class PatrolManager implements org.bukkit.event.Listener {
             if (brute != null && brute.isValid()) {
                 // ピグリンブルートも三人称追跡
                 startCinematicFollow(camera, brute, "§6砦の遺跡", "§eピグリンブルートを観測中...");
-                return staySeconds;
-            }
-        }
-
-        // *** 特殊ロジック: 海底神殿 (エルダーガーディアン) を探す ***
-        if (w.getEnvironment() == World.Environment.NORMAL) {
-            org.bukkit.entity.ElderGuardian elder = w.getEntitiesByClass(org.bukkit.entity.ElderGuardian.class)
-                    .stream().findFirst().orElse(null);
-
-            if (elder != null && elder.isValid()) {
-                startCinematicFollow(camera, elder, "§b海底神殿", "§3エルダーガーディアンを観測中...");
                 return staySeconds;
             }
         }
