@@ -15,6 +15,8 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.Material;
+import org.bukkit.GameMode;
+import org.bukkit.scheduler.BukkitTask;
 
 public class DungeonListener implements Listener {
 
@@ -22,6 +24,11 @@ public class DungeonListener implements Listener {
     private final DungeonManager manager;
     private final DungeonStatsStorage stats;
     private final TrapRunner trapRunner;
+    private final int emptyResetDelaySeconds;
+    private BukkitTask emptyResetTask;
+    private boolean wasOccupied;
+    private boolean completionResetPending;
+    private boolean observedCompletionBuild;
 
     public DungeonListener(PatrolSpectatorPlugin plugin, DungeonManager manager, DungeonStatsStorage stats,
             TrapRunner trapRunner) {
@@ -29,6 +36,87 @@ public class DungeonListener implements Listener {
         this.manager = manager;
         this.stats = stats;
         this.trapRunner = trapRunner;
+        this.emptyResetDelaySeconds = Math.max(10,
+                plugin.getConfig().getInt("dungeon.resetWhenEmptyDelaySeconds", 60));
+        startOccupancyMonitor();
+    }
+
+    private void startOccupancyMonitor() {
+        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            if (!manager.isEnabled()) {
+                cancelEmptyReset();
+                wasOccupied = false;
+                return;
+            }
+
+            if (completionResetPending) {
+                if (plugin.getDungeonBuilder().isBuilding()) {
+                    observedCompletionBuild = true;
+                } else if (observedCompletionBuild) {
+                    completionResetPending = false;
+                    observedCompletionBuild = false;
+                    wasOccupied = false;
+                }
+                return;
+            }
+
+            boolean occupied = hasChallengePlayers();
+            if (occupied) {
+                cancelEmptyReset();
+            } else if (shouldScheduleEmptyReset(wasOccupied, occupied, completionResetPending)) {
+                scheduleEmptyReset();
+            }
+            wasOccupied = occupied;
+        }, 20L, 20L);
+    }
+
+    private boolean hasChallengePlayers() {
+        return Bukkit.getOnlinePlayers().stream()
+                .filter(Player::isOnline)
+                .filter(player -> player.getGameMode() != GameMode.SPECTATOR)
+                .anyMatch(this::isInsidePlayableDungeonFloor);
+    }
+
+    private boolean isInsidePlayableDungeonFloor(Player player) {
+        Location center = manager.getCenter();
+        Location location = player.getLocation();
+        if (center == null || !manager.isInDungeon(location))
+            return false;
+        return location.getY() >= center.getBlockY() - 1
+                && location.getY() <= center.getBlockY() + 3;
+    }
+
+    static boolean shouldScheduleEmptyReset(boolean wasOccupied, boolean occupied, boolean resetPending) {
+        return wasOccupied && !occupied && !resetPending;
+    }
+
+    private void scheduleEmptyReset() {
+        if (emptyResetTask != null || plugin.getDungeonBuilder().isBuilding())
+            return;
+
+        plugin.getLogger().info("[Dungeon] 挑戦者がいなくなったため、" + emptyResetDelaySeconds
+                + "秒後に迷宮を初期化します。");
+        emptyResetTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            emptyResetTask = null;
+            if (hasChallengePlayers() || plugin.getDungeonBuilder().isBuilding())
+                return;
+
+            trapRunner.resetState();
+            manager.setBuilt(false);
+            if (plugin.getDungeonBuilder().buildB1()) {
+                plugin.getLogger().info("[Dungeon] 空室リセットを開始しました。宝箱・敵・ボス・罠状態を復活させます。");
+            } else {
+                plugin.getLogger().warning("[Dungeon] 空室リセットを開始できませんでした。次回起動時に再試行します。");
+            }
+        }, emptyResetDelaySeconds * 20L);
+    }
+
+    private void cancelEmptyReset() {
+        if (emptyResetTask != null) {
+            emptyResetTask.cancel();
+            emptyResetTask = null;
+            plugin.getLogger().info("[Dungeon] 新しい挑戦者が入ったため、空室リセットを取り消しました。");
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -190,6 +278,9 @@ public class DungeonListener implements Listener {
         org.bukkit.entity.LivingEntity entity = event.getEntity();
         org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(plugin, "is_dungeon_boss");
         if (entity.getPersistentDataContainer().has(key, org.bukkit.persistence.PersistentDataType.BYTE)) {
+            cancelEmptyReset();
+            completionResetPending = true;
+            observedCompletionBuild = false;
             // ボスが倒された！
             Player killer = entity.getKiller();
             String name = (killer != null) ? killer.getName() : "誰か";
@@ -237,8 +328,10 @@ public class DungeonListener implements Listener {
             // 迷宮の再生成 (少しディレイを置く)
             manager.setBuilt(false);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                trapRunner.resetState();
                 if (!plugin.getDungeonBuilder().buildB1()) {
                     plugin.getLogger().warning("[Dungeon] 迷宮の自動再構築を開始できませんでした。次回起動時に再試行します。");
+                    completionResetPending = false;
                 }
             }, 200L); // 10秒後
         }

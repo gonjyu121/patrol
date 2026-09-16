@@ -150,6 +150,10 @@ public class TrapRunner {
                 Material.STONE.createBlockData());
     }
 
+    public void resetState() {
+        cooldowns.clear();
+    }
+
     Location findSafeLocation(Location center, Location origin, int radius, int requiredHeadroom) {
         if (center == null || center.getWorld() == null || origin == null
                 || origin.getWorld() == null || !center.getWorld().equals(origin.getWorld())) {

@@ -1,5 +1,15 @@
 # PatrolSpectatorPlugin Development Log
 
+## Current Status (2026-09-17)
+- **Version**: 1.9.110
+- **Branch**: `feature/dungeon-empty-reset-v1.9.110`
+- **Issue**: 死の迷宮が無人になった際の攻略状態自動リセット
+- **Changes**:
+    - 最後の非スペクテイター挑戦者が退出して60秒間無人なら、迷宮全体を安全に再構築。
+    - 宝箱、通常敵、ボス、罠のクールダウンをまとめて初期化。
+    - 待機中に挑戦者が戻った場合はリセットを取り消し。
+    - ボス討伐後の既存10秒リセットと重複しないよう調停。
+
 ## Current Status (2026-09-16)
 - **Version**: 1.9.109
 - **Branch**: `fix/dungeon-entrance-camera-v1.9.109`

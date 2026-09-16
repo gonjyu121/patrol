@@ -93,6 +93,10 @@ performance:
   forceViewDistance: 6
   forceSimulationDistance: 5
 
+# 死の迷宮から最後の挑戦者が退出した後、宝箱・敵・ボス・罠状態を復活させるまでの待機時間
+dungeon:
+  resetWhenEmptyDelaySeconds: 60
+
 
 # Cloud Sync (GitHub Gist)
 # 複数のサーバー間でランキングデータを同期するための設定です。
