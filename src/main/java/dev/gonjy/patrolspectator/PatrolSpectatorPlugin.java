@@ -71,6 +71,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     public static class AutoStartConf {
         public boolean enabled;
         public String cameraPlayerName;
+        public int dwellSeconds;
     }
 
     public static class ChunkPreLoadingConf {
@@ -290,7 +291,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
                                 // ログイン地点（実際の現在地）を開始地点として使用するため、startLocationは設定しない
                                 // (startPatrol内部で camera.getLocation() が自動使用される)
-                                patrolManager.startPatrol(joinedPlayer, tourConf.dwellSeconds);
+                                patrolManager.startPatrol(joinedPlayer, autoStartConf.dwellSeconds);
                             } else {
                                 getLogger().warning(
                                         "Camera player " + playerName + " is no longer online. AutoStart aborted.");
@@ -487,6 +488,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         autoStartConf = new AutoStartConf();
         autoStartConf.enabled = getConfig().getBoolean("patrol.autoStart.enabled", true);
         autoStartConf.cameraPlayerName = getConfig().getString("patrol.autoStart.cameraPlayerName", "OtouGame");
+        autoStartConf.dwellSeconds = Math.max(3,
+                getConfig().getInt("patrol.autoStart.dwellSeconds", 10));
 
         // chunkPreLoading
         chunkPreLoadingConf = new ChunkPreLoadingConf();

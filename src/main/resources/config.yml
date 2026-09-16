@@ -32,6 +32,7 @@ patrol:
   autoStart:
     enabled: true
     cameraPlayerName: "OtouGame" # カメラ役のプレイヤー名を設定
+    dwellSeconds: 10 # 自動開始時の1スポットあたりの表示時間
   # 移動前にチャンクを非同期で読み込む設定（負荷分散）
   chunkPreLoading:
     enabled: true

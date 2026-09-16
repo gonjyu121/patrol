@@ -41,7 +41,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
 
     // 現在稼働中の定期タスク
     private BukkitTask patrolTask;
-    private int currentDwellSeconds = 8;
+    private int currentDwellSeconds = 10;
 
     // カメラ役（/patrol start 実行者）のUUID
     private UUID cameraUuid;
@@ -259,6 +259,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
      * @param dwellSeconds 各スポットの滞在時間（秒）
      */
     public void startPatrol(Player camera, int dwellSeconds) {
+        this.currentDwellSeconds = Math.max(3, dwellSeconds);
         if (plugin.getTickMonitor() != null) {
             plugin.getTickMonitor().resetPauseState();
         }
@@ -338,9 +339,9 @@ public class PatrolManager implements org.bukkit.event.Listener {
 
         // 低スペックモード：最小間隔を強制
         PatrolSpectatorPlugin.PerformanceConf perf = plugin.getPerformanceConf();
-        if (perf.lowSpecMode && dwellSeconds < perf.minIntervalSeconds) {
-            dwellSeconds = perf.minIntervalSeconds;
-            plugin.getLogger().info("[Performance] 巡回間隔を最小制限の " + dwellSeconds + "秒に設定しました。");
+        if (perf.lowSpecMode && currentDwellSeconds < perf.minIntervalSeconds) {
+            currentDwellSeconds = perf.minIntervalSeconds;
+            plugin.getLogger().info("[Performance] 巡回間隔を最小制限の " + currentDwellSeconds + "秒に設定しました。");
         }
 
         // 低スペックモード：パトロール開始直後にイベントが始まらないようにタイマーリセット
@@ -354,7 +355,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
         // パトロールの最初の実行をスケジュール
         scheduleNextTick(1L);
 
-        plugin.getLogger().info("パトロールを開始しました。カメラ: " + camera.getName() + ", デフォルト間隔: " + dwellSeconds + "秒, 観光地数: "
+        plugin.getLogger().info("パトロールを開始しました。カメラ: " + camera.getName() + ", デフォルト間隔: " + currentDwellSeconds + "秒, 観光地数: "
                 + touristLocations.size());
     }
 
@@ -564,11 +565,11 @@ public class PatrolManager implements org.bukkit.event.Listener {
     private int tickPatrol() {
         Player camera = getCamera();
         if (camera == null || !camera.isOnline()) {
-            return 8; // デフォルト
+            return currentDwellSeconds;
         }
 
         // 基本の滞在時間
-        int staySeconds = plugin.getTourConf().dwellSeconds;
+        int staySeconds = currentDwellSeconds;
 
         // 定期的なサマリログ（5分おき）
         long now = System.currentTimeMillis();
