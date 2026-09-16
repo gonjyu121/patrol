@@ -309,8 +309,10 @@ public class DungeonListener implements Listener {
             }
 
             // 報酬 (ボスの足元)
-            entity.getLocation().getWorld().dropItemNaturally(entity.getLocation(),
-                    plugin.getDungeonBossSystem().getBossLoot());
+            for (org.bukkit.inventory.ItemStack reward :
+                    plugin.getDungeonBossSystem().getBossLoot(floor, deepestFloor)) {
+                entity.getLocation().getWorld().dropItemNaturally(entity.getLocation(), reward);
+            }
 
             if (!dungeonCompleted) {
                 plugin.getDungeonBuilder().unlockNextFloor(floor);

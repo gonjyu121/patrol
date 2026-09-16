@@ -9,6 +9,8 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import java.util.Random;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DungeonBossSystem {
     private final Random random = new Random();
@@ -73,13 +75,28 @@ public class DungeonBossSystem {
      * ボス討伐時のレア報酬生成
      */
     public ItemStack getBossLoot() {
-        ItemStack item = new ItemStack(Material.NETHERITE_INGOT, 1);
+        return getBossLoot(1, 1).get(0);
+    }
+
+    public List<ItemStack> getBossLoot(int floor, int floorCount) {
+        List<ItemStack> loot = new ArrayList<>();
+        int coreCount = Math.min(3, 1 + Math.max(0, floor - 1) / 10);
+        ItemStack item = new ItemStack(Material.NETHERITE_INGOT, coreCount);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.setDisplayName(ChatColor.DARK_PURPLE + "迷宮主の核");
             item.setItemMeta(meta);
         }
-        return item;
+        loot.add(item);
+        loot.add(new ItemStack(Material.DIAMOND, Math.min(12, 1 + floor / 2)));
+        if (floor >= Math.max(2, floorCount / 2)) {
+            loot.add(new ItemStack(Material.ANCIENT_DEBRIS, 1 + floor / 10));
+        }
+        if (floor >= floorCount) {
+            loot.add(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 2));
+            loot.add(new ItemStack(Material.NETHER_STAR, 1));
+        }
+        return loot;
     }
 
     private org.bukkit.attribute.AttributeInstance getSafeAttribute(org.bukkit.attribute.Attributable entity, String[] names) {

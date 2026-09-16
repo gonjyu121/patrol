@@ -134,7 +134,7 @@ public class DungeonBuilder {
                             for (int floor = 1; floor <= floorCount; floor++) {
                                 int floorY = finalBaseY - ((floor - 1) * DungeonManager.FLOOR_HEIGHT);
                                 generateWaterVeins(finalWorld, finalStartX, floorY, finalStartZ);
-                                placeChests(finalWorld, finalStartX, floorY, finalStartZ);
+                                placeChests(finalWorld, finalStartX, floorY, finalStartZ, floor, floorCount);
                                 // 同じチャンクに全階ボスを常駐させない。最初はB1のみ生成し、以降は攻略時に出現させる。
                                 if (floor == 1) {
                                     plugin.getDungeonBossSystem().spawnBoss(
@@ -342,7 +342,7 @@ public class DungeonBuilder {
         }
     }
 
-    private void placeChests(World world, int startX, int baseY, int startZ) {
+    private void placeChests(World world, int startX, int baseY, int startZ, int floor, int floorCount) {
         DungeonLootSystem lootSystem = plugin.getDungeonLootSystem();
         // 部屋の座標に合わせて宝箱を設置
         Location[] chestLocs = {
@@ -355,7 +355,7 @@ public class DungeonBuilder {
         for (Location loc : chestLocs) {
             loc.getBlock().setType(Material.CHEST);
             org.bukkit.block.Chest chest = (org.bukkit.block.Chest) loc.getBlock().getState();
-            for (org.bukkit.inventory.ItemStack item : lootSystem.generateLoot()) {
+            for (org.bukkit.inventory.ItemStack item : lootSystem.generateLoot(floor, floorCount)) {
                 chest.getInventory().addItem(item);
             }
         }

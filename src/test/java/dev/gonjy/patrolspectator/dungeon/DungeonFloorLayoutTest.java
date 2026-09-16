@@ -21,4 +21,11 @@ class DungeonFloorLayoutTest {
         assertEquals(1, DungeonManager.calculateFloorCount(-63, -64, 100));
         assertEquals(1, DungeonManager.calculateFloorCount(64, -64, 0));
     }
+
+    @Test
+    void lootProgressionIncreasesFromEntranceToDeepestFloor() {
+        assertEquals(0.0, DungeonLootSystem.progression(1, 22));
+        assertEquals(1.0, DungeonLootSystem.progression(22, 22));
+        assertEquals(1.0, DungeonLootSystem.progression(100, 22));
+    }
 }

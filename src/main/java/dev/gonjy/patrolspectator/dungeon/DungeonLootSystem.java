@@ -11,32 +11,47 @@ public class DungeonLootSystem {
     private final Random random = new Random();
 
     public List<ItemStack> generateLoot() {
-        List<ItemStack> loot = new ArrayList<>();
+        return generateLoot(1, 1);
+    }
 
-        // 超レア枠 (2%)
-        if (random.nextDouble() < 0.02) {
+    public List<ItemStack> generateLoot(int floor, int floorCount) {
+        List<ItemStack> loot = new ArrayList<>();
+        double progress = progression(floor, floorCount);
+
+        // 深層ほど超レア・レア枠が伸びる（超レア2〜5%、レア10〜40%）。
+        if (random.nextDouble() < 0.02 + progress * 0.03) {
             loot.add(new ItemStack(Material.ELYTRA));
         }
 
-        // レア枠 (10%)
-        if (random.nextDouble() < 0.10) {
+        if (random.nextDouble() < 0.10 + progress * 0.30) {
             Material[] rares = { Material.NETHERITE_INGOT, Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE,
                     Material.ENCHANTED_GOLDEN_APPLE };
-            loot.add(new ItemStack(rares[random.nextInt(rares.length)]));
+            loot.add(new ItemStack(rares[random.nextInt(rares.length)], 1 + (progress >= 0.8 ? 1 : 0)));
         }
 
-        // 普通枠 (50%)
-        if (random.nextDouble() < 0.50) {
+        if (random.nextDouble() < 0.50 + progress * 0.40) {
             Material[] commons = { Material.DIAMOND, Material.EMERALD, Material.GOLD_INGOT, Material.IRON_INGOT };
-            loot.add(new ItemStack(commons[random.nextInt(commons.length)], random.nextInt(3) + 1));
+            loot.add(new ItemStack(commons[random.nextInt(commons.length)],
+                    random.nextInt(3) + 1 + (int) Math.floor(progress * 5.0)));
         }
 
         // 消耗品枠 (80%)
         if (random.nextDouble() < 0.80) {
-            loot.add(new ItemStack(Material.AMETHYST_SHARD, random.nextInt(5) + 1)); // 魔石
+            loot.add(new ItemStack(Material.AMETHYST_SHARD,
+                    random.nextInt(5) + 1 + (int) Math.floor(progress * 8.0))); // 魔石
+        }
+
+        if (floor >= floorCount) {
+            loot.add(new ItemStack(Material.ANCIENT_DEBRIS, 2));
         }
 
         return loot;
+    }
+
+    static double progression(int floor, int floorCount) {
+        if (floorCount <= 1)
+            return 1.0;
+        return Math.max(0.0, Math.min(1.0, (floor - 1.0) / (floorCount - 1.0)));
     }
 
     /**
