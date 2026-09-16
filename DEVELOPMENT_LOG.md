@@ -1,5 +1,17 @@
 # PatrolSpectatorPlugin Development Log
 
+## Current Status (2026-09-16)
+- **Version**: 1.9.109
+- **Branch**: `fix/dungeon-entrance-camera-v1.9.109`
+- **Issue**: 観光地巡りで死の迷宮入口ではなく地上面が映る問題
+- **Changes**:
+    - 観光カメラの足元座標を通路床付近へ下げ、目線が迷宮天井を突き抜けないよう修正。
+    - カメラ位置から入口内部まで3ブロック高の進入路と床を自動補修。
+    - 入口生成時と起動時登録で同じカメラ座標計算を共有。
+    - オーバーワールド全域のエルダーガーディアンへ割り込む追跡処理を削除。
+    - OtouGame参加時の自動開始間隔を独立設定にし、既定値を10秒へ変更。
+    - `/patrol start <秒>` と自動開始で指定された間隔を巡回処理へ正しく反映。
+
 ## Current Status (2026-09-13)
 - **Version**: 1.9.108
 - **Branch**: `fix/dungeon-softlock-reset-v1.9.108`

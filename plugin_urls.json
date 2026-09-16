@@ -31,7 +31,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.108",
-    "description": "配信用パトロールプラグイン（死の迷宮ソフトロック・再構築修正版）"
+    "version": "1.9.109",
+    "description": "配信用パトロールプラグイン（死の迷宮入口カメラ修正版）"
   }
 }

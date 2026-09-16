@@ -13,6 +13,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DungeonBuilder {
+    static final int ENTRANCE_APPROACH_START_OFFSET = -8;
+    static final int ENTRANCE_INTERIOR_END_OFFSET = 1;
+    static final double ENTRANCE_CAMERA_Z_OFFSET = -6.5;
+    static final double ENTRANCE_CAMERA_Y_OFFSET = 0.2;
+
     private final PatrolSpectatorPlugin plugin;
     private final DungeonManager manager;
     private final AtomicBoolean building = new AtomicBoolean(false);
@@ -189,20 +194,8 @@ public class DungeonBuilder {
         int centerX = startX + 30; // 60x60 の中央（グリッド通路 X=startX+30 と直結）
         int entranceZ = startZ;    // 北側の外壁 (Z=startZ)
 
-        // 1. 出入口の壁（岩盤）をくり抜く (X: centerX-1 ~ centerX+1, Y: baseY ~ baseY+2, Z: entranceZ-2 ~ entranceZ+1)
-        for (int x = centerX - 1; x <= centerX + 1; x++) {
-            for (int y = baseY; y <= baseY + 2; y++) {
-                for (int z = entranceZ - 2; z <= entranceZ + 1; z++) {
-                    world.getBlockAt(x, y, z).setType(Material.AIR);
-                }
-            }
-            // 床を磨かれたブラックストーンに
-            world.getBlockAt(x, baseY - 1, entranceZ - 3).setType(Material.POLISHED_BLACKSTONE);
-            world.getBlockAt(x, baseY - 1, entranceZ - 2).setType(Material.POLISHED_BLACKSTONE);
-            world.getBlockAt(x, baseY - 1, entranceZ - 1).setType(Material.POLISHED_BLACKSTONE);
-            world.getBlockAt(x, baseY - 1, entranceZ).setType(Material.POLISHED_BLACKSTONE);
-            world.getBlockAt(x, baseY - 1, entranceZ + 1).setType(Material.POLISHED_BLACKSTONE);
-        }
+        // 1. 観光カメラ位置から内部まで、3ブロック高の進入路を確実に開通させる。
+        carveEntranceApproach(world, centerX, baseY, entranceZ);
 
         // 2. アーチ状の門枠を装飾 (Z = entranceZ - 2)
         int gateZ = entranceZ - 2;
@@ -250,12 +243,12 @@ public class DungeonBuilder {
         }
 
         // 4. 観光案内 (PatrolManager) へ正面入口座標を登録
-        Location entranceLoc = new Location(world, centerX + 0.5, baseY + 1.0, entranceZ - 4.5, 0f, 10f);
+        Location entranceLoc = createEntranceCameraLocation(world, centerX, baseY, entranceZ);
         dev.gonjy.patrolspectator.TouristLocation entranceTourLoc = new dev.gonjy.patrolspectator.TouristLocation(
                 "auto_dungeon_entrance",
                 "§4死の迷宮 - 正面入口",
                 world.getName(),
-                entranceLoc.getX(), entranceLoc.getY() + 1.5, entranceLoc.getZ() - 2.0,
+                entranceLoc.getX(), entranceLoc.getY(), entranceLoc.getZ(),
                 0f, 15f,
                 "Death Dungeon North Entrance Gate",
                 "overworld",
@@ -264,6 +257,31 @@ public class DungeonBuilder {
         plugin.getPatrolManager().addTouristLocation(entranceTourLoc);
 
         plugin.getLogger().info("[Dungeon] 北側正面入口門（アーチ・看板・壁くり抜き）を生成しました。");
+    }
+
+    static void carveEntranceApproach(World world, int centerX, int baseY, int entranceZ) {
+        for (int x = centerX - 1; x <= centerX + 1; x++) {
+            for (int zOffset = ENTRANCE_APPROACH_START_OFFSET;
+                    zOffset <= ENTRANCE_INTERIOR_END_OFFSET; zOffset++) {
+                int z = entranceZ + zOffset;
+                world.getBlockAt(x, baseY - 1, z).setType(Material.POLISHED_BLACKSTONE, false);
+                for (int y = baseY; y <= baseY + 2; y++) {
+                    world.getBlockAt(x, y, z).setType(Material.AIR, false);
+                }
+            }
+        }
+    }
+
+    static Location createEntranceCameraLocation(World world, int centerX, int baseY, int entranceZ) {
+        return new Location(world, centerX + 0.5, baseY + ENTRANCE_CAMERA_Y_OFFSET,
+                entranceZ + ENTRANCE_CAMERA_Z_OFFSET, 0f, 15f);
+    }
+
+    public static Location createEntranceCameraLocation(Location center) {
+        if (center == null || center.getWorld() == null)
+            return null;
+        return createEntranceCameraLocation(center.getWorld(), center.getBlockX(), center.getBlockY(),
+                center.getBlockZ() - 30);
     }
 
     private void generateWaterVeins(World world, int startX, int baseY, int startZ) {
