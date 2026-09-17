@@ -69,8 +69,16 @@ public class TrapRunner {
     private void runMobTrap(Player p, Location loc) {
         p.sendMessage(ChatColor.DARK_RED + "けたたましい警報音が鳴り響き、転送陣が開いた！【モンスターハウス】");
 
-        EntityType[] mobTypes = { EntityType.BLAZE, EntityType.WITHER_SKELETON, EntityType.ENDERMAN };
-        int spawnCount = 2 + random.nextInt(2); // 狭い通路を塞がない2〜3体
+        int floor = Math.max(1, manager.getFloor(loc));
+        int floorCount = manager.getFloorCount();
+        double progress = DungeonLootSystem.progression(floor, floorCount);
+        EntityType[] mobTypes = progress < 0.34
+                ? new EntityType[] { EntityType.ZOMBIE, EntityType.SKELETON, EntityType.SPIDER }
+                : progress < 0.67
+                        ? new EntityType[] { EntityType.BLAZE, EntityType.WITHER_SKELETON, EntityType.ENDERMAN }
+                        : new EntityType[] { EntityType.PIGLIN_BRUTE, EntityType.VINDICATOR, EntityType.EVOKER,
+                                EntityType.WITHER_SKELETON };
+        int spawnCount = 2 + (int) Math.floor(progress * 3.0) + random.nextInt(2);
 
         for (int i = 0; i < spawnCount; i++) {
             EntityType type = mobTypes[random.nextInt(mobTypes.length)];
@@ -78,6 +86,7 @@ public class TrapRunner {
             if (spawnLoc == null)
                 continue;
             LivingEntity mob = (LivingEntity) loc.getWorld().spawnEntity(spawnLoc, type);
+            strengthenMob(mob, floor, floorCount);
             mob.setCollidable(false);
             mob.setRemoveWhenFarAway(true);
             new BukkitRunnable() {
@@ -102,6 +111,7 @@ public class TrapRunner {
             // 三叉槍を持たせる
             drowned.getEquipment().setItemInMainHand(new org.bukkit.inventory.ItemStack(Material.TRIDENT));
             drowned.getEquipment().setItemInMainHandDropChance(0.05f); // 5% でドロップ
+            strengthenMob(drowned, Math.max(1, manager.getFloor(loc)), manager.getFloorCount());
 
             // 30秒後にデスポーン
             new org.bukkit.scheduler.BukkitRunnable() {
@@ -154,6 +164,41 @@ public class TrapRunner {
         cooldowns.clear();
     }
 
+    private void strengthenMob(LivingEntity mob, int floor, int floorCount) {
+        double progress = DungeonLootSystem.progression(floor, floorCount);
+        double healthMultiplier = 1.0 + progress * 2.0;
+        double damageMultiplier = 1.0 + progress * 1.5;
+        org.bukkit.attribute.AttributeInstance health = getSafeAttribute(mob,
+                new String[] { "MAX_HEALTH", "GENERIC_MAX_HEALTH" });
+        if (health != null) {
+            double value = Math.min(2048.0, health.getBaseValue() * healthMultiplier);
+            health.setBaseValue(value);
+            mob.setHealth(value);
+        }
+        org.bukkit.attribute.AttributeInstance damage = getSafeAttribute(mob,
+                new String[] { "ATTACK_DAMAGE", "GENERIC_ATTACK_DAMAGE" });
+        if (damage != null) {
+            damage.setBaseValue(Math.min(100.0, damage.getBaseValue() * damageMultiplier));
+        }
+        mob.setCustomName(ChatColor.DARK_RED + "地下" + floor + "階の魔物");
+        mob.setCustomNameVisible(progress >= 0.67);
+    }
+
+    private org.bukkit.attribute.AttributeInstance getSafeAttribute(org.bukkit.attribute.Attributable entity,
+            String[] names) {
+        for (String name : names) {
+            try {
+                org.bukkit.attribute.Attribute attribute = org.bukkit.attribute.Attribute.valueOf(name);
+                org.bukkit.attribute.AttributeInstance instance = entity.getAttribute(attribute);
+                if (instance != null)
+                    return instance;
+            } catch (IllegalArgumentException ignored) {
+                // Paperの世代による列挙名差を吸収する。
+            }
+        }
+        return null;
+    }
+
     Location findSafeLocation(Location center, Location origin, int radius, int requiredHeadroom) {
         if (center == null || center.getWorld() == null || origin == null
                 || origin.getWorld() == null || !center.getWorld().equals(origin.getWorld())) {
@@ -164,7 +209,8 @@ public class TrapRunner {
         for (int attempt = 0; attempt < attempts; attempt++) {
             int x = origin.getBlockX() + random.nextInt(radius * 2 + 1) - radius;
             int z = origin.getBlockZ() + random.nextInt(radius * 2 + 1) - radius;
-            Location candidate = new Location(origin.getWorld(), x + 0.5, center.getBlockY(), z + 0.5);
+            Location candidate = new Location(origin.getWorld(), x + 0.5,
+                    manager.getFloorBaseY(Math.max(1, manager.getFloor(origin))), z + 0.5);
             if (isSafeStandingLocation(candidate, requiredHeadroom) && manager.isInDungeon(candidate)) {
                 return candidate;
             }
@@ -176,7 +222,8 @@ public class TrapRunner {
                 for (int z = origin.getBlockZ() - distance; z <= origin.getBlockZ() + distance; z++) {
                     if (Math.max(Math.abs(x - origin.getBlockX()), Math.abs(z - origin.getBlockZ())) != distance)
                         continue;
-                    Location candidate = new Location(origin.getWorld(), x + 0.5, center.getBlockY(), z + 0.5);
+                    Location candidate = new Location(origin.getWorld(), x + 0.5,
+                            manager.getFloorBaseY(Math.max(1, manager.getFloor(origin))), z + 0.5);
                     if (isSafeStandingLocation(candidate, requiredHeadroom) && manager.isInDungeon(candidate)) {
                         return candidate;
                     }

@@ -72,8 +72,8 @@ public class DungeonCommand implements CommandExecutor, TabCompleter {
                 break;
 
             case "build": {
-                if (args.length < 2 || !args[1].equalsIgnoreCase("b1")) {
-                    sender.sendMessage(ChatColor.RED + "使用法: /dungeon build b1");
+                if (args.length < 2 || (!args[1].equalsIgnoreCase("floors") && !args[1].equalsIgnoreCase("b1"))) {
+                    sender.sendMessage(ChatColor.RED + "使用法: /dungeon build floors");
                     return true;
                 }
                 if (!manager.isEnabled()) {
@@ -89,7 +89,8 @@ public class DungeonCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
 
-                sender.sendMessage(ChatColor.YELLOW + "B1階層の生成を開始します... (サーバー負荷軽減のため時間がかかります)");
+                sender.sendMessage(ChatColor.YELLOW + "B1〜B" + manager.getFloorCount()
+                        + " の生成を開始します... (サーバー負荷軽減のため時間がかかります)");
                 dev.gonjy.patrolspectator.PatrolSpectatorPlugin buildPlugin = manager.getPlugin();
                 if (buildPlugin != null && buildPlugin.getDungeonBuilder() != null) {
                     buildPlugin.getDungeonBuilder().buildB1();
@@ -174,7 +175,7 @@ public class DungeonCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage("§a/dungeon build_entrance §7- 正面入口門をその場に生成");
         sender.sendMessage("§a/dungeon setcenter     §7- 現在地を迷宮の中心に設定");
         sender.sendMessage("§a/dungeon scan          §7- 範囲内の建造物チェック");
-        sender.sendMessage("§a/dungeon build b1      §7- B1階層の生成 (分割設置)");
+        sender.sendMessage("§a/dungeon build floors  §7- 設置可能な地下階層を分割生成");
         sender.sendMessage("§a/dungeon reset         §7- 攻略状況・敵・宝箱を初期化して再構築");
         sender.sendMessage("§a/dungeon enable        §7- 迷宮の有効化");
         sender.sendMessage("§a/dungeon disable       §7- 迷宮の無効化");
@@ -187,7 +188,7 @@ public class DungeonCommand implements CommandExecutor, TabCompleter {
                     .stream().filter(s -> s.startsWith(args[0].toLowerCase())).collect(Collectors.toList());
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("build")) {
-            return Arrays.asList("b1");
+            return Arrays.asList("floors", "b1");
         }
         return new ArrayList<>();
     }
