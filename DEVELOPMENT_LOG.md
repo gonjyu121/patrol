@@ -145,3 +145,11 @@
 - **Changes**:
     - 迷宮踏破ランキングを記録件数にかかわらず定期ランキングへ表示。
     - 0件時は「最初の挑戦者を待っています」と案内し、参加のきっかけを作る。
+
+## Current Status (2026-09-18)
+- **Version**: 1.9.113
+- **Branch**: `chore/remove-grimac-v1.9.113`
+- **Issue**: 非互換のGrimACを配布・連携対象から削除
+- **Changes**:
+    - `plugin_urls.json` からGrimACを削除し、今後の依存プラグイン更新・配布対象から除外。
+    - カメラ役ログイン時の `grim exempt` 自動実行を削除。

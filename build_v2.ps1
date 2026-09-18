@@ -82,8 +82,8 @@ catch {
 # Download External Plugins
 Write-Host "Downloading external plugins..." -ForegroundColor Yellow
 
-# クリーンアップ: 古い重複ファイル (Floodgate.jar 等) があれば削除
-$obsoleteFiles = @("Floodgate.jar")
+# クリーンアップ: 廃止済み・重複プラグインがあれば削除
+$obsoleteFiles = @("Floodgate.jar", "GrimAC-Plugin.jar")
 foreach ($obs in $obsoleteFiles) {
     $obsTarget = Join-Path $targetDir $obs
     if (Test-Path $obsTarget) {
