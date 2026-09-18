@@ -31,7 +31,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.111",
-    "description": "配信用パトロールプラグイン（死の迷宮・地下複数階対応版）"
+    "version": "1.9.112",
+    "description": "配信用パトロールプラグイン（迷宮ランキング常時表示版）"
   }
 }

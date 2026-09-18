@@ -169,7 +169,7 @@ public class RankingDisplaySystem {
 
                             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                                 // 7. 迷宮踏破
-                                if (data.dungeonLevels != null && !data.dungeonLevels.isEmpty()) {
+                                if (shouldDisplayDungeonRanking(data.dungeonLevels)) {
                                     displayDungeonRanking(data.dungeonLevels, discordSummary);
                                 }
 
@@ -186,6 +186,11 @@ public class RankingDisplaySystem {
                 }, RANKING_STEP_DELAY);
             }, RANKING_STEP_DELAY);
         }, RANKING_STEP_DELAY);
+    }
+
+    static boolean shouldDisplayDungeonRanking(List<?> ranking) {
+        // 記録が0件でも存在を告知し、挑戦のきっかけにする。未初期化(null)だけを除外する。
+        return ranking != null;
     }
 
     private void sendSummaryToDiscord(String content) {
@@ -504,6 +509,7 @@ public class RankingDisplaySystem {
                 discord.append(ChatColor.stripColor(medal + " " + playerName + ": 地下 " + level + " 階")).append("\n");
             }
         } else {
+            Bukkit.getServer().broadcastMessage(ChatColor.GRAY + "  まだ踏破記録はありません。最初の挑戦者を待っています！");
             discord.append("記録保持者なし\n");
         }
         discord.append("\n");
