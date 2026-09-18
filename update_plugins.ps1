@@ -82,6 +82,17 @@ catch {
 
 # Download external plugins
 Write-Host "Downloading external plugins..." -ForegroundColor Yellow
+
+# 配布対象から外したプラグインが以前の更新結果に残らないよう削除
+$obsoleteFiles = @("Floodgate.jar", "GrimAC-Plugin.jar")
+foreach ($obsoleteFile in $obsoleteFiles) {
+    $obsoletePath = Join-Path $targetDir $obsoleteFile
+    if (Test-Path -LiteralPath $obsoletePath) {
+        Remove-Item -LiteralPath $obsoletePath -Force
+        Write-Host "Removed obsolete plugin: $obsoleteFile" -ForegroundColor DarkGray
+    }
+}
+
 $plugins = $config.plugins
 
 foreach ($prop in $plugins.PSObject.Properties) {

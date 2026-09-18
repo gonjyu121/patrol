@@ -23,15 +23,11 @@
     "LunaChat": {
       "url": "MODRINTH:lunachat",
       "description": "ローマ字を日本語に変換するチャットプラグイン (Modrinth)"
-    },
-    "GrimAC-Plugin": {
-      "url": "MODRINTH:grimac",
-      "description": "オープンソースのチート対策プラグイン (Modrinth)"
     }
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.112",
-    "description": "配信用パトロールプラグイン（迷宮ランキング常時表示版）"
+    "version": "1.9.113",
+    "description": "配信用パトロールプラグイン（GrimAC連携削除版）"
   }
 }

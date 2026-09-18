@@ -284,11 +284,6 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
                         // Delay slightly to ensure player is fully logged in
                         getServer().getScheduler().runTaskLater(PatrolSpectatorPlugin.this, () -> {
                             if (joinedPlayer.isOnline()) {
-                                // アンチチート除外コマンド実行 (GrimAC等)
-                                String exemptCmd = "grim exempt " + joinedPlayer.getName();
-                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), exemptCmd);
-                                getLogger().info("[AutoStart] Executed anti-cheat exemption: " + exemptCmd);
-
                                 // ログイン地点（実際の現在地）を開始地点として使用するため、startLocationは設定しない
                                 // (startPatrol内部で camera.getLocation() が自動使用される)
                                 patrolManager.startPatrol(joinedPlayer, autoStartConf.dwellSeconds);
