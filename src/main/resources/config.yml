@@ -97,6 +97,23 @@ performance:
 dungeon:
   resetWhenEmptyDelaySeconds: 60
 
+# 誤検知を避け、通常プレイでは成立しない極端な操作だけを無効化する軽量保護。
+# BAN・キック・飛行補正・速度補正・装置や自然スポーンの制限は行いません。
+safety_guard:
+  enabled: true
+  # OP、クリエイティブ、スペクテイター、および patrolspectator.exempt 権限は対象外。
+  exempt_ops: true
+  # 同じ警告をコンソールへ繰り返す最短間隔。座標はログに出しません。
+  log_interval_seconds: 10
+  reach:
+    enabled: true
+    # 対象の当たり判定までの距離。通常値より十分大きい10ブロックのみ遮断。
+    max_distance: 10.0
+  fast_break:
+    enabled: true
+    # 通常サーバーの毎秒20tickを大幅に上回る場合だけ、超過分を無効化。
+    max_breaks_per_second: 50
+
 
 # Cloud Sync (GitHub Gist)
 # 複数のサーバー間でランキングデータを同期するための設定です。
