@@ -114,6 +114,41 @@ public class DungeonManager {
         return built && config.getInt("floors.builtCount", 1) >= getFloorCount();
     }
 
+    public int getRecordedBuiltCount() {
+        return built ? Math.min(getFloorCount(), Math.max(0, config.getInt("floors.builtCount", 0))) : 0;
+    }
+
+    /** 各階の外殻・部屋・宝箱を抜き取り確認する。全ブロックの完全検査ではない。 */
+    public FloorInspection inspectBuiltFloors() {
+        if (center == null || center.getWorld() == null) return new FloorInspection(0, 0, 0);
+        World world = center.getWorld();
+        int startX = center.getBlockX() - DUNGEON_SIZE / 2;
+        int startZ = center.getBlockZ() - DUNGEON_SIZE / 2;
+        int verified = 0;
+        int deepest = 0;
+        int firstMissing = 0;
+        for (int floor = 1; floor <= getFloorCount(); floor++) {
+            int y = getFloorBaseY(floor);
+            boolean present = hasFloorMarkers(
+                    world.getBlockAt(startX, y - 1, startZ).getType(),
+                    world.getBlockAt(startX + 6, y + 1, startZ + 6).getType(),
+                    world.getBlockAt(startX + 7, y, startZ + 7).getType());
+            if (present) {
+                verified++;
+                deepest = floor;
+            } else if (firstMissing == 0) {
+                firstMissing = floor;
+            }
+        }
+        return new FloorInspection(verified, deepest, firstMissing);
+    }
+
+    static boolean hasFloorMarkers(Material shell, Material room, Material chest) {
+        return shell == Material.BEDROCK && room.isAir() && chest == Material.CHEST;
+    }
+
+    public record FloorInspection(int verifiedCount, int deepestVerified, int firstMissing) {}
+
     /** 既存の生成地点にも適用し、スポーン付近での再生成・入口補修を防ぐ。 */
     public boolean overlapsWorldSpawn() {
         if (center == null || center.getWorld() == null) return false;

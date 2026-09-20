@@ -18,7 +18,7 @@ commands:
     usage: /stats
   dungeon:
     description: 迷宮管理コマンド (Admin用)
-    usage: /dungeon <tp|reset|build|scan|enable|disable>
+    usage: /dungeon <status|tp|reset|build|scan|enable|disable>
     permission: patrol.dungeon.admin
 permissions:
   patrol.dungeon.admin:
