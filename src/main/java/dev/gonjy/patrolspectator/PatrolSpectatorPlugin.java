@@ -152,6 +152,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
                 new dev.gonjy.patrolspectator.dungeon.DungeonListener(this, dungeonManager, dungeonStatsStorage,
                         trapRunner),
                 this);
+        if (getConfig().getBoolean("safety_guard.enabled", true)) {
+            getServer().getPluginManager().registerEvents(new SafetyGuard(this), this);
+            getLogger().info("[SafetyGuard] 緩いサーバー保護を有効化しました（BAN・キックなし）。");
+        }
 
         // PatrolManagerの初期化（依存関係を注入）
         patrolManager = new PatrolManager(this, engagementSystem, participationManager, gameModeEnforcer,
