@@ -40,6 +40,12 @@ public class DungeonBuilder {
             return false;
         }
 
+        if (manager.overlapsWorldSpawn()) {
+            plugin.getLogger().warning("[Dungeon] 初期リスポーン地点に近いため生成を中止しました。/dungeon setcenter で離れた場所を指定してください。");
+            building.set(false);
+            return false;
+        }
+
         cleanupEntities(center);
 
         World world = center.getWorld();

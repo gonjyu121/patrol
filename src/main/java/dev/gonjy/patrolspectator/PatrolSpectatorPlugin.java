@@ -174,6 +174,11 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         // 死の迷宮の自動生成チェック（enabled かつ built=false なら自動生成）
         if (dungeonManager.isEnabled() && !dungeonManager.isBuilt()) {
             getServer().getScheduler().runTaskLater(this, () -> {
+                StringBuilder safetyReport = new StringBuilder();
+                if (dungeonManager.overlapsWorldSpawn() || !dungeonManager.scanForSafety(safetyReport)) {
+                    getLogger().warning("[Dungeon] スポーン付近または既存構造を検知したため、自動生成を中止しました。管理者が設置場所を確認してください。");
+                    return;
+                }
                 getLogger().info("[Dungeon] 迷宮が未生成のため、自動生成を開始します...");
                 dungeonBuilder.buildB1();
             }, 100L); // 起動直後の負荷を避けるため5秒待機
@@ -181,7 +186,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
             // built=true の旧迷宮にも入口が存在するとは限らないため、小範囲の入口だけ毎回補修する。
             getServer().getScheduler().runTaskLater(this, () -> {
                 Location center = dungeonManager.getCenter();
-                if (center != null && center.getWorld() != null) {
+                if (center != null && center.getWorld() != null && !dungeonManager.overlapsWorldSpawn()) {
                     dungeonBuilder.buildEntranceGate(center.getWorld(), center.getBlockX() - 30,
                             center.getBlockY(), center.getBlockZ() - 30);
                     patrolManager.addDungeonLocations(dungeonManager);

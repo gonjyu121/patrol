@@ -40,6 +40,11 @@ public class DungeonCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 Player p = (Player) sender;
+                if (DungeonManager.isTooCloseToSpawn(p.getLocation().getBlockX(), p.getLocation().getBlockZ(),
+                        p.getWorld().getSpawnLocation().getBlockX(), p.getWorld().getSpawnLocation().getBlockZ())) {
+                    sender.sendMessage(ChatColor.RED + "初期リスポーン地点に近すぎます。十分離れた場所で設定してください。");
+                    return true;
+                }
                 manager.setCenter(p.getLocation());
                 sender.sendMessage(ChatColor.GREEN + "迷宮の中心を現在地に設定しました。");
                 if (manager.getPlugin() != null && manager.getPlugin().getPatrolManager() != null) {
