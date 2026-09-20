@@ -22,6 +22,8 @@ public class DungeonManager {
     private boolean built = false;
     static final int DUNGEON_SIZE = 60;
     static final int FLOOR_HEIGHT = 6;
+    static final int SPAWN_OFFSET = 256;
+    static final int SPAWN_CLEARANCE = 64;
 
     public DungeonManager(PatrolSpectatorPlugin plugin) {
         this.plugin = plugin;
@@ -48,9 +50,18 @@ public class DungeonManager {
                 double z = config.getDouble("center.z");
                 center = new Location(world, x, y, z);
             }
+        } else {
+            World world = Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0);
+            if (world != null) {
+                Location spawn = world.getSpawnLocation();
+                int x = spawn.getBlockX() + SPAWN_OFFSET;
+                int z = spawn.getBlockZ() + SPAWN_OFFSET;
+                center = new Location(world, x, world.getHighestBlockYAt(x, z) + 1, z);
+            }
         }
         enabled = config.getBoolean("enabled", false);
         built = config.getBoolean("built", false);
+        if (worldName == null && center != null) saveConfig();
     }
 
     public void saveConfig() {
@@ -89,6 +100,19 @@ public class DungeonManager {
 
     public boolean isBuilt() {
         return built && config.getInt("floors.builtCount", 1) >= getFloorCount();
+    }
+
+    /** 既存の生成地点にも適用し、スポーン付近での再生成・入口補修を防ぐ。 */
+    public boolean overlapsWorldSpawn() {
+        if (center == null || center.getWorld() == null) return false;
+        return isTooCloseToSpawn(center.getBlockX(), center.getBlockZ(),
+                center.getWorld().getSpawnLocation().getBlockX(),
+                center.getWorld().getSpawnLocation().getBlockZ());
+    }
+
+    static boolean isTooCloseToSpawn(int x, int z, int spawnX, int spawnZ) {
+        return Math.abs((long) x - spawnX) < SPAWN_CLEARANCE
+                && Math.abs((long) z - spawnZ) < SPAWN_CLEARANCE;
     }
 
     public void setBuilt(boolean built) {
