@@ -27,7 +27,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.115",
-    "description": "配信用パトロールプラグイン（迷宮のスポーン回避版）"
+    "version": "1.9.116",
+    "description": "配信用パトロールプラグイン（迷宮のスポーン回避修正版）"
   }
 }
