@@ -1,5 +1,6 @@
 package dev.gonjy.patrolspectator.dungeon;
 
+import org.bukkit.Material;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,6 +15,17 @@ class DungeonFloorLayoutTest {
         assertTrue(DungeonManager.isTooCloseToSpawn(63, -63, 0, 0));
         assertFalse(DungeonManager.isTooCloseToSpawn(64, 0, 0, 0));
         assertFalse(DungeonManager.isTooCloseToSpawn(256, 256, 0, 0));
+    }
+
+    @Test
+    void safetyScanAllowsNaturalTerrainButProtectsBuiltStructures() {
+        assertFalse(DungeonManager.isSignificantBlock(Material.OAK_LEAVES));
+        assertFalse(DungeonManager.isSignificantBlock(Material.OAK_LOG));
+        assertFalse(DungeonManager.isSignificantBlock(Material.SHORT_GRASS));
+        assertFalse(DungeonManager.isSignificantBlock(Material.COAL_ORE));
+        assertTrue(DungeonManager.isSignificantBlock(Material.CHEST));
+        assertTrue(DungeonManager.isSignificantBlock(Material.OAK_PLANKS));
+        assertTrue(DungeonManager.isSignificantBlock(Material.BEDROCK));
     }
 
     @Test

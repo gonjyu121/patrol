@@ -11,6 +11,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 public class DungeonManager {
     private final PatrolSpectatorPlugin plugin;
@@ -53,15 +54,26 @@ public class DungeonManager {
         } else {
             World world = Bukkit.getWorlds().isEmpty() ? null : Bukkit.getWorlds().get(0);
             if (world != null) {
-                Location spawn = world.getSpawnLocation();
-                int x = spawn.getBlockX() + SPAWN_OFFSET;
-                int z = spawn.getBlockZ() + SPAWN_OFFSET;
-                center = new Location(world, x, world.getHighestBlockYAt(x, z) + 1, z);
+                center = defaultCenter(world);
             }
         }
         enabled = config.getBoolean("enabled", false);
         built = config.getBoolean("built", false);
-        if (worldName == null && center != null) saveConfig();
+        if (center != null && worldName != null && isLegacySpawnCenter(center)) {
+            File backup = new File(plugin.getDataFolder(), "dungeon_config.pre_spawn_relocation.yml");
+            try {
+                if (!backup.exists()) Files.copy(configFile.toPath(), backup.toPath());
+                center = defaultCenter(center.getWorld());
+                built = false;
+                config.set("floors.builtCount", 0);
+                saveConfig();
+                plugin.getLogger().warning("[Dungeon] 旧初期位置の設定を離れた場所へ移行しました。元の設定はバックアップ済みです。既存ブロックは変更していません。");
+            } catch (IOException e) {
+                plugin.getLogger().warning("[Dungeon] 設定のバックアップに失敗したため、迷宮の移行を中止しました。");
+            }
+        } else if (worldName == null && center != null) {
+            saveConfig();
+        }
     }
 
     public void saveConfig() {
@@ -113,6 +125,19 @@ public class DungeonManager {
     static boolean isTooCloseToSpawn(int x, int z, int spawnX, int spawnZ) {
         return Math.abs((long) x - spawnX) < SPAWN_CLEARANCE
                 && Math.abs((long) z - spawnZ) < SPAWN_CLEARANCE;
+    }
+
+    private static boolean isLegacySpawnCenter(Location location) {
+        return location.getBlockX() == 0 && location.getBlockY() == 64 && location.getBlockZ() == 0
+                && isTooCloseToSpawn(0, 0, location.getWorld().getSpawnLocation().getBlockX(),
+                        location.getWorld().getSpawnLocation().getBlockZ());
+    }
+
+    private static Location defaultCenter(World world) {
+        Location spawn = world.getSpawnLocation();
+        int x = spawn.getBlockX() + SPAWN_OFFSET;
+        int z = spawn.getBlockZ() + SPAWN_OFFSET;
+        return new Location(world, x, world.getHighestBlockYAt(x, z) + 1, z);
     }
 
     public void setBuilt(boolean built) {
@@ -190,8 +215,8 @@ public class DungeonManager {
                     Block b = world.getBlockAt(x, y, z);
                     Material type = b.getType();
                     if (isSignificantBlock(type)) {
-                        report.append("§c警告: 既存ブロックを発見: ").append(type.name())
-                                .append(" at ").append(x).append(", ").append(y).append(", ").append(z).append("\n");
+                        report.append("§c警告: 生成候補に既存の設備または建造物があります (")
+                                .append(type.name()).append(")。座標は表示しません。\n");
                         return false;
                     }
                 }
@@ -200,12 +225,26 @@ public class DungeonManager {
         return true;
     }
 
-    private boolean isSignificantBlock(Material m) {
-        if (m == Material.AIR || m == Material.CAVE_AIR || m == Material.BEDROCK ||
-                m == Material.STONE || m == Material.DIRT || m == Material.GRASS_BLOCK ||
-                m == Material.GRAVEL || m == Material.DEEPSLATE || m == Material.COBBLESTONE) {
+    static boolean isSignificantBlock(Material m) {
+        String name = m.name();
+        // 葉・木・草などの自然地形は自動生成を妨げない。人工的な設備や旧迷宮の岩盤は保護する。
+        if (m.isAir() || m == Material.STONE || m == Material.DIRT || m == Material.GRASS_BLOCK
+                || m == Material.GRAVEL || m == Material.DEEPSLATE || m == Material.COBBLESTONE
+                || m == Material.WATER || m == Material.LAVA || m == Material.SAND
+                || m == Material.RED_SAND || m == Material.SNOW || m == Material.SNOW_BLOCK
+                || m == Material.CLAY || m == Material.MOSS_BLOCK || m == Material.MOSS_CARPET
+                || m == Material.SHORT_GRASS || m == Material.TALL_GRASS || m == Material.FERN
+                || m == Material.LARGE_FERN || m == Material.VINE || m == Material.SEAGRASS
+                || m == Material.TALL_SEAGRASS || m == Material.DANDELION || m == Material.POPPY
+                || m == Material.BLUE_ORCHID || m == Material.ALLIUM || m == Material.AZURE_BLUET
+                || m == Material.OXEYE_DAISY || m == Material.CORNFLOWER
+                || m == Material.LILY_OF_THE_VALLEY || m == Material.DEAD_BUSH
+                || m == Material.SUGAR_CANE || m == Material.CACTUS) {
             return false;
         }
-        return true; // 看板、チェスト、人工的なブロックなど
+        return !(name.endsWith("_LEAVES") || name.endsWith("_LOG") || name.endsWith("_SAPLING")
+                || name.endsWith("_FLOWER") || name.endsWith("_ORE") || name.endsWith("_DIRT")
+                || name.endsWith("_SAND") || name.endsWith("_TERRACOTTA")
+                || name.endsWith("_CORAL") || name.endsWith("_BUSH"));
     }
 }
