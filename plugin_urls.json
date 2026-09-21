@@ -27,7 +27,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.117",
-    "description": "配信用パトロールプラグイン（迷宮の生成状況確認版）"
+    "version": "1.9.118",
+    "description": "配信用パトロールプラグイン（迷宮ボス報酬の不正落下防止版）"
   }
 }

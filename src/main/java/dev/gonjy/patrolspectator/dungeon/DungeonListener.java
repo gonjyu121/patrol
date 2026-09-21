@@ -278,6 +278,17 @@ public class DungeonListener implements Listener {
         org.bukkit.entity.LivingEntity entity = event.getEntity();
         org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(plugin, "is_dungeon_boss");
         if (entity.getPersistentDataContainer().has(key, org.bukkit.persistence.PersistentDataType.BYTE)) {
+            // Vanilla dropも含め、迷宮ボスの報酬はこのリスナーだけで管理する。
+            event.getDrops().clear();
+
+            Player killer = entity.getKiller();
+            boolean killerInDungeon = killer != null && manager.isInDungeon(killer.getLocation());
+            boolean bossInDungeon = manager.isInDungeon(entity.getLocation());
+            if (!isValidBossDefeat(killer != null, killerInDungeon, bossInDungeon)) {
+                plugin.getLogger().warning("迷宮外またはプレイヤー以外の原因でボスが死亡したため、報酬と踏破処理を無効化しました。");
+                return;
+            }
+
             org.bukkit.NamespacedKey floorKey = new org.bukkit.NamespacedKey(plugin, "dungeon_floor");
             int floor = entity.getPersistentDataContainer().getOrDefault(
                     floorKey, org.bukkit.persistence.PersistentDataType.INTEGER, 1);
@@ -289,8 +300,7 @@ public class DungeonListener implements Listener {
                 observedCompletionBuild = false;
             }
             // ボスが倒された！
-            Player killer = entity.getKiller();
-            String name = (killer != null) ? killer.getName() : "誰か";
+            String name = killer.getName();
 
             Bukkit.broadcastMessage(ChatColor.GOLD + "======== [ 地下" + floor + "階 踏破 ] ========");
             Bukkit.broadcastMessage(ChatColor.YELLOW + name + " が " + ChatColor.RED + entity.getCustomName()
@@ -343,10 +353,8 @@ public class DungeonListener implements Listener {
             }
 
             // 統計更新 (暫定的にランクポイント付与)
-            if (killer != null) {
-                stats.updateMaxLevel(killer.getUniqueId(), floor, killer.getName());
-                plugin.addEventPointsToRanking(killer.getUniqueId(), 25 + floor * 5, "迷宮 地下" + floor + "階踏破");
-            }
+            stats.updateMaxLevel(killer.getUniqueId(), floor, killer.getName());
+            plugin.addEventPointsToRanking(killer.getUniqueId(), 25 + floor * 5, "迷宮 地下" + floor + "階踏破");
 
             if (!dungeonCompleted)
                 return;
@@ -361,5 +369,9 @@ public class DungeonListener implements Listener {
                 }
             }, 200L); // 10秒後
         }
+    }
+
+    static boolean isValidBossDefeat(boolean hasPlayerKiller, boolean killerInDungeon, boolean bossInDungeon) {
+        return hasPlayerKiller && killerInDungeon && bossInDungeon;
     }
 }
