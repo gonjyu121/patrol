@@ -1,5 +1,12 @@
 # PatrolSpectatorPlugin Development Log
 
+## v1.9.121 - Java版・BE版の帰還地点共有
+
+- Java版名 `OtouGame` とGeyser経由のBE版名 `.OtouGame` を同じ帰還地点所有者として扱う。
+- `/patrol sethome`、`/patrol home`、`/patrol homes` の2枠を両アカウントで共有。
+- 従来のUUID形式で保存された地点は、所有者本人が最初に読み込んだ際に共有形式へ自動移行。
+- プレイヤー向けメッセージには引き続き座標を表示しない。
+
 ## v1.9.120 - ローカル秘密情報のビルド注入
 
 - Git管理外の `secrets/discord-secret.properties` をビルド時にJARへ収録できる仕組みを追加。
