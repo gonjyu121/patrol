@@ -29,6 +29,14 @@ class DungeonFloorLayoutTest {
     }
 
     @Test
+    void floorInspectionRequiresShellRoomAndChestMarkers() {
+        assertTrue(DungeonManager.hasFloorMarkers(Material.BEDROCK, Material.AIR, Material.CHEST));
+        assertFalse(DungeonManager.hasFloorMarkers(Material.STONE, Material.AIR, Material.CHEST));
+        assertFalse(DungeonManager.hasFloorMarkers(Material.BEDROCK, Material.STONE, Material.CHEST));
+        assertFalse(DungeonManager.hasFloorMarkers(Material.BEDROCK, Material.AIR, Material.AIR));
+    }
+
+    @Test
     void calculatesMaximumFloorsWithoutCrossingWorldBottom() {
         assertEquals(22, DungeonManager.calculateFloorCount(64, -64, 100));
     }

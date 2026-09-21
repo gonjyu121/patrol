@@ -34,6 +34,30 @@ public class DungeonCommand implements CommandExecutor, TabCompleter {
         }
 
         switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "status": {
+                int planned = manager.getFloorCount();
+                sender.sendMessage(ChatColor.GOLD + "[死の迷宮] 生成状況（座標非表示）");
+                sender.sendMessage(ChatColor.YELLOW + "設定: " + (manager.isEnabled() ? "有効" : "無効")
+                        + " / 生成予定: B1〜B" + planned);
+                if (manager.getCenter() == null || manager.getCenter().getWorld() == null) {
+                    sender.sendMessage(ChatColor.RED + "中心ワールドを読み込めず、構造を確認できません。");
+                    break;
+                }
+                boolean building = manager.getPlugin() != null && manager.getPlugin().getDungeonBuilder() != null
+                        && manager.getPlugin().getDungeonBuilder().isBuilding();
+                DungeonManager.FloorInspection inspection = manager.inspectBuiltFloors();
+                sender.sendMessage(ChatColor.YELLOW + "生成処理: " + (building ? "進行中" : "停止中")
+                        + " / 完了記録: " + manager.getRecordedBuiltCount() + "階");
+                sender.sendMessage(ChatColor.YELLOW + "構造の抜き取り確認: " + inspection.verifiedCount()
+                        + "/" + planned + "階" + (inspection.deepestVerified() > 0
+                        ? "（最深 B" + inspection.deepestVerified() + "）" : ""));
+                if (!building && manager.isBuilt() && inspection.verifiedCount() == planned) {
+                    sender.sendMessage(ChatColor.GREEN + "記録と各階の主要構造が一致しています（全ブロックの保証ではありません）。");
+                } else if (!building) {
+                    sender.sendMessage(ChatColor.RED + "未完成または要確認です。起動ログと安全スキャン結果を確認してください。");
+                }
+                break;
+            }
             case "setcenter":
                 if (!(sender instanceof Player)) {
                     sender.sendMessage("プレイヤーのみ実行可能です。");
@@ -176,6 +200,7 @@ public class DungeonCommand implements CommandExecutor, TabCompleter {
 
     private void sendHelp(CommandSender sender) {
         sender.sendMessage(ChatColor.GOLD + "========== [ Dungeon Admin Help ] ==========");
+        sender.sendMessage("§a/dungeon status        §7- 予定階数と生成済み構造を確認（座標非表示）");
         sender.sendMessage("§a/dungeon tp            §7- 迷宮の正面入口へTP（門自動生成）");
         sender.sendMessage("§a/dungeon build_entrance §7- 正面入口門をその場に生成");
         sender.sendMessage("§a/dungeon setcenter     §7- 現在地を迷宮の中心に設定");
@@ -189,7 +214,7 @@ public class DungeonCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("tp", "entrance", "build_entrance", "setcenter", "enable", "disable", "scan", "build", "reset")
+            return Arrays.asList("status", "tp", "entrance", "build_entrance", "setcenter", "enable", "disable", "scan", "build", "reset")
                     .stream().filter(s -> s.startsWith(args[0].toLowerCase())).collect(Collectors.toList());
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("build")) {

@@ -172,6 +172,7 @@ public class RankingDisplaySystem {
                                 if (shouldDisplayDungeonRanking(data.dungeonLevels)) {
                                     displayDungeonRanking(data.dungeonLevels, discordSummary);
                                 }
+                                displayDungeonBuildAnnouncement(discordSummary);
 
                                 Bukkit.getServer().broadcastMessage("");
                                 Bukkit.getServer()
@@ -191,6 +192,30 @@ public class RankingDisplaySystem {
     static boolean shouldDisplayDungeonRanking(List<?> ranking) {
         // 記録が0件でも存在を告知し、挑戦のきっかけにする。未初期化(null)だけを除外する。
         return ranking != null;
+    }
+
+    /** ランキングの締めに、確認できた迷宮規模だけを告知する。座標は含めない。 */
+    private void displayDungeonBuildAnnouncement(StringBuilder discord) {
+        if (!(plugin instanceof PatrolSpectatorPlugin patrol)) return;
+        dev.gonjy.patrolspectator.dungeon.DungeonManager manager = patrol.getDungeonManager();
+        if (manager == null || !manager.isEnabled()) return;
+
+        int planned = manager.getFloorCount();
+        int verified = manager.inspectBuiltFloors().verifiedCount();
+        boolean building = patrol.getDungeonBuilder() != null && patrol.getDungeonBuilder().isBuilding();
+        String announcement = formatDungeonAnnouncement(building, manager.isBuilt(), planned, verified);
+        if (announcement == null) return;
+        Bukkit.getServer().broadcastMessage(ChatColor.DARK_RED + "💀 " + ChatColor.YELLOW + announcement);
+        discord.append("**💀 ").append(announcement).append("**\n\n");
+    }
+
+    static String formatDungeonAnnouncement(boolean building, boolean recordedComplete, int planned, int verified) {
+        // 生成中の構造物や入口階さえ確認できない状態は宣伝しない。
+        if (building || planned < 1 || verified < 1) return null;
+        if (recordedComplete && verified == planned) {
+            return "死の迷宮は地下B" + planned + "まで主要構造を確認！挑戦者募集中！";
+        }
+        return "死の迷宮は主要構造 " + verified + "/" + planned + "階を確認！挑戦者募集中！";
     }
 
     private void sendSummaryToDiscord(String content) {
