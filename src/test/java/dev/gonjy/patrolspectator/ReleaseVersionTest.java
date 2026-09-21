@@ -9,6 +9,8 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ReleaseVersionTest {
     @Test
@@ -17,7 +19,9 @@ class ReleaseVersionTest {
             assertNotNull(stream);
             YamlConfiguration descriptor = YamlConfiguration.loadConfiguration(
                     new InputStreamReader(stream, StandardCharsets.UTF_8));
-            assertEquals("1.9.122", descriptor.getString("version"));
+            assertEquals("1.9.123", descriptor.getString("version"));
+            assertNull(descriptor.getString("commands.patrol.permission"));
+            assertTrue(descriptor.getBoolean("permissions.patrol.rescue.default"));
         } catch (Exception e) {
             throw new AssertionError("Failed to read packaged plugin descriptor", e);
         }

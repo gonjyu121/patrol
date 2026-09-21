@@ -21,12 +21,14 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
     private final PatrolSpectatorPlugin plugin;
     private final PatrolManager patrolManager;
     private final RankingDisplaySystem rankingDisplaySystem;
+    private final RescueManager rescueManager;
 
     public PatrolCommand(PatrolSpectatorPlugin plugin, PatrolManager patrolManager,
-            RankingDisplaySystem rankingDisplaySystem) {
+            RankingDisplaySystem rankingDisplaySystem, RescueManager rescueManager) {
         this.plugin = plugin;
         this.patrolManager = patrolManager;
         this.rankingDisplaySystem = rankingDisplaySystem;
+        this.rescueManager = rescueManager;
     }
 
     @Override
@@ -34,12 +36,32 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
         if (!"patrol".equalsIgnoreCase(command.getName()))
             return false;
 
+        boolean rescueCommand = args.length > 0 && "rescue".equalsIgnoreCase(args[0]);
+        if (rescueCommand) {
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage("§c[Patrol] rescueはプレイヤーのみ実行できます。");
+                return true;
+            }
+            if (!sender.hasPermission("patrol.rescue")) {
+                sender.sendMessage("§c[Patrol] rescueを実行する権限がありません。");
+                return true;
+            }
+            rescueManager.rescue(player);
+            return true;
+        }
+
+        if (!sender.isOp() && (args.length == 0 || "help".equalsIgnoreCase(args[0]))) {
+            sender.sendMessage("§a/patrol rescue - 死亡直後にリスキル地点から避難");
+            return true;
+        }
+
         if (!sender.isOp()) {
             sender.sendMessage("§c[Patrol] このコマンドを実行する権限がありません (OP専用)。");
             return true;
         }
 
         if (args.length == 0 || "help".equalsIgnoreCase(args[0])) {
+            sender.sendMessage("§a/patrol rescue              - 死亡直後にリスキル地点から避難");
             sender.sendMessage("§a/patrol start [dwellSeconds] - 観光巡りをスタート");
             sender.sendMessage("§a/patrol stop                 - 停止");
             sender.sendMessage("§a/patrol back                 - 最後に手動開始した地点と状態に復帰");
@@ -279,10 +301,14 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!sender.isOp()) {
+            if (args.length == 1 && sender.hasPermission("patrol.rescue")
+                    && "rescue".startsWith(args[0].toLowerCase(Locale.ROOT))) {
+                return List.of("rescue");
+            }
             return Collections.emptyList();
         }
         if (args.length == 1) {
-            List<String> sub = Arrays.asList("start", "stop", "back", "where", "tpback", "sethome", "home", "homes", "travel", "status", "rank", "spawn", "reset_survival", "backup", "reload");
+            List<String> sub = Arrays.asList("rescue", "start", "stop", "back", "where", "tpback", "sethome", "home", "homes", "travel", "status", "rank", "spawn", "reset_survival", "backup", "reload");
             List<String> ret = new ArrayList<>();
             for (String s : sub) {
                 if (s.startsWith(args[0].toLowerCase())) {
