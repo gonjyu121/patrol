@@ -17,7 +17,7 @@ class ReleaseVersionTest {
             assertNotNull(stream);
             YamlConfiguration descriptor = YamlConfiguration.loadConfiguration(
                     new InputStreamReader(stream, StandardCharsets.UTF_8));
-            assertEquals("1.9.117", descriptor.getString("version"));
+            assertEquals("1.9.118", descriptor.getString("version"));
         } catch (Exception e) {
             throw new AssertionError("Failed to read packaged plugin descriptor", e);
         }
