@@ -41,12 +41,12 @@ public class BountyManager implements Listener {
         activeBounties.put(target.getUniqueId(), bounty);
 
         // ゲーム内通知
-        Bukkit.broadcastMessage(ChatColor.RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        Bukkit.broadcastMessage(ChatColor.DARK_RED + "☠ 新たな賞金首が手配されました！ ☠");
-        Bukkit.broadcastMessage(ChatColor.RED + "ターゲット: " + ChatColor.YELLOW + target.getName());
-        Bukkit.broadcastMessage(ChatColor.RED + "賞金: " + ChatColor.GOLD + "ダイヤモンド " + (int) amount + "個");
-        Bukkit.broadcastMessage(ChatColor.RED + "依頼者: " + ChatColor.GRAY + issuer);
-        Bukkit.broadcastMessage(ChatColor.RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.DARK_RED + "☠ 新たな賞金首が手配されました！ ☠");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "ターゲット: " + ChatColor.YELLOW + target.getName());
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "賞金: " + ChatColor.GOLD + "ダイヤモンド " + (int) amount + "個");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "依頼者: " + ChatColor.GRAY + issuer);
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         // Discord通知
         sendDiscordAlert(target.getName(), (int) amount, issuer, true);
@@ -86,11 +86,11 @@ public class BountyManager implements Listener {
             String killerName = (killer != null) ? killer.getName() : "環境ダメージ/モブ";
 
             // ゲーム内通知
-            Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            Bukkit.broadcastMessage(ChatColor.GOLD + "⚔ 賞金首が討ち取られました！ ⚔");
-            Bukkit.broadcastMessage(ChatColor.YELLOW + "ターゲット: " + victim.getName());
-            Bukkit.broadcastMessage(ChatColor.YELLOW + "討伐者: " + ChatColor.RED + killerName);
-            Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "⚔ 賞金首が討ち取られました！ ⚔");
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "ターゲット: " + victim.getName());
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "討伐者: " + ChatColor.RED + killerName);
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
             // 報酬付与（キラーがいる場合のみ）
             if (killer != null) {

@@ -78,10 +78,10 @@ public class AutoEventSystem implements Listener {
                 eveningMode = isEvening;
                 if (eveningMode) {
                     eventInterval = 1800000L; // 夕方は30分間隔
-                    Bukkit.broadcastMessage(ChatColor.GOLD + "🌆 夕方モード開始！イベント頻度が上がりました！");
+                    dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "🌆 夕方モード開始！イベント頻度が上がりました！");
                 } else {
                     eventInterval = 3600000L; // 通常は1時間間隔
-                    Bukkit.broadcastMessage(ChatColor.GRAY + "🌙 通常モードに戻りました");
+                    dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GRAY + "🌙 通常モードに戻りました");
                 }
             }
 
@@ -100,7 +100,7 @@ public class AutoEventSystem implements Listener {
             }
         }, 20L * 60, 20L * 60); // 1分後に開始、1分間隔でチェック
 
-        Bukkit.broadcastMessage(ChatColor.GRAY + "1時間ごとにランダムイベントが開催されます");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GRAY + "1時間ごとにランダムイベントが開催されます");
     }
 
     public void resetLastEventTime() {
@@ -159,12 +159,12 @@ public class AutoEventSystem implements Listener {
         }
 
         // チャットでも派手に表示
-        Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        Bukkit.broadcastMessage(ChatColor.GOLD + "🎊 自動イベント開始！ 🎊");
-        Bukkit.broadcastMessage(ChatColor.YELLOW + "🎮 " + eventName);
-        Bukkit.broadcastMessage(ChatColor.GREEN + "⏰ 制限時間: 15分間");
-        Bukkit.broadcastMessage(ChatColor.AQUA + "🏆 上位3位にはランキングポイントと保護時間ボーナス！");
-        Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "🎊 自動イベント開始！ 🎊");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "🎮 " + eventName);
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GREEN + "⏰ 制限時間: 15分間");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.AQUA + "🏆 上位3位にはランキングポイントと保護時間ボーナス！");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         // Discord通知
         if (plugin instanceof PatrolSpectatorPlugin) {
@@ -193,7 +193,7 @@ public class AutoEventSystem implements Listener {
         if (currentEvent.isEmpty())
             return;
 
-        Bukkit.broadcastMessage(ChatColor.GOLD + "🏆 イベント終了！結果発表 🏆");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "🏆 イベント終了！結果発表 🏆");
 
         // 上位プレイヤーを発表
         announceWinners();
@@ -485,7 +485,7 @@ public class AutoEventSystem implements Listener {
         }
 
         // 一般参加者向け：上位3名
-        Bukkit.broadcastMessage(ChatColor.YELLOW + "🏆 イベント結果 (TOP 3):");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "🏆 イベント結果 (TOP 3):");
         for (int i = 0; i < Math.min(3, sortedPlayers.size()); i++) {
             Map.Entry<UUID, Integer> entry = sortedPlayers.get(i);
             Player player = Bukkit.getPlayer(entry.getKey());
@@ -494,7 +494,7 @@ public class AutoEventSystem implements Listener {
                     ((PatrolSpectatorPlugin) plugin).ensurePlayerNameSaved(entry.getKey(), player.getName());
                 }
                 String rank = getRankString(i + 1);
-                Bukkit.broadcastMessage(rank + " " + player.getName() + ": " + entry.getValue() + "ポイント");
+                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, rank + " " + player.getName() + ": " + entry.getValue() + "ポイント");
             }
         }
     }
