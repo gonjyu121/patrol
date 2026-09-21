@@ -248,7 +248,7 @@ public class EndGameManager implements Listener {
 
             String timestamp = LocalDateTime.now().format(TIME_FORMATTER);
             String message = String.format("[%s] ⚠ ヴォイド・ドラゴン (Void Dragon) が出現しました！ (HARD MODE)", timestamp);
-            Bukkit.broadcastMessage(ChatColor.RED + message);
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + message);
             if (discordWebhookClient != null) {
                 discordWebhookClient.send("🐉 **[ボス出現]** " + message);
             }
@@ -339,7 +339,7 @@ public class EndGameManager implements Listener {
             }
 
             if (struck) {
-                Bukkit.broadcastMessage(ChatColor.RED + "⚡ Void Lightning!!");
+                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "⚡ Void Lightning!!");
             }
 
         }, 20 * 20L, 20 * 20L);
@@ -385,8 +385,8 @@ public class EndGameManager implements Listener {
             }
 
             if (roared) {
-                Bukkit.broadcastMessage(ChatColor.DARK_PURPLE + "📢 " + ChatColor.RED + "ヴォイド・ドラゴンの咆哮がエンドに響き渡った！");
-                Bukkit.broadcastMessage(ChatColor.GRAY + "（周囲のエンダーマンが興奮している...）");
+                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.DARK_PURPLE + "📢 " + ChatColor.RED + "ヴォイド・ドラゴンの咆哮がエンドに響き渡った！");
+                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GRAY + "（周囲のエンダーマンが興奮している...）");
             }
 
         }, 35 * 20L, 35 * 20L);
@@ -494,9 +494,9 @@ public class EndGameManager implements Listener {
 
         if (killer != null) {
             // 共通の討伐メッセージ (通常モードでも表示)
-            Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            Bukkit.broadcastMessage(ChatColor.YELLOW + killer.getName() + " が エンダードラゴン を討伐しました！");
-            Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + killer.getName() + " が エンダードラゴン を討伐しました！");
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         } else {
             plugin.getLogger().warning("[Debug] Ender Dragon death detected, but no player found to credit.");
         }
@@ -507,12 +507,12 @@ public class EndGameManager implements Listener {
             statsStorage.setHardDragonSlayer(killer.getUniqueId(), true);
 
             String timestamp = LocalDateTime.now().format(TIME_FORMATTER);
-            Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            Bukkit.broadcastMessage(ChatColor.GOLD + "⚔️ 伝説の誕生！ ⚔️");
-            Bukkit.broadcastMessage(ChatColor.YELLOW + killer.getName() + " が " + ChatColor.RED + "ヴォイド・ドラゴン"
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "⚔️ 伝説の誕生！ ⚔️");
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + killer.getName() + " が " + ChatColor.RED + "ヴォイド・ドラゴン"
                     + ChatColor.YELLOW + " を討伐しました！ (HARD MODE)");
-            Bukkit.broadcastMessage(ChatColor.AQUA + "称号 [★] が付与されました！ " + ChatColor.GRAY + "[" + timestamp + "]");
-            Bukkit.broadcastMessage(ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.AQUA + "称号 [★] が付与されました！ " + ChatColor.GRAY + "[" + timestamp + "]");
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
             if (discordWebhookClient != null) {
                 discordWebhookClient.send(

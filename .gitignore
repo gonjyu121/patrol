@@ -58,6 +58,7 @@ patrol_homes.yml
 !.env.example
 
 secrets/
+discord-secret.properties
 credentials/
 credentials*.json
 service-account*.json

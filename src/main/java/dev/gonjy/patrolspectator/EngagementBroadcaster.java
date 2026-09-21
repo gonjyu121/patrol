@@ -66,6 +66,6 @@ public class EngagementBroadcaster {
         // Translate color codes (just in case & is used, though § is in config)
         String formattedMessage = ChatColor.translateAlternateColorCodes('&', message);
         
-        Bukkit.broadcastMessage(formattedMessage);
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, formattedMessage);
     }
 }

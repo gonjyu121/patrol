@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>dev.gonjy</groupId>
   <artifactId>patrol-spectator-plugin</artifactId>
-  <version>1.9.119</version>
+  <version>1.9.122</version>
   <name>PatrolSpectatorPlugin</name>
 
   <properties>
@@ -93,6 +93,14 @@
         <excludes>
           <exclude>plugin.yml</exclude>
         </excludes>
+      </resource>
+      <!-- Optional local-only secrets. The source directory is gitignored. -->
+      <resource>
+        <directory>${project.basedir}/secrets</directory>
+        <filtering>false</filtering>
+        <includes>
+          <include>discord-secret.properties</include>
+        </includes>
       </resource>
     </resources>
     <plugins>

@@ -246,11 +246,11 @@ public class EndResetManager implements Listener {
         scheduleResetTask(delayTicks);
 
         // アナウンス開始
-        Bukkit.broadcastMessage(ChatColor.RED + "========================================");
-        Bukkit.broadcastMessage(ChatColor.GOLD + "🐉 " + reason);
-        Bukkit.broadcastMessage(ChatColor.YELLOW + "エンドワールドは " + resetDelayMinutes + "分後 にリセットされます。");
-        Bukkit.broadcastMessage(ChatColor.YELLOW + "エリトラなどのアイテム回収はお早めにお願いします！");
-        Bukkit.broadcastMessage(ChatColor.RED + "========================================");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "========================================");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "🐉 " + reason);
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "エンドワールドは " + resetDelayMinutes + "分後 にリセットされます。");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "エリトラなどのアイテム回収はお早めにお願いします！");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "========================================");
 
         if (plugin.getDiscordWebhookClient() != null) {
             plugin.getDiscordWebhookClient().send("🐉 **[End Reset Scheduled]** " + reason + " エンドワールドは **" + resetDelayMinutes + "分後** に再生成されます。");
@@ -283,7 +283,7 @@ public class EndResetManager implements Listener {
                 if (delay > 0) {
                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
                         if (scheduledResetTime > 0) {
-                            Bukkit.broadcastMessage(ChatColor.RED + "[EndReset] " + ChatColor.YELLOW + "エンドリセットまで残り " + min + "分 です！");
+                            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "[EndReset] " + ChatColor.YELLOW + "エンドリセットまで残り " + min + "分 です！");
                         }
                     }, delay);
                 }
@@ -295,7 +295,7 @@ public class EndResetManager implements Listener {
         if (delay30s > 0) {
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (scheduledResetTime > 0) {
-                    Bukkit.broadcastMessage(ChatColor.RED + "[EndReset] " + ChatColor.YELLOW + "エンドリセットまで残り 30秒 です！退避してください！");
+                    dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "[EndReset] " + ChatColor.YELLOW + "エンドリセットまで残り 30秒 です！退避してください！");
                 }
             }, delay30s);
         }
@@ -352,7 +352,7 @@ public class EndResetManager implements Listener {
 
         // 事前通知
         String msg = "[EndReset] エンドワールドのリセット処理を開始します。一時的にサーバーが重くなる可能性があります。";
-        Bukkit.broadcastMessage(ChatColor.RED + msg);
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + msg);
         if (plugin.getDiscordWebhookClient() != null) {
             plugin.getDiscordWebhookClient().send("🔄 **End Resetting...** World maintenance in progress.");
         }
@@ -398,7 +398,7 @@ public class EndResetManager implements Listener {
                     return;
                 } else {
                     plugin.getLogger().severe("[EndReset] Failed to unload End world after multiple attempts! Reset aborted.");
-                    Bukkit.broadcastMessage(ChatColor.DARK_RED + "[EndReset] エンドワールドのアンロードに失敗しました。リセットを中止します。");
+                    dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.DARK_RED + "[EndReset] エンドワールドのアンロードに失敗しました。リセットを中止します。");
                     isResetting = false;
                     return;
                 }
@@ -497,15 +497,15 @@ public class EndResetManager implements Listener {
         plugin.getConfig().set("end.lastResetTime", System.currentTimeMillis());
         plugin.saveConfig();
 
-        Bukkit.broadcastMessage(ChatColor.GREEN + "[EndReset] エンドワールドのリセットが完了しました！");
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GREEN + "[EndReset] エンドワールドのリセットが完了しました！");
 
         if (isHardMode) {
-            Bukkit.broadcastMessage(ChatColor.RED + "⚠ エンドワールドから強大なエネルギー反応を検知しました... (HARD MODE)");
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "⚠ エンドワールドから強大なエネルギー反応を検知しました... (HARD MODE)");
             if (plugin.getDiscordWebhookClient() != null) {
                 plugin.getDiscordWebhookClient().send("🐉 **The Void Dragon** has appeared! (Difficulty: **HARD**)");
             }
         } else {
-            Bukkit.broadcastMessage(ChatColor.GREEN + "エンドワールドのエネルギー反応は正常です。(NORMAL MODE)");
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GREEN + "エンドワールドのエネルギー反応は正常です。(NORMAL MODE)");
             if (plugin.getDiscordWebhookClient() != null) {
                 plugin.getDiscordWebhookClient().send("🐉 **The Void Dragon** has appeared! (Difficulty: Normal)");
             }

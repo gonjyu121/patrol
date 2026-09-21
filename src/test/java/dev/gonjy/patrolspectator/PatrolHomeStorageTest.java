@@ -65,6 +65,33 @@ class PatrolHomeStorageTest {
         assertNull(storage.load(playerId, 3));
     }
 
+    @Test
+    void javaAndBedrockNamesShareTheSameOwnerKeyAndHomes() {
+        UUID javaId = UUID.randomUUID();
+        UUID bedrockId = UUID.randomUUID();
+        String javaKey = PatrolHomeStorage.canonicalOwnerKey("OtouGame", javaId);
+        String bedrockKey = PatrolHomeStorage.canonicalOwnerKey(".OtouGame", bedrockId);
+        Location home = new Location(world, 42, 70, -18, 30, 5);
+
+        assertEquals(javaKey, bedrockKey);
+        assertTrue(storage.save(javaKey, javaId, 1, home));
+        assertLocationEquals(home, storage.load(bedrockKey, bedrockId, 1));
+    }
+
+    @Test
+    void legacyUuidHomeMigratesWhenItsOwnerLoadsIt() {
+        UUID playerId = UUID.randomUUID();
+        Location legacyHome = new Location(world, -5, 65, 9);
+        assertTrue(storage.save(playerId, 2, legacyHome));
+
+        String ownerKey = PatrolHomeStorage.canonicalOwnerKey("OtouGame", playerId);
+        assertLocationEquals(legacyHome, storage.load(ownerKey, playerId, 2));
+
+        UUID bedrockId = UUID.randomUUID();
+        assertLocationEquals(legacyHome, storage.load(
+                PatrolHomeStorage.canonicalOwnerKey(".OtouGame", bedrockId), bedrockId, 2));
+    }
+
     private void assertLocationEquals(Location expected, Location actual) {
         assertNotNull(actual);
         assertEquals(expected.getWorld(), actual.getWorld());

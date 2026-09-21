@@ -460,14 +460,21 @@ public class PatrolManager implements org.bukkit.event.Listener {
      * 常設帰還地点を保存します。
      */
     public boolean saveHome(Player player, int slot) {
-        return player != null && homeStorage.save(player.getUniqueId(), slot, player.getLocation());
+        return player != null && homeStorage.save(
+                PatrolHomeStorage.canonicalOwnerKey(player.getName(), player.getUniqueId()),
+                player.getUniqueId(),
+                slot,
+                player.getLocation());
     }
 
     /**
      * 常設帰還地点を取得します。未登録またはワールド未ロードの場合は null を返します。
      */
     public Location getHome(Player player, int slot) {
-        return player == null ? null : homeStorage.load(player.getUniqueId(), slot);
+        return player == null ? null : homeStorage.load(
+                PatrolHomeStorage.canonicalOwnerKey(player.getName(), player.getUniqueId()),
+                player.getUniqueId(),
+                slot);
     }
 
     /**

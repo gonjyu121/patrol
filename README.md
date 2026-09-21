@@ -126,3 +126,11 @@ singleSleepEnabled: true
 - ビルド: `.\update_plugins.ps1` または `mvn clean package`
 - テスト: `mvn test`
 - JDK 21を使用すること
+
+### Discord Webhookをローカルビルドから埋め込む
+
+`discord-secret.properties.example` を `secrets/discord-secret.properties` へコピーし、
+ビルドPC上でのみWebhook URLを設定できます。`secrets/` はGit管理対象外です。
+このファイルが存在する場合、そのURLがJARへ埋め込まれ、サーバー側の
+`config.yml` より優先されます。新しいサーバーでもJARを配置するだけで通知できます。
+完成したJARには秘密情報が含まれるため公開しないでください。

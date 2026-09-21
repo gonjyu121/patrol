@@ -1,5 +1,25 @@
 # PatrolSpectatorPlugin Development Log
 
+## v1.9.122 - 自動案内をカメラ役だけに表示
+
+- ランキング、イベント、賞金首、エンド、迷宮などの自動一斉案内を、設定上のカメラ役だけへ送信。
+- Java版 `OtouGame` とBE版 `.OtouGame` は表示先として区別し、BEで通常プレイ中は自動案内を表示しない。
+- コマンド応答、報酬通知、罠や危険の警告など、本人の操作・ゲーム進行に必要な個別通知は維持。
+
+## v1.9.121 - Java版・BE版の帰還地点共有
+
+- Java版名 `OtouGame` とGeyser経由のBE版名 `.OtouGame` を同じ帰還地点所有者として扱う。
+- `/patrol sethome`、`/patrol home`、`/patrol homes` の2枠を両アカウントで共有。
+- 従来のUUID形式で保存された地点は、所有者本人が最初に読み込んだ際に共有形式へ自動移行。
+- プレイヤー向けメッセージには引き続き座標を表示しない。
+
+## v1.9.120 - ローカル秘密情報のビルド注入
+
+- Git管理外の `secrets/discord-secret.properties` をビルド時にJARへ収録できる仕組みを追加。
+- 埋め込みWebhook URLをサーバー側 `config.yml` より優先し、JAR配置だけで新規サーバーへ移行可能にした。
+- 秘密情報がない場合は従来の `config.yml` 設定へフォールバックし、既存環境との互換性を維持。
+- Webhook URL自体の変更・再発行はこのIssueでは実施しない。
+
 ## Current Status (2026-09-17)
 - **Version**: 1.9.110
 - **Branch**: `feature/dungeon-empty-reset-v1.9.110`

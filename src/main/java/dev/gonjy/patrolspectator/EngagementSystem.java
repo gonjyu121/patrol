@@ -399,7 +399,7 @@ public final class EngagementSystem {
     private void notifyRankUp(Player player, String rank) {
         org.bukkit.ChatColor color = getLegacyRankColor(rank);
 
-        Bukkit.broadcastMessage(ChatColor.YELLOW + player.getName() + " さんがランク " 
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + player.getName() + " さんがランク "
                 + color + rank 
                 + ChatColor.YELLOW + " になりました！");
 
