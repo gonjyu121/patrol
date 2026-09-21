@@ -20,7 +20,9 @@ public class DiscordWebhookClient {
 
     public void reload() {
         this.enabled = plugin.getConfig().getBoolean("discord.enabled", true);
-        this.webhookUrl = plugin.getConfig().getString("discord.webhook_url");
+        this.webhookUrl = DiscordWebhookSecretResolver.resolve(
+                plugin.getConfig().getString("discord.webhook_url"),
+                plugin.getClass().getClassLoader());
         if (this.enabled && (this.webhookUrl == null || this.webhookUrl.isEmpty())) {
             plugin.getLogger().warning("Discord Webhook URL is not configured in config.yml");
         }

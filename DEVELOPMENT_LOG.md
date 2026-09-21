@@ -1,5 +1,12 @@
 # PatrolSpectatorPlugin Development Log
 
+## v1.9.120 - ローカル秘密情報のビルド注入
+
+- Git管理外の `secrets/discord-secret.properties` をビルド時にJARへ収録できる仕組みを追加。
+- 埋め込みWebhook URLをサーバー側 `config.yml` より優先し、JAR配置だけで新規サーバーへ移行可能にした。
+- 秘密情報がない場合は従来の `config.yml` 設定へフォールバックし、既存環境との互換性を維持。
+- Webhook URL自体の変更・再発行はこのIssueでは実施しない。
+
 ## Current Status (2026-09-17)
 - **Version**: 1.9.110
 - **Branch**: `feature/dungeon-empty-reset-v1.9.110`
