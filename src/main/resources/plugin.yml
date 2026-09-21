@@ -7,8 +7,7 @@ authors: [ 'gonjy' ]
 commands:
   patrol:
     description: 観光巡りコマンド
-    usage: /patrol <start|stop|status|rank>
-    permission: patrolspectator.use
+    usage: /patrol <rescue|start|stop|status|rank>
   bounty:
     description: 賞金首コマンド
     usage: /bounty <info|claim>
@@ -21,6 +20,9 @@ commands:
     usage: /dungeon <status|tp|reset|build|scan|enable|disable>
     permission: patrol.dungeon.admin
 permissions:
+  patrol.rescue:
+    description: リスキル救済コマンドを使用できます
+    default: true
   patrol.dungeon.admin:
     default: op
   patrolspectator.use:
