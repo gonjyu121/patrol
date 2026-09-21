@@ -61,6 +61,22 @@ public class DungeonStatsStorage {
         }
     }
 
+    public boolean grantPermanentKeepInventory(UUID uuid, String name) {
+        String path = "players." + uuid + ".permanent_keep_inventory";
+        if (stats.getBoolean(path, false)) {
+            return false;
+        }
+        stats.set(path, true);
+        stats.set("players." + uuid + ".name", name);
+        stats.set("players." + uuid + ".keep_inventory_granted_at", System.currentTimeMillis());
+        saveStats();
+        return true;
+    }
+
+    public boolean hasPermanentKeepInventory(UUID uuid) {
+        return stats.getBoolean("players." + uuid + ".permanent_keep_inventory", false);
+    }
+
     public java.util.Map<UUID, Integer> getAllPlayerLevels() {
         java.util.Map<UUID, Integer> map = new java.util.HashMap<>();
         if (stats.getConfigurationSection("players") == null)

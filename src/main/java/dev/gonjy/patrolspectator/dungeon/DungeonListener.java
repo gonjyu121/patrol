@@ -14,6 +14,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerSpawnChangeEvent;
 import org.bukkit.Material;
 import org.bukkit.GameMode;
 import org.bukkit.scheduler.BukkitTask;
@@ -141,6 +142,9 @@ public class DungeonListener implements Listener {
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
+        if (stats.hasPermanentKeepInventory(player.getUniqueId())) {
+            applyPermanentKeepInventory(event);
+        }
         Location deathLoc = player.getLocation();
 
         // 早期リターン: 迷宮外なら何もしない
@@ -162,6 +166,15 @@ public class DungeonListener implements Listener {
         deathLoc.getWorld().strikeLightningEffect(deathLoc);
         for (Player p : Bukkit.getOnlinePlayers()) {
             p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_WITHER_SPAWN, 0.5f, 0.5f);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onSpawnChange(PlayerSpawnChangeEvent event) {
+        Location newSpawn = event.getNewSpawn();
+        if (shouldBlockSpawnChange(newSpawn != null && manager.isInDungeon(newSpawn))) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage(ChatColor.RED + "死の迷宮内をリスポーン地点に登録することはできません。");
         }
     }
 
@@ -359,6 +372,16 @@ public class DungeonListener implements Listener {
             if (!dungeonCompleted)
                 return;
 
+            boolean newlyGranted = stats.grantPermanentKeepInventory(killer.getUniqueId(), killer.getName());
+            if (newlyGranted) {
+                Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "======== [ 迷宮完全踏破特典 ] ========");
+                Bukkit.broadcastMessage(ChatColor.GOLD + killer.getName() + ChatColor.YELLOW
+                        + " は死の迷宮を制し、永続キープインベントリを獲得しました！");
+                Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "====================================");
+                killer.sendTitle(ChatColor.GOLD + "永続特典を獲得！",
+                        ChatColor.YELLOW + "今後は死亡してもアイテムと経験値を失いません", 10, 120, 20);
+            }
+
             // 迷宮の再生成 (少しディレイを置く)
             manager.setBuilt(false);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -373,5 +396,16 @@ public class DungeonListener implements Listener {
 
     static boolean isValidBossDefeat(boolean hasPlayerKiller, boolean killerInDungeon, boolean bossInDungeon) {
         return hasPlayerKiller && killerInDungeon && bossInDungeon;
+    }
+
+    static boolean shouldBlockSpawnChange(boolean newSpawnInDungeon) {
+        return newSpawnInDungeon;
+    }
+
+    static void applyPermanentKeepInventory(PlayerDeathEvent event) {
+        event.setKeepInventory(true);
+        event.setKeepLevel(true);
+        event.setDroppedExp(0);
+        event.getDrops().clear();
     }
 }
