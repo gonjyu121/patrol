@@ -38,6 +38,21 @@ class SpawnResetManagerTest {
     }
 
     @Test
+    void excludesOnlyDungeonChunksAndKeepsRemainingSpawnArea() {
+        World world = mock(World.class);
+        List<SpawnResetManager.ChunkPosition> planned =
+                SpawnResetManager.createPlan(new Location(world, 0, 64, 0), 4);
+
+        SpawnResetManager.ResetPlan safe = SpawnResetManager.excludeDungeonChunks(
+                planned, new Location(world, 70, 64, 0), 30);
+
+        assertTrue(safe.excludedDungeonChunks() > 0);
+        assertEquals(81, safe.chunks().size() + safe.excludedDungeonChunks());
+        assertTrue(safe.chunks().contains(new SpawnResetManager.ChunkPosition(0, 0)));
+        assertFalse(safe.chunks().contains(new SpawnResetManager.ChunkPosition(4, 0)));
+    }
+
+    @Test
     void confirmationExpiresAfterDeadline() {
         assertTrue(SpawnResetManager.isConfirmationValid(10_000L, 10_000L));
         assertFalse(SpawnResetManager.isConfirmationValid(9_999L, 10_000L));
