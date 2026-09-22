@@ -19,9 +19,10 @@ class ReleaseVersionTest {
             assertNotNull(stream);
             YamlConfiguration descriptor = YamlConfiguration.loadConfiguration(
                     new InputStreamReader(stream, StandardCharsets.UTF_8));
-            assertEquals("1.9.123", descriptor.getString("version"));
+            assertEquals("1.9.124", descriptor.getString("version"));
             assertNull(descriptor.getString("commands.patrol.permission"));
             assertTrue(descriptor.getBoolean("permissions.patrol.rescue.default"));
+            assertTrue(descriptor.getBoolean("permissions.patrol.teleport.default"));
         } catch (Exception e) {
             throw new AssertionError("Failed to read packaged plugin descriptor", e);
         }
