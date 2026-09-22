@@ -22,13 +22,16 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
     private final PatrolManager patrolManager;
     private final RankingDisplaySystem rankingDisplaySystem;
     private final RescueManager rescueManager;
+    private final TeleportRequestManager teleportRequestManager;
 
     public PatrolCommand(PatrolSpectatorPlugin plugin, PatrolManager patrolManager,
-            RankingDisplaySystem rankingDisplaySystem, RescueManager rescueManager) {
+            RankingDisplaySystem rankingDisplaySystem, RescueManager rescueManager,
+            TeleportRequestManager teleportRequestManager) {
         this.plugin = plugin;
         this.patrolManager = patrolManager;
         this.rankingDisplaySystem = rankingDisplaySystem;
         this.rescueManager = rescueManager;
+        this.teleportRequestManager = teleportRequestManager;
     }
 
     @Override
@@ -50,8 +53,33 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        String subcommand = args.length == 0 ? "" : args[0].toLowerCase(Locale.ROOT);
+        if (List.of("invite", "accept", "deny").contains(subcommand)) {
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage("§c[Patrol] プレイヤーのみ実行できます。");
+                return true;
+            }
+            if (!sender.hasPermission("patrol.teleport")) {
+                sender.sendMessage("§c[Patrol] プレイヤー間TPを実行する権限がありません。");
+                return true;
+            }
+            switch (subcommand) {
+                case "invite" -> {
+                    if (args.length < 2) sender.sendMessage("§c使い方: /patrol invite <プレイヤー>");
+                    else teleportRequestManager.invite(player, args[1]);
+                }
+                case "accept" -> teleportRequestManager.accept(player);
+                case "deny" -> teleportRequestManager.deny(player);
+                default -> { }
+            }
+            return true;
+        }
+
         if (!sender.isOp() && (args.length == 0 || "help".equalsIgnoreCase(args[0]))) {
             sender.sendMessage("§a/patrol rescue - 死亡直後にリスキル地点から避難");
+            sender.sendMessage("§a/patrol invite <相手> - 自分の場所へTP招待");
+            sender.sendMessage("§a/patrol accept - 最新のTP招待を承認");
+            sender.sendMessage("§a/patrol deny - 最新のTP招待を拒否");
             return true;
         }
 
@@ -62,6 +90,9 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 0 || "help".equalsIgnoreCase(args[0])) {
             sender.sendMessage("§a/patrol rescue              - 死亡直後にリスキル地点から避難");
+            sender.sendMessage("§a/patrol invite <相手>       - 自分の場所へTP招待");
+            sender.sendMessage("§a/patrol accept              - 最新のTP招待を承認");
+            sender.sendMessage("§a/patrol deny                - 最新のTP招待を拒否");
             sender.sendMessage("§a/patrol start [dwellSeconds] - 観光巡りをスタート");
             sender.sendMessage("§a/patrol stop                 - 停止");
             sender.sendMessage("§a/patrol back                 - 最後に手動開始した地点と状態に復帰");
@@ -301,14 +332,24 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!sender.isOp()) {
-            if (args.length == 1 && sender.hasPermission("patrol.rescue")
-                    && "rescue".startsWith(args[0].toLowerCase(Locale.ROOT))) {
-                return List.of("rescue");
+            if (args.length == 1) {
+                List<String> allowed = new ArrayList<>();
+                if (sender.hasPermission("patrol.rescue")) allowed.add("rescue");
+                if (sender.hasPermission("patrol.teleport")) allowed.addAll(List.of("invite", "accept", "deny"));
+                return allowed.stream().filter(value -> value.startsWith(args[0].toLowerCase(Locale.ROOT))).toList();
+            }
+            if (args.length == 2 && "invite".equalsIgnoreCase(args[0])
+                    && sender.hasPermission("patrol.teleport")) {
+                return Bukkit.getOnlinePlayers().stream()
+                        .map(Player::getName)
+                        .filter(name -> !name.equalsIgnoreCase(sender.getName()))
+                        .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(args[1].toLowerCase(Locale.ROOT)))
+                        .sorted(String.CASE_INSENSITIVE_ORDER).toList();
             }
             return Collections.emptyList();
         }
         if (args.length == 1) {
-            List<String> sub = Arrays.asList("rescue", "start", "stop", "back", "where", "tpback", "sethome", "home", "homes", "travel", "status", "rank", "spawn", "reset_survival", "backup", "reload");
+            List<String> sub = Arrays.asList("rescue", "invite", "accept", "deny", "start", "stop", "back", "where", "tpback", "sethome", "home", "homes", "travel", "status", "rank", "spawn", "reset_survival", "backup", "reload");
             List<String> ret = new ArrayList<>();
             for (String s : sub) {
                 if (s.startsWith(args[0].toLowerCase())) {
@@ -316,6 +357,13 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                 }
             }
             return ret;
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("invite")) {
+            return Bukkit.getOnlinePlayers().stream()
+                    .map(Player::getName)
+                    .filter(name -> !name.equalsIgnoreCase(sender.getName()))
+                    .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(args[1].toLowerCase(Locale.ROOT)))
+                    .sorted(String.CASE_INSENSITIVE_ORDER).toList();
         }
         if (args.length == 2 && (args[0].equalsIgnoreCase("sethome") || args[0].equalsIgnoreCase("home"))) {
             return Arrays.asList("1", "2").stream()

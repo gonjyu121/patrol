@@ -17,6 +17,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     private PatrolManager patrolManager;
     private RankingDisplaySystem rankingDisplaySystem;
     private RescueManager rescueManager;
+    private TeleportRequestManager teleportRequestManager;
 
     private EndResetManager endResetManager;
     private YouTubeManager youTubeManager;
@@ -134,6 +135,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         rankingDisplaySystem = new RankingDisplaySystem(this, statsStorage);
         rescueManager = new RescueManager(this);
         getServer().getPluginManager().registerEvents(rescueManager, this);
+        teleportRequestManager = new TeleportRequestManager(this);
+        getServer().getPluginManager().registerEvents(teleportRequestManager, this);
         endResetManager = new EndResetManager(this);
         endGameManager = new EndGameManager(this, statsStorage, discordWebhookClient);
 
@@ -202,7 +205,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         MessageUtils.init(titleConf);
 
         // コマンド登録
-        PatrolCommand patrolCmd = new PatrolCommand(this, patrolManager, rankingDisplaySystem, rescueManager);
+        PatrolCommand patrolCmd = new PatrolCommand(this, patrolManager, rankingDisplaySystem, rescueManager,
+                teleportRequestManager);
         if (getCommand("patrol") != null) {
             getCommand("patrol").setExecutor(patrolCmd);
             getCommand("patrol").setTabCompleter(patrolCmd);
