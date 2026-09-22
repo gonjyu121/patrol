@@ -17,6 +17,7 @@ public class EngagementBroadcaster {
     private final JavaPlugin plugin;
     private final Random random = new Random();
     private BukkitTask broadcastTask;
+    private BukkitTask participantGuideTask;
 
     public EngagementBroadcaster(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -28,10 +29,13 @@ public class EngagementBroadcaster {
     public void start() {
         stop();
 
+        startCameraEngagement();
+        startParticipantGuidance();
+    }
+
+    private void startCameraEngagement() {
         FileConfiguration config = plugin.getConfig();
-        if (!config.getBoolean("engagement.enabled", true)) {
-            return;
-        }
+        if (!config.getBoolean("engagement.enabled", true)) return;
 
         int intervalMinutes = config.getInt("engagement.interval_minutes", 15);
         if (intervalMinutes <= 0) return;
@@ -42,6 +46,19 @@ public class EngagementBroadcaster {
         plugin.getLogger().info("[Engagement] Periodic broadcasts started every " + intervalMinutes + " minutes.");
     }
 
+    private void startParticipantGuidance() {
+        FileConfiguration config = plugin.getConfig();
+        if (!config.getBoolean("participant_guidance.enabled", true)) return;
+
+        int intervalMinutes = config.getInt("participant_guidance.interval_minutes", 30);
+        if (intervalMinutes <= 0) return;
+
+        long ticks = intervalMinutes * 60L * 20L;
+        participantGuideTask = Bukkit.getScheduler().runTaskTimer(plugin, this::sendParticipantGuidance, ticks, ticks);
+        plugin.getLogger().info("[ParticipantGuide] Participant guidance started every "
+                + intervalMinutes + " minutes.");
+    }
+
     /**
      * Stops the periodic broadcast task.
      */
@@ -49,6 +66,10 @@ public class EngagementBroadcaster {
         if (broadcastTask != null) {
             broadcastTask.cancel();
             broadcastTask = null;
+        }
+        if (participantGuideTask != null) {
+            participantGuideTask.cancel();
+            participantGuideTask = null;
         }
     }
 
@@ -67,5 +88,16 @@ public class EngagementBroadcaster {
         String formattedMessage = ChatColor.translateAlternateColorCodes('&', message);
         
         dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, formattedMessage);
+    }
+
+    /** Sends compact command and channel guidance only to actual participants. */
+    private void sendParticipantGuidance() {
+        List<String> messages = plugin.getConfig().getStringList("participant_guidance.messages");
+        if (messages == null || messages.isEmpty()) return;
+
+        for (String message : messages) {
+            String formatted = ChatColor.translateAlternateColorCodes('&', message);
+            ParticipantMessageRouter.send(plugin, formatted);
+        }
     }
 }
