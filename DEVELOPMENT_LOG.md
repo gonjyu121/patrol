@@ -259,3 +259,13 @@
     - `/stats`、`/patrol rescue`、承認制TPの各コマンドを簡潔に案内。
     - Java版カメラ `OtouGame` は除外し、BE版のプレイ用 `.OtouGame` は参加者として案内対象にする。
     - 直接メッセージで送信し、DiscordやYouTubeへは転送しない。
+
+## Current Status (2026-09-22, safe spawn regeneration)
+- **Version**: 1.9.126
+- **Branch**: `feature/spawn-reset-v1.9.126`
+- **Issue**: 荒らされた初期リス周辺を安全に自然地形へ再生成
+- **Changes**:
+    - OPまたはコンソール専用の `/patrol spawnreset` と60秒以内の `confirm` を追加。
+    - 初期リスを中心とする半径4チャンク、合計81チャンクを負荷分散しながら順番に再生成。
+    - 対象範囲にプレイヤーがいる場合や死の迷宮と重なる場合は開始を拒否。
+    - 実行中にプレイヤーが対象範囲へ入った場合も安全のため中断し、座標は画面やログへ表示しない。
