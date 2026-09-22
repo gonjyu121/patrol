@@ -159,3 +159,13 @@ engagement:
     - "§b[YouTube] §f24時間配信中！高評価とチャンネル登録お願いします！"
     - "§b[YouTube] §fこのサーバーが面白いと思ったら、ぜひYouTubeの配信も覗いてみてね！"
     - "§b[YouTube] §fチャンネル登録者が増えると、サーバーに新しい機能が追加されるかも...？"
+
+# カメラ役を除く参加者へ、配信案内と一般利用可能なコマンドを直接表示します。
+# 通常チャットイベントを通さないため、DiscordやYouTubeには転送されません。
+participant_guidance:
+  enabled: true
+  interval_minutes: 30
+  messages:
+    - "§b[配信] §f24時間配信中！チャンネル登録・高評価で応援お願いします！"
+    - "§a[使えるコマンド] §f/stats  /patrol rescue"
+    - "§a[TP招待] §f/patrol invite <相手>  /patrol accept  /patrol deny"

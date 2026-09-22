@@ -27,7 +27,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.124",
-    "description": "配信用パトロールプラグイン（承認制プレイヤーTP版）"
+    "version": "1.9.125",
+    "description": "配信用パトロールプラグイン（参加者向け定期案内版）"
   }
 }
