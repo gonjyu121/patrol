@@ -7,7 +7,7 @@ authors: [ 'gonjy' ]
 commands:
   patrol:
     description: 観光巡りコマンド
-    usage: /patrol <rescue|invite|accept|deny|start|stop|status|rank>
+    usage: /patrol <rescue|invite|accept|deny|start|stop|status|rank|spawnreset>
   bounty:
     description: 賞金首コマンド
     usage: /bounty <info|claim>

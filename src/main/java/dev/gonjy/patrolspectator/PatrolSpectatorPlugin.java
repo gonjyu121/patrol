@@ -18,6 +18,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     private RankingDisplaySystem rankingDisplaySystem;
     private RescueManager rescueManager;
     private TeleportRequestManager teleportRequestManager;
+    private SpawnResetManager spawnResetManager;
 
     private EndResetManager endResetManager;
     private YouTubeManager youTubeManager;
@@ -147,6 +148,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         dungeonBuilder = new dev.gonjy.patrolspectator.dungeon.DungeonBuilder(this, dungeonManager);
         dungeonLootSystem = new dev.gonjy.patrolspectator.dungeon.DungeonLootSystem();
         dungeonBossSystem = new dev.gonjy.patrolspectator.dungeon.DungeonBossSystem();
+        spawnResetManager = new SpawnResetManager(this, dungeonManager);
 
         // Engagement Broadcaster
         engagementBroadcaster = new EngagementBroadcaster(this);
@@ -206,7 +208,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
         // コマンド登録
         PatrolCommand patrolCmd = new PatrolCommand(this, patrolManager, rankingDisplaySystem, rescueManager,
-                teleportRequestManager);
+                teleportRequestManager, spawnResetManager);
         if (getCommand("patrol") != null) {
             getCommand("patrol").setExecutor(patrolCmd);
             getCommand("patrol").setTabCompleter(patrolCmd);

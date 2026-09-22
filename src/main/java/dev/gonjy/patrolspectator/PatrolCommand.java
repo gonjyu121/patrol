@@ -23,15 +23,17 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
     private final RankingDisplaySystem rankingDisplaySystem;
     private final RescueManager rescueManager;
     private final TeleportRequestManager teleportRequestManager;
+    private final SpawnResetManager spawnResetManager;
 
     public PatrolCommand(PatrolSpectatorPlugin plugin, PatrolManager patrolManager,
             RankingDisplaySystem rankingDisplaySystem, RescueManager rescueManager,
-            TeleportRequestManager teleportRequestManager) {
+            TeleportRequestManager teleportRequestManager, SpawnResetManager spawnResetManager) {
         this.plugin = plugin;
         this.patrolManager = patrolManager;
         this.rankingDisplaySystem = rankingDisplaySystem;
         this.rescueManager = rescueManager;
         this.teleportRequestManager = teleportRequestManager;
+        this.spawnResetManager = spawnResetManager;
     }
 
     @Override
@@ -103,6 +105,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage("§a/patrol homes                - 登録した帰還地点を表示");
             sender.sendMessage("§a/patrol spawn                - 初期スポーン地点へ戻り、開始地点をリセット");
             sender.sendMessage("§a/patrol travel               - 初期リスから遠く離れた村(またはランダム地点)へTP");
+            sender.sendMessage("§a/patrol spawnreset          - 初期リス周辺の再生成を事前確認(OP)");
             sender.sendMessage("§a/patrol status               - 状態表示");
             sender.sendMessage("§a/patrol rank                 - ランキング表示");
             if (sender.isOp()) {
@@ -217,6 +220,14 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                 patrolManager.setStartLocation(spawnLoc);
                 p.teleport(spawnLoc);
                 sender.sendMessage("§a[Patrol] オーバーワールドの初期スポーン地点へ戻りました。開始地点をここにリセットしました。");
+                break;
+            }
+            case "spawnreset": {
+                if (args.length >= 2 && "confirm".equalsIgnoreCase(args[1])) {
+                    spawnResetManager.confirm(sender);
+                } else {
+                    spawnResetManager.preview(sender);
+                }
                 break;
             }
             case "where": {
@@ -349,7 +360,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             return Collections.emptyList();
         }
         if (args.length == 1) {
-            List<String> sub = Arrays.asList("rescue", "invite", "accept", "deny", "start", "stop", "back", "where", "tpback", "sethome", "home", "homes", "travel", "status", "rank", "spawn", "reset_survival", "backup", "reload");
+            List<String> sub = Arrays.asList("rescue", "invite", "accept", "deny", "start", "stop", "back", "where", "tpback", "sethome", "home", "homes", "travel", "status", "rank", "spawn", "spawnreset", "reset_survival", "backup", "reload");
             List<String> ret = new ArrayList<>();
             for (String s : sub) {
                 if (s.startsWith(args[0].toLowerCase())) {
@@ -369,6 +380,9 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             return Arrays.asList("1", "2").stream()
                     .filter(slot -> slot.startsWith(args[1]))
                     .toList();
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("spawnreset")) {
+            return "confirm".startsWith(args[1].toLowerCase(Locale.ROOT)) ? List.of("confirm") : List.of();
         }
         return Collections.emptyList();
     }

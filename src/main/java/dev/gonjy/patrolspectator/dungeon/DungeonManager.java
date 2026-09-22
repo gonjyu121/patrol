@@ -22,6 +22,7 @@ public class DungeonManager {
     private boolean enabled = false;
     private boolean built = false;
     static final int DUNGEON_SIZE = 60;
+    public static final int DUNGEON_RADIUS_BLOCKS = DUNGEON_SIZE / 2;
     static final int FLOOR_HEIGHT = 6;
     static final int SPAWN_OFFSET = 256;
     static final int SPAWN_CLEARANCE = 64;
