@@ -42,7 +42,8 @@ public final class SpawnResetManager {
             return;
         }
 
-        List<ChunkPosition> chunks = createPlan(world.getSpawnLocation(), DEFAULT_RADIUS_CHUNKS);
+        ResetPlan plan = createSafePlan(world);
+        List<ChunkPosition> chunks = plan.chunks();
         String refusal = refusalReason(world, chunks);
         if (refusal != null) {
             sender.sendMessage(refusal);
@@ -51,6 +52,10 @@ public final class SpawnResetManager {
 
         confirmations.put(senderKey(sender), System.currentTimeMillis() + CONFIRMATION_MILLIS);
         sender.sendMessage("§e[Patrol] 初期リス周辺の" + chunks.size() + "チャンクを自然地形へ再生成します。");
+        if (plan.excludedDungeonChunks() > 0) {
+            sender.sendMessage("§6[Patrol] 死の迷宮と重なる" + plan.excludedDungeonChunks()
+                    + "チャンクは保護し、再生成対象から除外します。");
+        }
         sender.sendMessage("§c建築物や設置物は失われます。60秒以内に §f/patrol spawnreset confirm §cで確定してください。");
     }
 
@@ -70,14 +75,16 @@ public final class SpawnResetManager {
             sender.sendMessage("§c[Patrol] 対象ワールドを取得できませんでした。");
             return;
         }
-        List<ChunkPosition> chunks = createPlan(world.getSpawnLocation(), DEFAULT_RADIUS_CHUNKS);
+        ResetPlan plan = createSafePlan(world);
+        List<ChunkPosition> chunks = plan.chunks();
         String refusal = refusalReason(world, chunks);
         if (refusal != null) {
             sender.sendMessage(refusal);
             return;
         }
 
-        plugin.getLogger().warning("[SpawnReset] 初期リス周辺の再生成を開始します（" + chunks.size() + "チャンク、座標非表示）。");
+        plugin.getLogger().warning("[SpawnReset] 初期リス周辺の再生成を開始します（対象=" + chunks.size()
+                + "チャンク、迷宮保護による除外=" + plan.excludedDungeonChunks() + "チャンク、座標非表示）。");
         sender.sendMessage("§a[Patrol] 初期リス周辺の再生成を開始しました。負荷を抑えて順番に処理します。");
         int[] index = {0};
         resetTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
@@ -119,17 +126,24 @@ public final class SpawnResetManager {
     }
 
     private String refusalReason(World world, List<ChunkPosition> chunks) {
+        if (chunks.isEmpty()) {
+            return "§c[Patrol] 対象範囲の全チャンクが死の迷宮と重なるため再生成できません。";
+        }
         Set<ChunkPosition> area = new HashSet<>(chunks);
         if (hasPlayerInArea(world, area)) {
             return "§c[Patrol] 対象範囲にプレイヤーがいるため再生成できません。全員が離れてから再実行してください。";
         }
-        Location dungeonCenter = dungeonManager == null ? null : dungeonManager.getCenter();
-        if (dungeonManager != null && dungeonManager.isEnabled() && dungeonCenter != null
-                && dungeonCenter.getWorld() != null && dungeonCenter.getWorld().equals(world)
-                && overlapsDungeon(area, dungeonCenter, DungeonManager.DUNGEON_RADIUS_BLOCKS)) {
-            return "§c[Patrol] 死の迷宮と対象範囲が重なるため、安全上再生成できません。";
-        }
         return null;
+    }
+
+    private ResetPlan createSafePlan(World world) {
+        List<ChunkPosition> planned = createPlan(world.getSpawnLocation(), DEFAULT_RADIUS_CHUNKS);
+        Location center = dungeonManager == null ? null : dungeonManager.getCenter();
+        if (dungeonManager == null || !dungeonManager.isEnabled() || center == null
+                || center.getWorld() == null || !center.getWorld().equals(world)) {
+            return new ResetPlan(planned, 0);
+        }
+        return excludeDungeonChunks(planned, center, DungeonManager.DUNGEON_RADIUS_BLOCKS);
     }
 
     static List<ChunkPosition> createPlan(Location spawn, int radiusChunks) {
@@ -162,6 +176,22 @@ public final class SpawnResetManager {
         return false;
     }
 
+    static ResetPlan excludeDungeonChunks(List<ChunkPosition> planned, Location center, int radiusBlocks) {
+        int minChunkX = (center.getBlockX() - radiusBlocks) >> 4;
+        int maxChunkX = (center.getBlockX() + radiusBlocks) >> 4;
+        int minChunkZ = (center.getBlockZ() - radiusBlocks) >> 4;
+        int maxChunkZ = (center.getBlockZ() + radiusBlocks) >> 4;
+        List<ChunkPosition> safe = new ArrayList<>(planned.size());
+        int excluded = 0;
+        for (ChunkPosition chunk : planned) {
+            boolean dungeonChunk = chunk.x() >= minChunkX && chunk.x() <= maxChunkX
+                    && chunk.z() >= minChunkZ && chunk.z() <= maxChunkZ;
+            if (dungeonChunk) excluded++;
+            else safe.add(chunk);
+        }
+        return new ResetPlan(List.copyOf(safe), excluded);
+    }
+
     static boolean isConfirmationValid(Long expiresAt, long now) {
         return expiresAt != null && expiresAt >= now;
     }
@@ -179,4 +209,5 @@ public final class SpawnResetManager {
     }
 
     record ChunkPosition(int x, int z) { }
+    record ResetPlan(List<ChunkPosition> chunks, int excludedDungeonChunks) { }
 }
