@@ -167,5 +167,5 @@ participant_guidance:
   interval_minutes: 30
   messages:
     - "§b[配信] §f24時間配信中！チャンネル登録・高評価で応援お願いします！"
-    - "§a[使えるコマンド] §f/stats  /patrol rescue"
+    - "§a[使えるコマンド] §f/stats  /patrol rescue  /patrol escape"
     - "§a[TP招待] §f/patrol invite <相手>  /patrol accept  /patrol deny"

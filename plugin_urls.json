@@ -27,7 +27,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.127",
-    "description": "配信用パトロールプラグイン（迷宮保護付き初期リス再生成修正版）"
+    "version": "1.9.128",
+    "description": "配信用パトロールプラグイン（閉じ込め脱出コマンド版）"
   }
 }
