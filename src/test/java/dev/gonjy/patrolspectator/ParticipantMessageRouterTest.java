@@ -36,7 +36,7 @@ class ParticipantMessageRouterTest {
     }
 
     @Test
-    void defaultGuidanceContainsSubscriptionPublicCommandsAndSpawnResetNotice() throws Exception {
+    void defaultGuidanceContainsSubscriptionAndPublicCommands() throws Exception {
         try (InputStream stream = getClass().getResourceAsStream("/config.yml")) {
             assertNotNull(stream);
             YamlConfiguration config = YamlConfiguration.loadConfiguration(
@@ -49,8 +49,12 @@ class ParticipantMessageRouterTest {
             assertTrue(combined.contains("/stats"));
             assertTrue(combined.contains("/patrol rescue"));
             assertTrue(combined.contains("/patrol invite"));
-            assertTrue(combined.contains("鯖主が再生成"));
-            assertTrue(combined.contains("5チャンク以上"));
         }
+    }
+
+    @Test
+    void mandatorySpawnResetNoticeDoesNotDependOnExistingConfigList() {
+        assertTrue(EngagementBroadcaster.SPAWN_RESET_NOTICE.contains("鯖主が再生成"));
+        assertTrue(EngagementBroadcaster.SPAWN_RESET_NOTICE.contains("5チャンク以上"));
     }
 }
