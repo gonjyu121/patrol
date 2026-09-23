@@ -19,7 +19,7 @@ class ReleaseVersionTest {
             assertNotNull(stream);
             YamlConfiguration descriptor = YamlConfiguration.loadConfiguration(
                     new InputStreamReader(stream, StandardCharsets.UTF_8));
-            assertEquals("1.9.127", descriptor.getString("version"));
+            assertEquals("1.9.128", descriptor.getString("version"));
             assertNull(descriptor.getString("commands.patrol.permission"));
             assertTrue(descriptor.getBoolean("permissions.patrol.rescue.default"));
             assertTrue(descriptor.getBoolean("permissions.patrol.teleport.default"));

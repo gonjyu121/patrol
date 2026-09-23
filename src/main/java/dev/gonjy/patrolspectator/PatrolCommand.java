@@ -24,16 +24,19 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
     private final RescueManager rescueManager;
     private final TeleportRequestManager teleportRequestManager;
     private final SpawnResetManager spawnResetManager;
+    private final EscapeManager escapeManager;
 
     public PatrolCommand(PatrolSpectatorPlugin plugin, PatrolManager patrolManager,
             RankingDisplaySystem rankingDisplaySystem, RescueManager rescueManager,
-            TeleportRequestManager teleportRequestManager, SpawnResetManager spawnResetManager) {
+            TeleportRequestManager teleportRequestManager, SpawnResetManager spawnResetManager,
+            EscapeManager escapeManager) {
         this.plugin = plugin;
         this.patrolManager = patrolManager;
         this.rankingDisplaySystem = rankingDisplaySystem;
         this.rescueManager = rescueManager;
         this.teleportRequestManager = teleportRequestManager;
         this.spawnResetManager = spawnResetManager;
+        this.escapeManager = escapeManager;
     }
 
     @Override
@@ -52,6 +55,20 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
             rescueManager.rescue(player);
+            return true;
+        }
+
+        boolean escapeCommand = args.length > 0 && "escape".equalsIgnoreCase(args[0]);
+        if (escapeCommand) {
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage("§c[Patrol] escapeはプレイヤーのみ実行できます。");
+                return true;
+            }
+            if (!sender.hasPermission("patrol.escape")) {
+                sender.sendMessage("§c[Patrol] escapeを実行する権限がありません。");
+                return true;
+            }
+            escapeManager.request(player);
             return true;
         }
 
@@ -79,6 +96,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
 
         if (!sender.isOp() && (args.length == 0 || "help".equalsIgnoreCase(args[0]))) {
             sender.sendMessage("§a/patrol rescue - 死亡直後にリスキル地点から避難");
+            sender.sendMessage("§a/patrol escape - 閉じ込められた場所から付近の地表へ脱出");
             sender.sendMessage("§a/patrol invite <相手> - 自分の場所へTP招待");
             sender.sendMessage("§a/patrol accept - 最新のTP招待を承認");
             sender.sendMessage("§a/patrol deny - 最新のTP招待を拒否");
@@ -92,6 +110,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 0 || "help".equalsIgnoreCase(args[0])) {
             sender.sendMessage("§a/patrol rescue              - 死亡直後にリスキル地点から避難");
+            sender.sendMessage("§a/patrol escape              - 閉じ込められた場所から付近の地表へ脱出");
             sender.sendMessage("§a/patrol invite <相手>       - 自分の場所へTP招待");
             sender.sendMessage("§a/patrol accept              - 最新のTP招待を承認");
             sender.sendMessage("§a/patrol deny                - 最新のTP招待を拒否");
@@ -346,6 +365,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             if (args.length == 1) {
                 List<String> allowed = new ArrayList<>();
                 if (sender.hasPermission("patrol.rescue")) allowed.add("rescue");
+                if (sender.hasPermission("patrol.escape")) allowed.add("escape");
                 if (sender.hasPermission("patrol.teleport")) allowed.addAll(List.of("invite", "accept", "deny"));
                 return allowed.stream().filter(value -> value.startsWith(args[0].toLowerCase(Locale.ROOT))).toList();
             }
@@ -360,7 +380,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             return Collections.emptyList();
         }
         if (args.length == 1) {
-            List<String> sub = Arrays.asList("rescue", "invite", "accept", "deny", "start", "stop", "back", "where", "tpback", "sethome", "home", "homes", "travel", "status", "rank", "spawn", "spawnreset", "reset_survival", "backup", "reload");
+            List<String> sub = Arrays.asList("rescue", "escape", "invite", "accept", "deny", "start", "stop", "back", "where", "tpback", "sethome", "home", "homes", "travel", "status", "rank", "spawn", "spawnreset", "reset_survival", "backup", "reload");
             List<String> ret = new ArrayList<>();
             for (String s : sub) {
                 if (s.startsWith(args[0].toLowerCase())) {

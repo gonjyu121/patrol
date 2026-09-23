@@ -7,7 +7,7 @@ authors: [ 'gonjy' ]
 commands:
   patrol:
     description: 観光巡りコマンド
-    usage: /patrol <rescue|invite|accept|deny|start|stop|status|rank|spawnreset>
+    usage: /patrol <rescue|escape|invite|accept|deny|start|stop|status|rank|spawnreset>
   bounty:
     description: 賞金首コマンド
     usage: /bounty <info|claim>
@@ -22,6 +22,9 @@ commands:
 permissions:
   patrol.rescue:
     description: リスキル救済コマンドを使用できます
+    default: true
+  patrol.escape:
+    description: 閉じ込め脱出コマンドを使用できます
     default: true
   patrol.teleport:
     description: 承認制のプレイヤー間テレポートを使用できます

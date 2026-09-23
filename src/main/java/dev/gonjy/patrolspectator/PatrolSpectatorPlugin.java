@@ -17,6 +17,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     private PatrolManager patrolManager;
     private RankingDisplaySystem rankingDisplaySystem;
     private RescueManager rescueManager;
+    private EscapeManager escapeManager;
     private TeleportRequestManager teleportRequestManager;
     private SpawnResetManager spawnResetManager;
 
@@ -136,6 +137,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         rankingDisplaySystem = new RankingDisplaySystem(this, statsStorage);
         rescueManager = new RescueManager(this);
         getServer().getPluginManager().registerEvents(rescueManager, this);
+        escapeManager = new EscapeManager(this);
+        getServer().getPluginManager().registerEvents(escapeManager, this);
         teleportRequestManager = new TeleportRequestManager(this);
         getServer().getPluginManager().registerEvents(teleportRequestManager, this);
         endResetManager = new EndResetManager(this);
@@ -208,7 +211,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
         // コマンド登録
         PatrolCommand patrolCmd = new PatrolCommand(this, patrolManager, rankingDisplaySystem, rescueManager,
-                teleportRequestManager, spawnResetManager);
+                teleportRequestManager, spawnResetManager, escapeManager);
         if (getCommand("patrol") != null) {
             getCommand("patrol").setExecutor(patrolCmd);
             getCommand("patrol").setTabCompleter(patrolCmd);
