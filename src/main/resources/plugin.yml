@@ -4,6 +4,7 @@ main: dev.gonjy.patrolspectator.PatrolSpectatorPlugin
 version: ${project.version}
 api-version: '1.21'
 authors: [ 'gonjy' ]
+softdepend: [ 'WorldEdit' ]
 commands:
   patrol:
     description: 観光巡りコマンド

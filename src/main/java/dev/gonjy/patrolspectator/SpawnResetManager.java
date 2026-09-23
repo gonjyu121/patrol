@@ -41,6 +41,10 @@ public final class SpawnResetManager {
             sender.sendMessage("§c[Patrol] 対象ワールドを取得できませんでした。");
             return;
         }
+        if (!WorldEditSpawnRegenerator.isAvailable()) {
+            sender.sendMessage("§c[Patrol] 初期リス再生成にはWorldEditが必要です。導入後に再実行してください。");
+            return;
+        }
 
         ResetPlan plan = createSafePlan(world);
         List<ChunkPosition> chunks = plan.chunks();
@@ -75,6 +79,10 @@ public final class SpawnResetManager {
             sender.sendMessage("§c[Patrol] 対象ワールドを取得できませんでした。");
             return;
         }
+        if (!WorldEditSpawnRegenerator.isAvailable()) {
+            sender.sendMessage("§c[Patrol] WorldEditが利用できないため、初期リス再生成を開始できません。");
+            return;
+        }
         ResetPlan plan = createSafePlan(world);
         List<ChunkPosition> chunks = plan.chunks();
         String refusal = refusalReason(world, chunks);
@@ -103,22 +111,18 @@ public final class SpawnResetManager {
 
             ChunkPosition chunk = chunks.get(index[0]++);
             try {
-                if (!world.regenerateChunk(chunk.x(), chunk.z())) {
+                if (!WorldEditSpawnRegenerator.regenerateChunk(world, chunk.x(), chunk.z())) {
                     plugin.getLogger().warning("[SpawnReset] 再生成できないチャンクがあり、安全のため処理を中断しました（座標非表示）。");
                     sender.sendMessage("§c[Patrol] 再生成できない範囲があったため処理を中断しました。サーバーログを確認してください。");
                     stopTask();
                 }
-            } catch (UnsupportedOperationException ex) {
-                plugin.getLogger().warning("[SpawnReset] このサーバーバージョンはチャンク再生成APIに対応していないため、処理を中断しました。");
-                sender.sendMessage("§c[Patrol] このサーバーバージョンでは初期リス再生成を実行できません。処理は安全に中断しました。");
-                stopTask();
-            } catch (RuntimeException ex) {
+            } catch (RuntimeException | LinkageError ex) {
                 plugin.getLogger().log(java.util.logging.Level.SEVERE,
-                        "[SpawnReset] チャンク再生成中に予期しないエラーが発生したため、安全に中断しました（座標非表示）。", ex);
+                        "[SpawnReset] WorldEditによる再生成中にエラーが発生したため、安全に中断しました（座標非表示）。", ex);
                 sender.sendMessage("§c[Patrol] 再生成中にエラーが発生したため処理を中断しました。サーバーログを確認してください。");
                 stopTask();
             }
-        }, 1L, 2L);
+        }, 1L, 20L);
     }
 
     public boolean isRunning() {
