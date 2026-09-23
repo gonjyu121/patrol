@@ -88,7 +88,7 @@ public final class SpawnResetManager {
         sender.sendMessage("§a[Patrol] 初期リス周辺の再生成を開始しました。負荷を抑えて順番に処理します。");
         int[] index = {0};
         resetTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (hasPlayerInArea(world, new HashSet<>(chunks))) {
+            if (hasBlockingPlayerInArea(world, new HashSet<>(chunks))) {
                 plugin.getLogger().warning("[SpawnReset] 対象範囲へのプレイヤー進入を検知したため、安全のため中断しました。");
                 sender.sendMessage("§c[Patrol] 対象範囲にプレイヤーが入ったため再生成を中断しました。");
                 stopTask();
@@ -102,9 +102,20 @@ public final class SpawnResetManager {
             }
 
             ChunkPosition chunk = chunks.get(index[0]++);
-            if (!world.regenerateChunk(chunk.x(), chunk.z())) {
-                plugin.getLogger().warning("[SpawnReset] 再生成できないチャンクがあり、安全のため処理を中断しました（座標非表示）。");
-                sender.sendMessage("§c[Patrol] 再生成できない範囲があったため処理を中断しました。サーバーログを確認してください。");
+            try {
+                if (!world.regenerateChunk(chunk.x(), chunk.z())) {
+                    plugin.getLogger().warning("[SpawnReset] 再生成できないチャンクがあり、安全のため処理を中断しました（座標非表示）。");
+                    sender.sendMessage("§c[Patrol] 再生成できない範囲があったため処理を中断しました。サーバーログを確認してください。");
+                    stopTask();
+                }
+            } catch (UnsupportedOperationException ex) {
+                plugin.getLogger().warning("[SpawnReset] このサーバーバージョンはチャンク再生成APIに対応していないため、処理を中断しました。");
+                sender.sendMessage("§c[Patrol] このサーバーバージョンでは初期リス再生成を実行できません。処理は安全に中断しました。");
+                stopTask();
+            } catch (RuntimeException ex) {
+                plugin.getLogger().log(java.util.logging.Level.SEVERE,
+                        "[SpawnReset] チャンク再生成中に予期しないエラーが発生したため、安全に中断しました（座標非表示）。", ex);
+                sender.sendMessage("§c[Patrol] 再生成中にエラーが発生したため処理を中断しました。サーバーログを確認してください。");
                 stopTask();
             }
         }, 1L, 2L);
@@ -130,7 +141,7 @@ public final class SpawnResetManager {
             return "§c[Patrol] 対象範囲の全チャンクが死の迷宮と重なるため再生成できません。";
         }
         Set<ChunkPosition> area = new HashSet<>(chunks);
-        if (hasPlayerInArea(world, area)) {
+        if (hasBlockingPlayerInArea(world, area)) {
             return "§c[Patrol] 対象範囲にプレイヤーがいるため再生成できません。全員が離れてから再実行してください。";
         }
         return null;
@@ -196,12 +207,20 @@ public final class SpawnResetManager {
         return expiresAt != null && expiresAt >= now;
     }
 
-    private static boolean hasPlayerInArea(World world, Set<ChunkPosition> area) {
+    private boolean hasBlockingPlayerInArea(World world, Set<ChunkPosition> area) {
+        String cameraPlayerName = plugin.getConfig()
+                .getString("patrol.autoStart.cameraPlayerName", "OtouGame");
         for (Player player : world.getPlayers()) {
+            if (isCameraPlayer(player.getName(), cameraPlayerName)) continue;
             Location location = player.getLocation();
             if (area.contains(new ChunkPosition(location.getBlockX() >> 4, location.getBlockZ() >> 4))) return true;
         }
         return false;
+    }
+
+    static boolean isCameraPlayer(String playerName, String cameraPlayerName) {
+        return playerName != null && cameraPlayerName != null
+                && playerName.equalsIgnoreCase(cameraPlayerName);
     }
 
     private static String senderKey(CommandSender sender) {
