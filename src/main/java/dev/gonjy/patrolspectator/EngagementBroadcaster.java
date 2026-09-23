@@ -13,6 +13,9 @@ import java.util.Random;
  * Handles periodic in-game announcements to encourage YouTube engagement.
  */
 public class EngagementBroadcaster {
+    static final String SPAWN_RESET_NOTICE =
+            "§e[土地について] §f初期スポーン周辺は、荒れ方によって鯖主が再生成する場合があります。"
+                    + "建築を残したい場合は、初期スポーンから5チャンク以上離れてください。";
 
     private final JavaPlugin plugin;
     private final Random random = new Random();
@@ -90,14 +93,15 @@ public class EngagementBroadcaster {
         dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, formattedMessage);
     }
 
-    /** Sends compact command and channel guidance only to actual participants. */
+    /** Sends compact command and channel guidance to every online player, including the stream camera. */
     private void sendParticipantGuidance() {
         List<String> messages = plugin.getConfig().getStringList("participant_guidance.messages");
-        if (messages == null || messages.isEmpty()) return;
-
-        for (String message : messages) {
-            String formatted = ChatColor.translateAlternateColorCodes('&', message);
-            ParticipantMessageRouter.send(plugin, formatted);
+        if (messages != null) {
+            for (String message : messages) {
+                String formatted = ChatColor.translateAlternateColorCodes('&', message);
+                ParticipantMessageRouter.send(plugin, formatted);
+            }
         }
+        ParticipantMessageRouter.send(plugin, SPAWN_RESET_NOTICE);
     }
 }
