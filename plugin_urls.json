@@ -31,7 +31,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.130",
-    "description": "配信用パトロールプラグイン（WorldEdit初期リス再生成版）"
+    "version": "1.9.131",
+    "description": "配信用パトロールプラグイン（WorldEdit初期リス再生成負荷対策版）"
   }
 }

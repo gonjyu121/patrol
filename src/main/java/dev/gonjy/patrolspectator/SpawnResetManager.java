@@ -19,6 +19,7 @@ import java.util.Set;
 public final class SpawnResetManager {
     static final int DEFAULT_RADIUS_CHUNKS = 4;
     static final long CONFIRMATION_MILLIS = 60_000L;
+    static final long CHUNK_INTERVAL_TICKS = 100L;
 
     private final PatrolSpectatorPlugin plugin;
     private final DungeonManager dungeonManager;
@@ -115,6 +116,16 @@ public final class SpawnResetManager {
                     plugin.getLogger().warning("[SpawnReset] 再生成できないチャンクがあり、安全のため処理を中断しました（座標非表示）。");
                     sender.sendMessage("§c[Patrol] 再生成できない範囲があったため処理を中断しました。サーバーログを確認してください。");
                     stopTask();
+                    return;
+                }
+                int completed = index[0];
+                if (shouldReportProgress(completed, chunks.size())) {
+                    sender.sendMessage("§e[Patrol] 初期リス再生成: " + completed + "/" + chunks.size() + "チャンク完了");
+                }
+                if (completed >= chunks.size()) {
+                    plugin.getLogger().info("[SpawnReset] 初期リス周辺の再生成が完了しました（座標非表示）。");
+                    sender.sendMessage("§a[Patrol] 初期リス周辺の再生成が完了しました。");
+                    stopTask();
                 }
             } catch (RuntimeException | LinkageError ex) {
                 plugin.getLogger().log(java.util.logging.Level.SEVERE,
@@ -122,7 +133,7 @@ public final class SpawnResetManager {
                 sender.sendMessage("§c[Patrol] 再生成中にエラーが発生したため処理を中断しました。サーバーログを確認してください。");
                 stopTask();
             }
-        }, 1L, 20L);
+        }, 1L, CHUNK_INTERVAL_TICKS);
     }
 
     public boolean isRunning() {
@@ -225,6 +236,10 @@ public final class SpawnResetManager {
     static boolean isCameraPlayer(String playerName, String cameraPlayerName) {
         return playerName != null && cameraPlayerName != null
                 && playerName.equalsIgnoreCase(cameraPlayerName);
+    }
+
+    static boolean shouldReportProgress(int completed, int total) {
+        return completed > 0 && (completed % 5 == 0 || completed >= total);
     }
 
     private static String senderKey(CommandSender sender) {

@@ -31,6 +31,8 @@ final class WorldEditSpawnRegenerator {
             Class<?> regenOptionsClass = loader.loadClass("com.sk89q.worldedit.world.RegenOptions");
             Class<?> regenOptionsBuilderClass = loader.loadClass("com.sk89q.worldedit.world.RegenOptions$Builder");
             Class<?> editSessionBuilderClass = loader.loadClass("com.sk89q.worldedit.EditSessionBuilder");
+            Class<?> editSessionClass = loader.loadClass("com.sk89q.worldedit.EditSession");
+            Class<?> sideEffectSetClass = loader.loadClass("com.sk89q.worldedit.util.SideEffectSet");
             Class<?> bukkitAdapterClass = loader.loadClass("com.sk89q.worldedit.bukkit.BukkitAdapter");
 
             Object worldEditWorld = bukkitAdapterClass.getMethod("adapt", World.class).invoke(null, world);
@@ -51,10 +53,15 @@ final class WorldEditSpawnRegenerator {
             editSessionBuilderClass.getMethod("maxBlocks", int.class).invoke(editSessionBuilder, -1);
             Object editSession = editSessionBuilderClass.getMethod("build").invoke(editSessionBuilder);
 
+            Object noSideEffects = sideEffectSetClass.getMethod("none").invoke(null);
+            editSessionClass.getMethod("setSideEffectApplier", sideEffectSetClass)
+                    .invoke(editSession, noSideEffects);
+            editSessionClass.getMethod("setTrackingHistory", boolean.class).invoke(editSession, false);
+            editSessionClass.getMethod("setTickingWatchdog", boolean.class).invoke(editSession, true);
+
             try {
                 Object result = worldClass.getMethod("regenerate", regionClass, extentClass, regenOptionsClass)
                         .invoke(worldEditWorld, region, editSession, options);
-                editSession.getClass().getMethod("flushSession").invoke(editSession);
                 return Boolean.TRUE.equals(result);
             } finally {
                 if (editSession instanceof AutoCloseable closeable) closeable.close();

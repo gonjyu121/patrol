@@ -67,4 +67,13 @@ class SpawnResetManagerTest {
         assertFalse(SpawnResetManager.isCameraPlayer("participant", "OtouGame"));
         assertFalse(SpawnResetManager.isCameraPlayer(null, "OtouGame"));
     }
+
+    @Test
+    void reportsProgressEveryFiveChunksAndAtCompletion() {
+        assertEquals(100L, SpawnResetManager.CHUNK_INTERVAL_TICKS);
+        assertFalse(SpawnResetManager.shouldReportProgress(1, 79));
+        assertTrue(SpawnResetManager.shouldReportProgress(5, 79));
+        assertFalse(SpawnResetManager.shouldReportProgress(6, 79));
+        assertTrue(SpawnResetManager.shouldReportProgress(79, 79));
+    }
 }
