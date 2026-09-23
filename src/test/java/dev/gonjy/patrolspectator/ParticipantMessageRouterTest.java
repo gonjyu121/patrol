@@ -1,7 +1,12 @@
 package dev.gonjy.patrolspectator;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.junit.jupiter.api.Test;
+import org.mockbukkit.mockbukkit.MockBukkit;
+import org.mockbukkit.mockbukkit.ServerMock;
+import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -9,21 +14,29 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ParticipantMessageRouterTest {
     @Test
-    void exactJavaCameraIsExcludedButBedrockPlayAccountReceivesGuidance() {
-        assertFalse(ParticipantMessageRouter.isParticipantName("OtouGame", "OtouGame"));
-        assertFalse(ParticipantMessageRouter.isParticipantName("OtouGame", "otougame"));
-        assertTrue(ParticipantMessageRouter.isParticipantName("OtouGame", ".OtouGame"));
-        assertTrue(ParticipantMessageRouter.isParticipantName("OtouGame", "OtherPlayer"));
+    void guidanceIsSentToCameraAndRegularParticipant() {
+        ServerMock server = MockBukkit.mock();
+        try {
+            JavaPlugin plugin = MockBukkit.createMockPlugin("ParticipantMessageRouterTest");
+            PlayerMock camera = server.addPlayer("OtouGame");
+            PlayerMock participant = server.addPlayer("OtherPlayer");
+
+            ParticipantMessageRouter.send(plugin, "定期案内");
+
+            assertEquals(Component.text("定期案内"), camera.nextComponentMessage());
+            assertEquals(Component.text("定期案内"), participant.nextComponentMessage());
+        } finally {
+            MockBukkit.unmock();
+        }
     }
 
     @Test
-    void defaultGuidanceContainsSubscriptionAndPublicCommands() throws Exception {
+    void defaultGuidanceContainsSubscriptionPublicCommandsAndSpawnResetNotice() throws Exception {
         try (InputStream stream = getClass().getResourceAsStream("/config.yml")) {
             assertNotNull(stream);
             YamlConfiguration config = YamlConfiguration.loadConfiguration(
@@ -36,7 +49,8 @@ class ParticipantMessageRouterTest {
             assertTrue(combined.contains("/stats"));
             assertTrue(combined.contains("/patrol rescue"));
             assertTrue(combined.contains("/patrol invite"));
-            assertFalse(combined.contains("world"));
+            assertTrue(combined.contains("鯖主が再生成"));
+            assertTrue(combined.contains("5チャンク以上"));
         }
     }
 }

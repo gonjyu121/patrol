@@ -90,7 +90,7 @@ public class EngagementBroadcaster {
         dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, formattedMessage);
     }
 
-    /** Sends compact command and channel guidance only to actual participants. */
+    /** Sends compact command and channel guidance to every online player, including the stream camera. */
     private void sendParticipantGuidance() {
         List<String> messages = plugin.getConfig().getStringList("participant_guidance.messages");
         if (messages == null || messages.isEmpty()) return;

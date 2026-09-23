@@ -160,7 +160,7 @@ engagement:
     - "§b[YouTube] §fこのサーバーが面白いと思ったら、ぜひYouTubeの配信も覗いてみてね！"
     - "§b[YouTube] §fチャンネル登録者が増えると、サーバーに新しい機能が追加されるかも...？"
 
-# カメラ役を除く参加者へ、配信案内と一般利用可能なコマンドを直接表示します。
+# カメラ役を含む全参加者へ、配信案内と一般利用可能なコマンドを直接表示します。
 # 通常チャットイベントを通さないため、DiscordやYouTubeには転送されません。
 participant_guidance:
   enabled: true
@@ -169,3 +169,4 @@ participant_guidance:
     - "§b[配信] §f24時間配信中！チャンネル登録・高評価で応援お願いします！"
     - "§a[使えるコマンド] §f/stats  /patrol rescue  /patrol escape"
     - "§a[TP招待] §f/patrol invite <相手>  /patrol accept  /patrol deny"
+    - "§e[土地について] §f初期スポーン周辺は、荒れ方によって鯖主が再生成する場合があります。建築を残したい場合は、初期スポーンから5チャンク以上離れてください。"
