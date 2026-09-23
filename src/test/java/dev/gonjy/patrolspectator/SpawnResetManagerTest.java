@@ -58,4 +58,13 @@ class SpawnResetManagerTest {
         assertFalse(SpawnResetManager.isConfirmationValid(9_999L, 10_000L));
         assertFalse(SpawnResetManager.isConfirmationValid(null, 10_000L));
     }
+
+    @Test
+    void ignoresOnlyConfiguredCameraPlayerRegardlessOfNameCase() {
+        assertTrue(SpawnResetManager.isCameraPlayer("OtouGame", "OtouGame"));
+        assertTrue(SpawnResetManager.isCameraPlayer("otougame", "OtouGame"));
+        assertFalse(SpawnResetManager.isCameraPlayer(".OtouGame", "OtouGame"));
+        assertFalse(SpawnResetManager.isCameraPlayer("participant", "OtouGame"));
+        assertFalse(SpawnResetManager.isCameraPlayer(null, "OtouGame"));
+    }
 }
