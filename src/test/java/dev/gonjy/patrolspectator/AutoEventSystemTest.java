@@ -1,7 +1,10 @@
 package dev.gonjy.patrolspectator;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
+import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,5 +46,21 @@ class AutoEventSystemTest {
         autoEventSystem.startAutoEvents();
         // We can't easily check internal state without reflection or getters,
         // but this verifies no exceptions are thrown during startup.
+    }
+
+    @Test
+    void participantGetsCompactActionBarWhileCameraKeepsLargeTitle() {
+        PlayerMock camera = server.addPlayer("OtouGame");
+        PlayerMock participant = server.addPlayer("Participant");
+
+        AutoEventSystem.sendEventStartNotice(camera, "OtouGame", "モブ討伐祭り");
+        AutoEventSystem.sendEventStartNotice(participant, "OtouGame", "モブ討伐祭り");
+
+        assertEquals("§6🎊 自動イベント開始！ 🎊", camera.nextTitle());
+        Component expected = Component.text("🎮 イベント開始: ", NamedTextColor.GOLD)
+                .append(Component.text("モブ討伐祭り", NamedTextColor.YELLOW))
+                .append(Component.text("（15分）", NamedTextColor.GRAY));
+        assertEquals(expected, participant.nextActionBar());
+        assertNull(camera.nextActionBar());
     }
 }
