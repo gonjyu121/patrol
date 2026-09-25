@@ -1,5 +1,7 @@
 package dev.gonjy.patrolspectator;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -150,12 +152,11 @@ public class AutoEventSystem implements Listener {
         // 🎊 派手なイベント開始演出 🎊
         String eventName = getEventDisplayName(eventType);
 
-        // Title表示で盛大に開始を告知
+        // 配信カメラには大型タイトル、参加者にはプレイを妨げにくい小型通知を表示
+        String cameraName = plugin.getConfig()
+                .getString("patrol.autoStart.cameraPlayerName", "OtouGame");
         for (Player player : Bukkit.getOnlinePlayers()) {
-            player.sendTitle(
-                    ChatColor.GOLD + "🎊 自動イベント開始！ 🎊",
-                    ChatColor.YELLOW + eventName,
-                    10, 60, 20);
+            sendEventStartNotice(player, cameraName, eventName);
         }
 
         // チャットでも派手に表示
@@ -186,6 +187,21 @@ public class AutoEventSystem implements Listener {
         // 3分ごとに進捗表示
         pointDisplayTask = Bukkit.getScheduler().runTaskTimer(plugin, this::displayEventProgress, 3 * 60 * 20L,
                 3 * 60 * 20L);
+    }
+
+    static void sendEventStartNotice(Player player, String cameraName, String eventName) {
+        if (CameraMessageRouter.isCameraName(cameraName, player.getName())) {
+            player.sendTitle(
+                    ChatColor.GOLD + "🎊 自動イベント開始！ 🎊",
+                    ChatColor.YELLOW + eventName,
+                    10, 60, 20);
+            return;
+        }
+
+        Component notice = Component.text("🎮 イベント開始: ", NamedTextColor.GOLD)
+                .append(Component.text(eventName, NamedTextColor.YELLOW))
+                .append(Component.text("（15分）", NamedTextColor.GRAY));
+        player.sendActionBar(notice);
     }
 
     // ...
