@@ -19,7 +19,7 @@ class ReleaseVersionTest {
             assertNotNull(stream);
             YamlConfiguration descriptor = YamlConfiguration.loadConfiguration(
                     new InputStreamReader(stream, StandardCharsets.UTF_8));
-            assertEquals("1.9.133", descriptor.getString("version"));
+            assertEquals("1.9.134", descriptor.getString("version"));
             assertTrue(descriptor.getStringList("softdepend").contains("WorldEdit"));
             assertNull(descriptor.getString("commands.patrol.permission"));
             assertTrue(descriptor.getBoolean("permissions.patrol.rescue.default"));

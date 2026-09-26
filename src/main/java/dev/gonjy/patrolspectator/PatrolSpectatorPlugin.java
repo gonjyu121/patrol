@@ -172,6 +172,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         patrolManager = new PatrolManager(this, engagementSystem, participationManager, gameModeEnforcer,
                 rankingDisplaySystem);
         getServer().getPluginManager().registerEvents(patrolManager, this);
+        getServer().getPluginManager().registerEvents(new SpectatedInventoryMirror(this, patrolManager), this);
 
         // ルール適用（Bedrock/Java 1.21.11+ 対応）
         engagementSystem.applyServerRules();
