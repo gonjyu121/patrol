@@ -791,6 +791,10 @@ public class PatrolManager implements org.bukkit.event.Listener {
         return Bukkit.getPlayer(cameraUuid);
     }
 
+    boolean isObservingPlayer(UUID playerUuid) {
+        return isRunning() && playerUuid != null && playerUuid.equals(lastSpectatedUuid);
+    }
+
     private Player getCamera() {
         return getCameraPlayer();
     }

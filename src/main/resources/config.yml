@@ -1,5 +1,7 @@
 # src/main/resources/config.yml（差し替え）
 patrol:
+  # 観戦中の参加者が開いたチェスト等を、カメラ役にも読み取り専用で表示します。
+  mirrorObservedContainers: true
   intervalSeconds: 5
   announce: true
   titles:
