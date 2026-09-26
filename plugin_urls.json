@@ -31,7 +31,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.133",
-    "description": "配信用パトロールプラグイン（参加者イベント通知小型化版）"
+    "version": "1.9.134",
+    "description": "配信用パトロールプラグイン（観戦対象コンテナ画面ミラー版）"
   }
 }
