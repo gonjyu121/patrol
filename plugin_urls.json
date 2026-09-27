@@ -31,7 +31,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.134",
-    "description": "配信用パトロールプラグイン（観戦対象コンテナ画面ミラー版）"
+    "version": "1.9.135",
+    "description": "配信用パトロールプラグイン（観戦対象のコンテナ画面閉じ忘れ修正版）"
   }
 }
