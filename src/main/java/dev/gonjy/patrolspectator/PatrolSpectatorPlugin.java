@@ -212,7 +212,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
         // コマンド登録
         PatrolCommand patrolCmd = new PatrolCommand(this, patrolManager, rankingDisplaySystem, rescueManager,
-                teleportRequestManager, spawnResetManager, escapeManager);
+                teleportRequestManager, spawnResetManager, escapeManager,
+                new ServerDiagnosticsService(this, patrolManager));
         if (getCommand("patrol") != null) {
             getCommand("patrol").setExecutor(patrolCmd);
             getCommand("patrol").setTabCompleter(patrolCmd);
@@ -341,6 +342,12 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
         getLogger().info("PatrolSpectatorPlugin has been enabled!");
         getLogger().info("========================================");
+    }
+
+    boolean areCoreSystemsInitialized() {
+        return patrolManager != null && participationManager != null && rankingDisplaySystem != null
+                && statsStorage != null && rescueManager != null && escapeManager != null
+                && teleportRequestManager != null && dungeonManager != null && endResetManager != null;
     }
 
     /**

@@ -31,7 +31,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.135",
-    "description": "配信用パトロールプラグイン（観戦対象のコンテナ画面閉じ忘れ修正版）"
+    "version": "1.9.136",
+    "description": "配信用パトロールプラグイン（サーバー／Bedrock接続診断版）"
   }
 }

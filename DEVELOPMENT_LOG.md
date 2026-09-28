@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## v1.9.136 - サーバー／Bedrock接続診断
+
+- OPまたは `patrol.admin` 向けの `/patrol diagnose` を追加。
+- Paper、Patrol、Geyser、Floodgate、Geyser UDPポート、接続中Bedrock人数を読み取り専用で診断。
+- Geyser/Floodgateは公開APIの任意連携とし、未導入・無効時もPatrol単体で動作。
+- 外部connection testは安定した公開APIがないため `NOT AVAILABLE` と表示し、外部通信を実行しない。
+- 設定書換え、再起動、reload、kick、Webhook、自動修復は行わない診断専用。
+
 ## v1.9.135 - 観戦対象のコンテナ画面閉じ忘れを修正
 
 - 対象プレイヤーの `InventoryView` を追跡し、チェスト等を閉じたらカメラ側も即座に閉じるように修正。
