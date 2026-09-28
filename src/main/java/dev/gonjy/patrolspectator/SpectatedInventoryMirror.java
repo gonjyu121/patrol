@@ -11,6 +11,7 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.UUID;
@@ -22,7 +23,8 @@ final class SpectatedInventoryMirror implements Listener {
 
     private UUID cameraUuid;
     private UUID targetUuid;
-    private Inventory mirroredInventory;
+    private InventoryView targetView;
+    private InventoryView cameraView;
     private BukkitTask validationTask;
 
     SpectatedInventoryMirror(PatrolSpectatorPlugin plugin, PatrolManager patrolManager) {
@@ -41,20 +43,21 @@ final class SpectatedInventoryMirror implements Listener {
         if (camera == null || !camera.isOnline() || camera.getUniqueId().equals(target.getUniqueId())) return;
 
         Inventory source = event.getInventory();
+        InventoryView openedTargetView = event.getView();
         Bukkit.getScheduler().runTask(plugin, () -> {
             if (!camera.isOnline() || !target.isOnline()) return;
             if (!patrolManager.isObservingPlayer(target.getUniqueId())) return;
-            if (target.getOpenInventory().getTopInventory() != source) return;
+            if (!isActiveView(target.getOpenInventory(), openedTargetView)) return;
 
             try {
-                camera.openInventory(source);
+                cameraView = camera.openInventory(source);
             } catch (RuntimeException ex) {
                 plugin.getLogger().fine("観戦対象のコンテナ画面をミラーできませんでした: " + ex.getMessage());
                 return;
             }
             cameraUuid = camera.getUniqueId();
             targetUuid = target.getUniqueId();
-            mirroredInventory = source;
+            targetView = openedTargetView;
             startValidation();
         });
     }
@@ -71,20 +74,21 @@ final class SpectatedInventoryMirror implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onInventoryClick(InventoryClickEvent event) {
-        if (event.getWhoClicked() instanceof Player player && isCameraMirror(player, event.getView().getTopInventory())) {
+        if (event.getWhoClicked() instanceof Player player && isCameraMirror(player)) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (event.getWhoClicked() instanceof Player player && isCameraMirror(player, event.getView().getTopInventory())) {
+        if (event.getWhoClicked() instanceof Player player && isCameraMirror(player)) {
             event.setCancelled(true);
         }
     }
 
-    private boolean isCameraMirror(Player player, Inventory topInventory) {
-        return cameraUuid != null && cameraUuid.equals(player.getUniqueId()) && mirroredInventory == topInventory;
+    private boolean isCameraMirror(Player player) {
+        return cameraUuid != null && cameraUuid.equals(player.getUniqueId())
+                && cameraView != null && player.getOpenInventory() == cameraView;
     }
 
     private void startValidation() {
@@ -94,19 +98,17 @@ final class SpectatedInventoryMirror implements Listener {
             Player target = targetUuid == null ? null : Bukkit.getPlayer(targetUuid);
             if (camera == null || target == null || !camera.isOnline() || !target.isOnline()
                     || !patrolManager.isObservingPlayer(targetUuid)
-                    || target.getOpenInventory().getTopInventory() != mirroredInventory) {
+                    || !isActiveView(target.getOpenInventory(), targetView)) {
                 closeCameraMirror();
             }
-        }, 5L, 5L);
+        }, 1L, 1L);
     }
 
     private void closeCameraMirror() {
         Player camera = cameraUuid == null ? null : Bukkit.getPlayer(cameraUuid);
-        if (camera != null && camera.isOnline()
-                && camera.getOpenInventory().getTopInventory() == mirroredInventory) {
-            camera.closeInventory();
-        }
+        boolean shouldClose = camera != null && camera.isOnline() && cameraView != null;
         clearState();
+        if (shouldClose) camera.closeInventory();
     }
 
     private void clearState() {
@@ -116,7 +118,12 @@ final class SpectatedInventoryMirror implements Listener {
         }
         cameraUuid = null;
         targetUuid = null;
-        mirroredInventory = null;
+        targetView = null;
+        cameraView = null;
+    }
+
+    static boolean isActiveView(InventoryView current, InventoryView expected) {
+        return expected != null && current == expected;
     }
 
     static boolean isMirrorableInventory(InventoryType type) {
