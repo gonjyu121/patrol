@@ -18,6 +18,11 @@ record ServerDiagnosticsReport(
         String floodgateStatus,
         String floodgateVersion,
         Integer bedrockPlayers,
+        String falixApiStatus,
+        String falixAddress,
+        Integer falixPrimaryPort,
+        Integer falixGeyserPort,
+        String portMatch,
         String overall) {
 
     List<String> displayLines() {
@@ -37,11 +42,19 @@ record ServerDiagnosticsReport(
         lines.add("");
         lines.add("§fGeyser: " + colorStatus(geyserStatus));
         lines.add("§fGeyser Version: §b" + geyserVersion);
-        lines.add("§fGeyser UDP Port: §b" + valueOrUnknown(geyserUdpPort));
+        lines.add("§fGeyser Configured Port: §b" + valueOrUnknown(geyserUdpPort));
         lines.add("");
         lines.add("§fFloodgate: " + colorStatus(floodgateStatus));
         lines.add("§fFloodgate Version: §b" + floodgateVersion);
         lines.add("§fBedrock Players: §b" + valueOrUnknown(bedrockPlayers));
+        lines.add("");
+        lines.add("§6=== Bedrock / Falix Diagnostics ===");
+        lines.add("§fFalix API: " + colorStatus(falixApiStatus));
+        lines.add("§fFalix Address: §b" + valueOrUnknown(falixAddress));
+        lines.add("§fFalix Primary Port: §b" + valueOrUnknown(falixPrimaryPort));
+        lines.add("§fFalix Geyser Port: §b" + valueOrUnknown(falixGeyserPort));
+        lines.add("§fGeyser Configured Port: §b" + valueOrUnknown(geyserUdpPort));
+        lines.add("§fPort Match: " + colorStatus(portMatch));
         lines.add("");
         lines.add("§fExternal Connection Test: §7NOT AVAILABLE");
         lines.add("§fOverall: " + colorStatus(overall));
@@ -57,10 +70,16 @@ record ServerDiagnosticsReport(
         return value == null ? "UNKNOWN" : Integer.toString(value);
     }
 
+    private static String valueOrUnknown(String value) {
+        return value == null || value.isBlank() ? "UNKNOWN" : value;
+    }
+
     private static String colorStatus(String status) {
         String color = switch (status) {
             case "OK", "RUNNING", "INITIALIZED" -> "§a";
-            case "NOT INSTALLED", "DISABLED", "WARNING", "UNKNOWN" -> "§e";
+            case "NOT INSTALLED", "NOT CONFIGURED", "DISABLED", "WARNING", "UNKNOWN",
+                    "UNAVAILABLE", "AUTH ERROR", "FORBIDDEN", "SERVER NOT FOUND", "RATE LIMITED",
+                    "INVALID RESPONSE", "MISMATCH" -> "§e";
             default -> "§b";
         };
         return color + status;
