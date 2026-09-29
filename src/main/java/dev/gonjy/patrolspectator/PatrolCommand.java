@@ -25,11 +25,12 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
     private final TeleportRequestManager teleportRequestManager;
     private final SpawnResetManager spawnResetManager;
     private final EscapeManager escapeManager;
+    private final ServerDiagnosticsService diagnosticsService;
 
     public PatrolCommand(PatrolSpectatorPlugin plugin, PatrolManager patrolManager,
             RankingDisplaySystem rankingDisplaySystem, RescueManager rescueManager,
             TeleportRequestManager teleportRequestManager, SpawnResetManager spawnResetManager,
-            EscapeManager escapeManager) {
+            EscapeManager escapeManager, ServerDiagnosticsService diagnosticsService) {
         this.plugin = plugin;
         this.patrolManager = patrolManager;
         this.rankingDisplaySystem = rankingDisplaySystem;
@@ -37,6 +38,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
         this.teleportRequestManager = teleportRequestManager;
         this.spawnResetManager = spawnResetManager;
         this.escapeManager = escapeManager;
+        this.diagnosticsService = diagnosticsService;
     }
 
     @Override
@@ -73,6 +75,14 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
         }
 
         String subcommand = args.length == 0 ? "" : args[0].toLowerCase(Locale.ROOT);
+        if ("diagnose".equals(subcommand)) {
+            if (!hasAdminAccess(sender)) {
+                sender.sendMessage("§c[Patrol] diagnoseを実行する権限がありません。");
+                return true;
+            }
+            diagnosticsService.run(sender);
+            return true;
+        }
         if (List.of("invite", "accept", "deny").contains(subcommand)) {
             if (!(sender instanceof Player player)) {
                 sender.sendMessage("§c[Patrol] プレイヤーのみ実行できます。");
@@ -127,6 +137,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage("§a/patrol spawnreset          - 初期リス周辺の再生成を事前確認(OP)");
             sender.sendMessage("§a/patrol status               - 状態表示");
             sender.sendMessage("§a/patrol rank                 - ランキング表示");
+            sender.sendMessage("§a/patrol diagnose             - サーバー／Bedrock接続診断");
             if (sender.isOp()) {
                 sender.sendMessage("§a/patrol reset_survival       - 連続生存時間リセット(OP)");
                 sender.sendMessage("§a/patrol backup               - ランキングのDiscordバックアップ(OP)");
@@ -367,6 +378,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                 if (sender.hasPermission("patrol.rescue")) allowed.add("rescue");
                 if (sender.hasPermission("patrol.escape")) allowed.add("escape");
                 if (sender.hasPermission("patrol.teleport")) allowed.addAll(List.of("invite", "accept", "deny"));
+                if (sender.hasPermission("patrol.admin")) allowed.add("diagnose");
                 return allowed.stream().filter(value -> value.startsWith(args[0].toLowerCase(Locale.ROOT))).toList();
             }
             if (args.length == 2 && "invite".equalsIgnoreCase(args[0])
@@ -380,7 +392,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             return Collections.emptyList();
         }
         if (args.length == 1) {
-            List<String> sub = Arrays.asList("rescue", "escape", "invite", "accept", "deny", "start", "stop", "back", "where", "tpback", "sethome", "home", "homes", "travel", "status", "rank", "spawn", "spawnreset", "reset_survival", "backup", "reload");
+            List<String> sub = Arrays.asList("rescue", "escape", "invite", "accept", "deny", "start", "stop", "back", "where", "tpback", "sethome", "home", "homes", "travel", "status", "rank", "spawn", "spawnreset", "diagnose", "reset_survival", "backup", "reload");
             List<String> ret = new ArrayList<>();
             for (String s : sub) {
                 if (s.startsWith(args[0].toLowerCase())) {
@@ -425,6 +437,10 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
 
     static String teleportBackSuccessMessage() {
         return "§a[Patrol] 保存済みの戻り地点へTPしました！";
+    }
+
+    static boolean hasAdminAccess(CommandSender sender) {
+        return sender.isOp() || sender.hasPermission("patrol.admin");
     }
 
     private Integer parseHomeSlot(String[] args) {
