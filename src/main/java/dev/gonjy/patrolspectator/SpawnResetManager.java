@@ -23,12 +23,19 @@ public final class SpawnResetManager {
 
     private final PatrolSpectatorPlugin plugin;
     private final DungeonManager dungeonManager;
+    private final SpawnHazardCleanupManager hazardCleanupManager;
     private final Map<String, Long> confirmations = new HashMap<>();
     private BukkitTask resetTask;
 
     public SpawnResetManager(PatrolSpectatorPlugin plugin, DungeonManager dungeonManager) {
+        this(plugin, dungeonManager, null);
+    }
+
+    SpawnResetManager(PatrolSpectatorPlugin plugin, DungeonManager dungeonManager,
+                      SpawnHazardCleanupManager hazardCleanupManager) {
         this.plugin = plugin;
         this.dungeonManager = dungeonManager;
+        this.hazardCleanupManager = hazardCleanupManager;
     }
 
     public void preview(CommandSender sender) {
@@ -94,6 +101,7 @@ public final class SpawnResetManager {
 
         plugin.getLogger().warning("[SpawnReset] 初期リス周辺の再生成を開始します（対象=" + chunks.size()
                 + "チャンク、迷宮保護による除外=" + plan.excludedDungeonChunks() + "チャンク、座標非表示）。");
+        if (hazardCleanupManager != null) hazardCleanupManager.clearTrackedHazardsForFullReset();
         sender.sendMessage("§a[Patrol] 初期リス周辺の再生成を開始しました。負荷を抑えて順番に処理します。");
         int[] index = {0};
         resetTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {

@@ -20,6 +20,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     private EscapeManager escapeManager;
     private TeleportRequestManager teleportRequestManager;
     private SpawnResetManager spawnResetManager;
+    private SpawnHazardCleanupManager spawnHazardCleanupManager;
 
     private EndResetManager endResetManager;
     private YouTubeManager youTubeManager;
@@ -151,7 +152,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         dungeonBuilder = new dev.gonjy.patrolspectator.dungeon.DungeonBuilder(this, dungeonManager);
         dungeonLootSystem = new dev.gonjy.patrolspectator.dungeon.DungeonLootSystem();
         dungeonBossSystem = new dev.gonjy.patrolspectator.dungeon.DungeonBossSystem();
-        spawnResetManager = new SpawnResetManager(this, dungeonManager);
+        spawnHazardCleanupManager = new SpawnHazardCleanupManager(this);
+        getServer().getPluginManager().registerEvents(spawnHazardCleanupManager, this);
+        spawnHazardCleanupManager.start();
+        spawnResetManager = new SpawnResetManager(this, dungeonManager, spawnHazardCleanupManager);
 
         // Engagement Broadcaster
         engagementBroadcaster = new EngagementBroadcaster(this);
@@ -440,6 +444,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
             endGameManager.shutdown();
         if (engagementBroadcaster != null)
             engagementBroadcaster.stop();
+        if (spawnHazardCleanupManager != null)
+            spawnHazardCleanupManager.shutdown();
 
         // 最後にストレージ保存
         if (statsStorage != null) {

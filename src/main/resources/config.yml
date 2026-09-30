@@ -81,6 +81,13 @@ end:
   # End world name (defaults to "world_the_end")
   worldName: "world_the_end"
 
+# 初期リス周辺でプレイヤーが設置した危険物だけを、無人時に局所清掃します。
+# 通常の建築・採掘・自然生成物やチャンク全体は変更しません。
+spawnHazardCleanup:
+  enabled: true
+  radiusChunks: 4
+  graceMinutes: 60
+
 # Performance / Low-Spec Optimization
 performance:
   lowSpecMode: false
