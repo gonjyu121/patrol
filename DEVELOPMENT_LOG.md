@@ -342,3 +342,12 @@
     - 10秒間静止した後、現在地付近の安全な地表へ移動。移動・被弾・攻撃でキャンセル。
     - 対人被弾後30秒は使用不可、成功後30分のクールダウン、死の迷宮内では使用不可。
     - 長距離移動には使えない範囲へ限定し、プレイヤー向け表示とログに座標を残さない。
+## Current Status (2026-09-29, Falix allocation diagnostics)
+- **Version**: 1.9.137
+- **Branch**: `feature/falix-port-diagnostics-v1.9.137`
+- **Issue**: Falixの割当UDPポートとGeyser設定ポートを読み取り専用で比較する
+- **Changes**:
+    - `/patrol diagnose` からFalix公式allocation APIを非同期に照会し、Primaryと明示的に `Geyser` と記された追加ポートを表示。
+    - Geyserの公開APIから取得した設定ポートと比較し、一致・不一致・判別不能を明示。
+    - APIキーとserver IDはJAR外の環境変数またはサーバー側外部ファイルだけから読み込み、未設定やAPI障害時も診断を継続。
+    - Falix設定・Geyser設定の変更、reload、再起動、自動修復は行わない。

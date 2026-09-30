@@ -134,3 +134,19 @@ singleSleepEnabled: true
 このファイルが存在する場合、そのURLがJARへ埋め込まれ、サーバー側の
 `config.yml` より優先されます。新しいサーバーでもJARを配置するだけで通知できます。
 完成したJARには秘密情報が含まれるため公開しないでください。
+# Falixポート診断（任意）
+
+`/patrol diagnose` でFalixのallocationとGeyserの設定ポートを比較する場合だけ、
+サーバー上の `plugins/PatrolSpectatorPlugin/falix-api.properties` に次を設定します。
+このファイルはGitやJARへ含めず、閲覧権限をサーバー管理者に限定してください。
+
+```properties
+apiKey=Falixで発行した読み取り専用APIキー
+serverId=対象サーバーID
+geyserAllocationNote=Geyser
+```
+
+APIキーには `servers:network:read` だけを付与し、FalixのNetwork画面で対象の追加allocationの
+noteを `Geyser` にします。環境変数 `FALIX_API_KEY`、`FALIX_SERVER_ID`、
+`FALIX_GEYSER_ALLOCATION_NOTE` でも指定できます。未設定や判別不能の場合は診断結果が
+`NOT CONFIGURED` または `UNKNOWN` になり、既存機能はそのまま動作します。

@@ -31,7 +31,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.136",
+    "version": "1.9.137",
     "description": "配信用パトロールプラグイン（サーバー／Bedrock接続診断版）"
   }
 }

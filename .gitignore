@@ -59,6 +59,7 @@ patrol_homes.yml
 
 secrets/
 discord-secret.properties
+falix-api.properties
 credentials/
 credentials*.json
 service-account*.json
