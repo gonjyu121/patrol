@@ -30,6 +30,13 @@ patrol:
       points: 6
       radius: 60
       yOffset: 0.0
+    # 退出した参加者の最後の場所を、無人時の観光案内へ期間限定で追加します。
+    # 座標はタイトル・チャット・ログには表示しません。カメラ役の退出地点は記録対象外です。
+    recentPlayers:
+      enabled: true
+      maxEntries: 10
+      retentionDays: 30
+      dwellSeconds: 10
   # カメラ役が参加した時に自動でパトロールを開始する設定
   autoStart:
     enabled: true

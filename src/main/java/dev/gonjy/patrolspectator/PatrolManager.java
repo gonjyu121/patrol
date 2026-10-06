@@ -32,6 +32,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
     private final GameModeEnforcer gameModeEnforcer;
     private final RankingDisplaySystem rankingDisplaySystem;
     private final PatrolHomeStorage homeStorage;
+    private final RecentPlayerLocationStore recentPlayerLocationStore;
 
     // 観光地リスト
     private final List<TouristLocation> touristLocations = new ArrayList<>();
@@ -93,6 +94,10 @@ public class PatrolManager implements org.bukkit.event.Listener {
         this.gameModeEnforcer = gameModeEnforcer;
         this.rankingDisplaySystem = rankingDisplaySystem;
         this.homeStorage = new PatrolHomeStorage(plugin);
+        PatrolSpectatorPlugin.TourConf tourConf = plugin.getTourConf();
+        this.recentPlayerLocationStore = new RecentPlayerLocationStore(plugin,
+                tourConf.recentPlayersMaxEntries, tourConf.recentPlayersRetentionDays,
+                tourConf.recentPlayersDwellSeconds);
     }
 
     /**
@@ -129,6 +134,12 @@ public class PatrolManager implements org.bukkit.event.Listener {
         if (!fileExists && !touristLocations.isEmpty()) {
             TouristLocation.saveToYaml(f, touristLocations);
             plugin.getLogger().info("[Patrol] 自動生成された初期の観光地リストを " + tourConf.file + " に保存しました！");
+        }
+
+        if (tourConf.recentPlayersEnabled) {
+            List<TouristLocation> recentLocations = recentPlayerLocationStore.load();
+            touristLocations.addAll(recentLocations);
+            plugin.getLogger().info("[Patrol] 最近の参加地点を " + recentLocations.size() + " 件読み込みました。");
         }
 
         plugin.getLogger().info("[Patrol] 最終的な観光地リスト: " + touristLocations.size() + " 件");
@@ -771,7 +782,9 @@ public class PatrolManager implements org.bukkit.event.Listener {
             }
         }
 
-        if (!subTitle.isEmpty()) {
+        if (RecentPlayerLocationStore.isRecentPlayerLocation(nextLocation)) {
+            MessageUtils.showTitleLargeSmall(camera, nextLocation.name, RecentPlayerLocationStore.RETURN_MESSAGE);
+        } else if (!subTitle.isEmpty()) {
             MessageUtils.showTitleLargeSmall(camera, nextLocation.name, subTitle);
         } else {
             MessageUtils.showTourTitle(camera, nextLocation.name);
@@ -1125,6 +1138,17 @@ public class PatrolManager implements org.bukkit.event.Listener {
         if (cameraUuid != null && e.getPlayer().getUniqueId().equals(cameraUuid)) {
             plugin.getLogger().warning("[QuitLog] カメラ役 " + e.getPlayer().getName() + " がログアウトしました。");
             stopTracking();
+            return;
+        }
+
+        if (plugin.getTourConf().recentPlayersEnabled
+                && !CameraMessageRouter.isCameraName(plugin.getAutoStartConf().cameraPlayerName, e.getPlayer().getName())) {
+            TouristLocation recent = recentPlayerLocationStore.record(e.getPlayer());
+            if (recent != null) {
+                touristLocations.removeIf(RecentPlayerLocationStore::isRecentPlayerLocation);
+                touristLocations.addAll(recentPlayerLocationStore.load());
+                plugin.getLogger().info("[Patrol] " + e.getPlayer().getName() + " さんの最近の参加地点を観光案内へ更新しました。");
+            }
         }
     }
 

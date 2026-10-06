@@ -58,6 +58,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         public int autogenPoints;
         public int autogenRadius;
         public double autogenYOffset;
+        public boolean recentPlayersEnabled;
+        public int recentPlayersMaxEntries;
+        public int recentPlayersRetentionDays;
+        public int recentPlayersDwellSeconds;
     }
 
     public static class PerformanceConf {
@@ -499,6 +503,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         tourConf.autogenPoints = getConfig().getInt("patrol.tour.autogen.points", 6);
         tourConf.autogenRadius = getConfig().getInt("patrol.tour.autogen.radius", 60);
         tourConf.autogenYOffset = getConfig().getDouble("patrol.tour.autogen.yOffset", 0.0);
+        tourConf.recentPlayersEnabled = getConfig().getBoolean("patrol.tour.recentPlayers.enabled", true);
+        tourConf.recentPlayersMaxEntries = getConfig().getInt("patrol.tour.recentPlayers.maxEntries", 10);
+        tourConf.recentPlayersRetentionDays = getConfig().getInt("patrol.tour.recentPlayers.retentionDays", 30);
+        tourConf.recentPlayersDwellSeconds = getConfig().getInt("patrol.tour.recentPlayers.dwellSeconds", 10);
 
         // performance
         performanceConf = new PerformanceConf();
