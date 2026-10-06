@@ -19,6 +19,7 @@ public class PatrolHomeStorage {
 
     public static final int MIN_SLOT = 1;
     public static final int MAX_SLOT = 2;
+    public static final String ADMIN_OWNER_KEY = "patrol-admins";
 
     private final JavaPlugin plugin;
     private final File file;

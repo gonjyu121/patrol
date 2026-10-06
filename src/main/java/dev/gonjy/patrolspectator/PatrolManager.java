@@ -472,7 +472,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
      */
     public boolean saveHome(Player player, int slot) {
         return player != null && homeStorage.save(
-                PatrolHomeStorage.canonicalOwnerKey(player.getName(), player.getUniqueId()),
+                homeOwnerKey(player),
                 player.getUniqueId(),
                 slot,
                 player.getLocation());
@@ -482,10 +482,25 @@ public class PatrolManager implements org.bukkit.event.Listener {
      * 常設帰還地点を取得します。未登録またはワールド未ロードの場合は null を返します。
      */
     public Location getHome(Player player, int slot) {
-        return player == null ? null : homeStorage.load(
-                PatrolHomeStorage.canonicalOwnerKey(player.getName(), player.getUniqueId()),
-                player.getUniqueId(),
-                slot);
+        if (player == null) return null;
+        String ownerKey = homeOwnerKey(player);
+        Location home = homeStorage.load(ownerKey, player.getUniqueId(), slot);
+        if (home != null || !PatrolHomeStorage.ADMIN_OWNER_KEY.equals(ownerKey)) return home;
+
+        // v1.9.121以前から名前単位で保存されている地点を、管理者共通枠へ初回移行する。
+        String previousOwnerKey = PatrolHomeStorage.canonicalOwnerKey(player.getName(), player.getUniqueId());
+        Location previousHome = homeStorage.load(previousOwnerKey, player.getUniqueId(), slot);
+        if (previousHome != null) {
+            homeStorage.save(PatrolHomeStorage.ADMIN_OWNER_KEY, player.getUniqueId(), slot, previousHome);
+        }
+        return previousHome;
+    }
+
+    private String homeOwnerKey(Player player) {
+        if (player.isOp() || player.hasPermission("patrol.admin")) {
+            return PatrolHomeStorage.ADMIN_OWNER_KEY;
+        }
+        return PatrolHomeStorage.canonicalOwnerKey(player.getName(), player.getUniqueId());
     }
 
     /**
@@ -496,10 +511,16 @@ public class PatrolManager implements org.bukkit.event.Listener {
         if (home == null) {
             return false;
         }
-        if (isRunning()) {
+        // 別アカウントで遊んでいるOPの帰還によって、配信用カメラ巡回を止めない。
+        if (isRunning() && isCameraPlayer(player)) {
             stopPatrol();
         }
         return teleportSafely(player, home, "保存地点" + slot);
+    }
+
+    /** 実行者本人が現在のカメラ役かをUUIDで判定します。 */
+    public boolean isCameraPlayer(Player player) {
+        return player != null && cameraUuid != null && cameraUuid.equals(player.getUniqueId());
     }
 
     /**

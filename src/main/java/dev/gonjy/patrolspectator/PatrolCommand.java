@@ -303,11 +303,11 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
                     sender.sendMessage("§c使い方: /patrol sethome <1|2>");
                     return true;
                 }
-                if (patrolManager.isRunning()) {
+                Player player = (Player) sender;
+                if (patrolManager.isRunning() && patrolManager.isCameraPlayer(player)) {
                     sender.sendMessage("§c[Patrol] パトロール中のカメラ位置は登録できません。先に /patrol stop を実行してください。");
                     return true;
                 }
-                Player player = (Player) sender;
                 if (patrolManager.saveHome(player, slot)) {
                     sender.sendMessage(homeSavedMessage(slot));
                 } else {
