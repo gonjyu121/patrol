@@ -31,7 +31,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.138",
-    "description": "配信用パトロールプラグイン（初期リス危険物局所清掃版）"
+    "version": "1.9.139",
+    "description": "配信用パトロールプラグイン（最近の参加地点観光案内版）"
   }
 }
