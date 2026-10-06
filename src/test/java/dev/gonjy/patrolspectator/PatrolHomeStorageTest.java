@@ -79,6 +79,17 @@ class PatrolHomeStorageTest {
     }
 
     @Test
+    void patrolAdministratorsShareTheSameTwoHomeSlots() {
+        UUID firstAdmin = UUID.randomUUID();
+        UUID secondAdmin = UUID.randomUUID();
+        Location sharedHome = new Location(world, 80, 72, -40, 15, 3);
+
+        assertTrue(storage.save(PatrolHomeStorage.ADMIN_OWNER_KEY, firstAdmin, 1, sharedHome));
+        assertLocationEquals(sharedHome,
+                storage.load(PatrolHomeStorage.ADMIN_OWNER_KEY, secondAdmin, 1));
+    }
+
+    @Test
     void legacyUuidHomeMigratesWhenItsOwnerLoadsIt() {
         UUID playerId = UUID.randomUUID();
         Location legacyHome = new Location(world, -5, 65, 9);
