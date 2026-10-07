@@ -1,5 +1,12 @@
 # PatrolSpectatorPlugin Development Log
 
+## v1.9.142 - 依存プラグインの誤取得を防止
+
+- ModrinthからPaper対応の安定版だけを公開日時順で選択。
+- primary JARを優先し、`plugin.yml` / `paper-plugin.yml`がないファイルを配布対象から除外。
+- WorldEditはBukkit版のファイル名と7.4.5以上を必須化。
+- 1件でも取得または検証に失敗した場合、古い配布物のまま成功扱いにせず更新処理を失敗させるよう修正。
+
 ## v1.9.141 - 最近の参加地点タイトルの表示切れを修正
 
 - MCIDと「さんが最後にいた場所」をタイトルの上下2行へ分離。
