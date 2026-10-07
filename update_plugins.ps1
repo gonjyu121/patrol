@@ -7,6 +7,35 @@ $targetDir = Join-Path $rootDir "plugins"
 # target/ から plugins/ に変更（mvn clean で消えないように）
 $configFile = Join-Path $rootDir "plugin_urls.json"
 
+function Test-PluginJar {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    if (-not (Test-Path -LiteralPath $Path) -or (Get-Item -LiteralPath $Path).Length -le 0) {
+        throw "Downloaded file is empty or missing: $Path"
+    }
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $archive = [System.IO.Compression.ZipFile]::OpenRead($Path)
+    try {
+        $descriptor = $archive.Entries | Where-Object {
+            $_.FullName -eq "plugin.yml" -or $_.FullName -eq "paper-plugin.yml"
+        } | Select-Object -First 1
+        if (-not $descriptor) {
+            throw "Downloaded JAR is not a Paper/Bukkit plugin: $Path"
+        }
+    }
+    finally {
+        $archive.Dispose()
+    }
+}
+
+function ConvertTo-Version {
+    param([Parameter(Mandatory = $true)][string]$Value)
+    $numeric = [regex]::Match($Value, '\d+(?:\.\d+){1,3}').Value
+    if (-not $numeric) { throw "Version number could not be parsed: $Value" }
+    return [version]$numeric
+}
+
 
 Write-Host "Plugin update script started" -ForegroundColor Green
 Write-Host "==============================" -ForegroundColor Green
@@ -94,6 +123,7 @@ foreach ($obsoleteFile in $obsoleteFiles) {
 }
 
 $plugins = $config.plugins
+$downloadFailures = @()
 
 foreach ($prop in $plugins.PSObject.Properties) {
     $name = $prop.Name
@@ -102,37 +132,63 @@ foreach ($prop in $plugins.PSObject.Properties) {
     $description = $pluginInfo.description
     $filename = if ($name.EndsWith(".jar")) { $name } else { $name + ".jar" }
     $outputPath = Join-Path $targetDir $filename
+    $temporaryPath = $outputPath + ".download"
 
     Write-Host ("Downloading " + $name + " (" + $description + ")...") -ForegroundColor Cyan
 
     try {
         if ($url -like "MODRINTH:*") {
             $slug = $url -replace "MODRINTH:", ""
-            Write-Host ("Searching Modrinth for latest version (" + $slug + ")...") -ForegroundColor Gray
-            $apiUrl = "https://api.modrinth.com/v2/project/" + $slug + "/version"
-            $versions = Invoke-RestMethod -Uri $apiUrl -Method Get
-            $latestVersion = $versions | Where-Object { $_.version_type -eq "release" } | Select-Object -First 1
-            if (-not $latestVersion) {
-                $latestVersion = $versions | Select-Object -First 1
+            $loader = if ($pluginInfo.modrinth_loader) { [string]$pluginInfo.modrinth_loader } else { "paper" }
+            $loaderQuery = [uri]::EscapeDataString((@($loader) | ConvertTo-Json -Compress))
+            Write-Host ("Searching Modrinth for latest stable " + $loader + " version (" + $slug + ")...") -ForegroundColor Gray
+            $apiUrl = "https://api.modrinth.com/v2/project/" + $slug + "/version?loaders=" + $loaderQuery
+            $versions = Invoke-RestMethod -Uri $apiUrl -Method Get -Headers @{ "User-Agent" = "PatrolSpectatorPlugin-updater/$buildVersion" }
+            $latestVersion = $versions |
+                Where-Object { $_.version_type -eq "release" -and $_.loaders -contains $loader } |
+                Sort-Object { [datetimeoffset]$_.date_published } -Descending |
+                Select-Object -First 1
+
+            if (-not $latestVersion) { throw "No stable $loader version found for $name" }
+            if ($pluginInfo.min_version -and
+                    (ConvertTo-Version $latestVersion.version_number) -lt (ConvertTo-Version ([string]$pluginInfo.min_version))) {
+                throw "$name resolved to $($latestVersion.version_number), below required $($pluginInfo.min_version)"
             }
-            
-            if ($latestVersion) {
-                $downloadUrl = $latestVersion.files[0].url
-                Invoke-WebRequest -Uri $downloadUrl -OutFile $outputPath
-                Write-Host ("Download complete: " + $name + " (Version: " + $latestVersion.version_number + ")") -ForegroundColor Green
+
+            $downloadFile = $latestVersion.files |
+                Where-Object { $_.primary -and $_.filename -like "*.jar" } |
+                Select-Object -First 1
+            if (-not $downloadFile) {
+                $downloadFile = $latestVersion.files | Where-Object {
+                    $_.filename -like "*.jar" -and $_.filename -notmatch '(sources|javadoc|dev)'
+                } | Select-Object -First 1
             }
-            else {
-                Write-Host ("No version found for " + $name) -ForegroundColor Red
+            if (-not $downloadFile) { throw "No deployable JAR found for $name $($latestVersion.version_number)" }
+            if ($pluginInfo.file_name_pattern -and $downloadFile.filename -notlike ([string]$pluginInfo.file_name_pattern)) {
+                throw "Unexpected file selected for ${name}: $($downloadFile.filename)"
             }
+
+            Invoke-WebRequest -Uri $downloadFile.url -OutFile $temporaryPath
+            Test-PluginJar -Path $temporaryPath
+            Move-Item -LiteralPath $temporaryPath -Destination $outputPath -Force
+            Write-Host ("Download complete: " + $name + " (Version: " + $latestVersion.version_number + ", File: " + $downloadFile.filename + ")") -ForegroundColor Green
         }
         else {
-            Invoke-WebRequest -Uri $url -OutFile $outputPath
+            Invoke-WebRequest -Uri $url -OutFile $temporaryPath
+            Test-PluginJar -Path $temporaryPath
+            Move-Item -LiteralPath $temporaryPath -Destination $outputPath -Force
             Write-Host ("Download complete: " + $name) -ForegroundColor Green
         }
     }
     catch {
+        if (Test-Path -LiteralPath $temporaryPath) { Remove-Item -LiteralPath $temporaryPath -Force }
+        $downloadFailures += $name
         Write-Host ("Download failed for " + $name + ": " + $_.Exception.Message) -ForegroundColor Red
     }
+}
+
+if ($downloadFailures.Count -gt 0) {
+    throw "Plugin update aborted because download or validation failed: $($downloadFailures -join ', ')"
 }
 
 # Show results

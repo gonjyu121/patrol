@@ -10,28 +10,35 @@
     },
     "ViaVersion": {
       "url": "MODRINTH:viaversion",
+      "modrinth_loader": "paper",
       "description": "複数のMinecraftバージョンに対応するプロトコル変換プラグイン (Modrinth)"
     },
     "ViaBackwards": {
       "url": "MODRINTH:viabackwards",
+      "modrinth_loader": "paper",
       "description": "古いバージョンのクライアントが新しいサーバーに接続可能にする (Modrinth)"
     },
     "ViaRewind": {
       "url": "MODRINTH:viarewind",
+      "modrinth_loader": "paper",
       "description": "新しいバージョンのクライアントが古いサーバーに接続可能にする (Modrinth)"
     },
     "LunaChat": {
       "url": "MODRINTH:lunachat",
+      "modrinth_loader": "paper",
       "description": "ローマ字を日本語に変換するチャットプラグイン (Modrinth)"
     },
     "WorldEdit": {
       "url": "MODRINTH:worldedit",
+      "modrinth_loader": "paper",
+      "min_version": "7.4.5",
+      "file_name_pattern": "worldedit-bukkit-*.jar",
       "description": "初期リス周辺を現行サーバー互換の方法で自然地形へ再生成するプラグイン (Modrinth)"
     }
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.141",
-    "description": "配信用パトロールプラグイン（最近の参加地点タイトル修正版）"
+    "version": "1.9.142",
+    "description": "配信用パトロールプラグイン（依存プラグイン取得検証版）"
   }
 }
