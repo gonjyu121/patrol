@@ -21,6 +21,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     private TeleportRequestManager teleportRequestManager;
     private SpawnResetManager spawnResetManager;
     private SpawnHazardCleanupManager spawnHazardCleanupManager;
+    private ServerSettingsGuard serverSettingsGuard;
 
     private EndResetManager endResetManager;
     private YouTubeManager youTubeManager;
@@ -117,6 +118,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
         loadConfigValues();
         applyWorldPerformanceSettings();
+        serverSettingsGuard = new ServerSettingsGuard(this);
+        serverSettingsGuard.start();
 
         // 保護データの初期化
         protectionData = new ProtectionData(this);
@@ -381,6 +384,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         if (engagementBroadcaster != null) {
             engagementBroadcaster.start();
         }
+
+        if (serverSettingsGuard != null) {
+            serverSettingsGuard.start();
+        }
         
         // クラウド同期マネージャーの再生成（トークン等が変わった可能性のため）
         gistSyncManager = new GistSyncManager(this);
@@ -450,6 +457,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
             engagementBroadcaster.stop();
         if (spawnHazardCleanupManager != null)
             spawnHazardCleanupManager.shutdown();
+        if (serverSettingsGuard != null)
+            serverSettingsGuard.stop();
 
         // 最後にストレージ保存
         if (statsStorage != null) {

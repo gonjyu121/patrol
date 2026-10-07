@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## v1.9.143 - BEチャット用サーバー設定を自動修復
+
+- 起動時と5分間隔で `server.properties` の `enforce-secure-profile=false` を確認・修復。
+- 初期リス保護も `spawn-protection=0` へ保ち、稼働中のBukkit設定へ即時反映。
+- 初回変更前に `server.properties.patrol-backup` を作成し、一時ファイル経由で安全に置換。
+- 稼働中のSecure Profile強制が有効な場合、設定反映にもう一度再起動が必要なことを管理者へ通知。
+- 設定ファイルが見つからない場合やバックアップ・書込みに失敗した場合は変更せず、安全にログへ記録。
+
 ## v1.9.142 - 依存プラグインの誤取得を防止
 
 - ModrinthからPaper対応の安定版だけを公開日時順で選択。
