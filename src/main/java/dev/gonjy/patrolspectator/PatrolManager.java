@@ -1,5 +1,7 @@
 package dev.gonjy.patrolspectator;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -804,7 +806,9 @@ public class PatrolManager implements org.bukkit.event.Listener {
         }
 
         if (RecentPlayerLocationStore.isRecentPlayerLocation(nextLocation)) {
-            MessageUtils.showTitleLargeSmall(camera, nextLocation.name, RecentPlayerLocationStore.RETURN_MESSAGE);
+            // MCIDと説明を2行に分け、長いMCIDでも画面幅に余裕を持たせる。
+            MessageUtils.showTitleLargeSmall(camera, nextLocation.name, RecentPlayerLocationStore.LOCATION_MESSAGE);
+            camera.sendActionBar(Component.text("またの参加をお待ちしています！", NamedTextColor.GREEN));
         } else if (!subTitle.isEmpty()) {
             MessageUtils.showTitleLargeSmall(camera, nextLocation.name, subTitle);
         } else {

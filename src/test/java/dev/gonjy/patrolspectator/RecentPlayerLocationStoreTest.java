@@ -29,11 +29,27 @@ class RecentPlayerLocationStoreTest {
         TouristLocation location = store.record(uuid, "Alice", new Location(world, 123.5, 70, -456.5, 90, 12), 1_000_000L);
 
         assertNotNull(location);
-        assertEquals("§bAlice§fさんが最後にいた場所", location.name);
+        assertEquals("§bAlice", location.name);
+        assertEquals("§fさんが最後にいた場所", RecentPlayerLocationStore.LOCATION_MESSAGE);
         assertEquals(RecentPlayerLocationStore.RETURN_MESSAGE, location.description);
         assertFalse(location.name.contains("123"));
         assertFalse(location.name.contains("456"));
         assertTrue(RecentPlayerLocationStore.isRecentPlayerLocation(location));
+    }
+
+    @Test
+    void keepsLongPlayerNameSeparateFromLocationDescription() {
+        File file = tempDir.resolve("recent.yml").toFile();
+        RecentPlayerLocationStore store = new RecentPlayerLocationStore(file, Logger.getLogger("test"), 10, 30, 10);
+        World world = Mockito.mock(World.class);
+        Mockito.when(world.getName()).thenReturn("world");
+
+        TouristLocation location = store.record(UUID.randomUUID(), "VeryLongPlayerName123",
+                new Location(world, 1, 64, 1), 1_000_000L);
+
+        assertNotNull(location);
+        assertEquals("§bVeryLongPlayerName123", location.name);
+        assertFalse(location.name.contains("最後にいた場所"));
     }
 
     @Test

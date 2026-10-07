@@ -31,7 +31,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.140",
-    "description": "配信用パトロールプラグイン（BE版帰還地点利用修正版）"
+    "version": "1.9.141",
+    "description": "配信用パトロールプラグイン（最近の参加地点タイトル修正版）"
   }
 }

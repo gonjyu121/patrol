@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 /** Stores recent participant locations separately from the permanent tour list. */
 final class RecentPlayerLocationStore {
     static final String ID_PREFIX = "recent_player_";
+    static final String LOCATION_MESSAGE = "§fさんが最後にいた場所";
     static final String RETURN_MESSAGE = "§aまたの参加をお待ちしています！";
 
     private final File file;
@@ -132,7 +133,7 @@ final class RecentPlayerLocationStore {
     private TouristLocation toTouristLocation(Entry entry) {
         return new TouristLocation(
                 ID_PREFIX + entry.uuid,
-                "§b" + entry.playerName + "§fさんが最後にいた場所",
+                "§b" + entry.playerName,
                 entry.world, entry.x, entry.y, entry.z, entry.yaw, entry.pitch,
                 RETURN_MESSAGE, worldType(entry.world), dwellSeconds, false);
     }
