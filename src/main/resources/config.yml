@@ -185,3 +185,9 @@ participant_guidance:
     - "§b[配信] §f24時間配信中！チャンネル登録・高評価で応援お願いします！"
     - "§a[使えるコマンド] §f/stats  /patrol rescue  /patrol escape"
     - "§a[TP招待] §f/patrol invite <相手>  /patrol accept  /patrol deny"
+
+# サーバー移転後も、初期リス保護とBEチャットに必要な設定を維持します。
+# enforce-secure-profileの変更は次回のサーバー再起動で反映されます。
+server_settings_guard:
+  enabled: true
+  interval_minutes: 5
