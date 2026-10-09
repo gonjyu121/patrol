@@ -109,18 +109,16 @@ public class TickMonitor {
             isPausedDueToLoad = false;
         }
 
-        plugin.getPatrolManager().stopPatrol();
+        if (!plugin.getPatrolManager().pausePatrolForLoad()) {
+            plugin.getLogger().warning("[Performance] カメラ役を保護したまま巡回を一時停止できませんでした。");
+            isPausedDueToLoad = false;
+            pausedCameraId = null;
+        }
         highLoadCount = 0;
         lowLoadCount = 0;
-        
-        // パトロール停止後も一時停止状態を維持するために再設定 (stopPatrol()内でresetPauseStateが呼ばれるため)
-        if (pausedCameraId != null) {
-            isPausedDueToLoad = true;
-        }
     }
 
     private void resumePatrol() {
-        isPausedDueToLoad = false;
         lowLoadCount = 0;
         highLoadCount = 0;
 
@@ -131,10 +129,12 @@ public class TickMonitor {
             plugin.getLogger().info("[✅] サーバー負荷が安定したため、パトロールを自動再開します。");
             camera.sendMessage(ChatColor.GREEN + "✅ サーバー負荷が安定したため、パトロールを自動再開します！");
             
-            int dwellSeconds = plugin.getTourConf().dwellSeconds;
-            plugin.getPatrolManager().startPatrol(camera, dwellSeconds);
+            if (plugin.getPatrolManager().resumePatrolAfterLoad()) {
+                isPausedDueToLoad = false;
+                pausedCameraId = null;
+            } else {
+                plugin.getLogger().warning("[Performance] 一時停止中のパトロールを再開できませんでした。");
+            }
         }
-        
-        pausedCameraId = null;
     }
 }

@@ -416,31 +416,30 @@ public class PatrolManager implements org.bukkit.event.Listener {
             preLoadTask = null;
         }
 
-        // GameModeEnforcerの停止
-        gameModeEnforcer.clearCameraOperator();
-        gameModeEnforcer.stop();
-
         // ランキング表示の停止（除外設定も解除）
         rankingDisplaySystem.stopRankingDisplay();
         rankingDisplaySystem.setExcludedPlayer(null);
 
-        // 安全策: 全プレイヤーをSurvivalに戻す（カメラ役含む）
+        Player camera = getCamera();
+
+        // 安全策: カメラ役以外の全プレイヤーをSurvivalに戻す。
+        // カメラ役は安全な復帰先へテレポートするまでSpectatorと無敵を維持する。
         for (Player pl : Bukkit.getOnlinePlayers()) {
-            gameModeEnforcer.ensurePlayerIsSurvival(pl);
+            if (camera == null || !pl.getUniqueId().equals(camera.getUniqueId())) {
+                gameModeEnforcer.ensurePlayerIsSurvival(pl);
+            }
         }
 
         // カメラ役を開始地点とインベントリに戻す
-        Player camera = getCamera();
         if (camera != null && camera.isOnline()) {
-            // 安全のため、改めてサバイバル＆無敵解除を強制する
-            camera.setGameMode(GameMode.SURVIVAL);
+            // 復帰完了までは現在地が上空・壁内・奈落でも死亡しない状態を保つ。
             try {
-                camera.setInvulnerable(false);
-                camera.setFlying(false);
-                camera.setAllowFlight(false);
+                camera.setGameMode(GameMode.SPECTATOR);
+                camera.setInvulnerable(true);
+                camera.setAllowFlight(true);
+                camera.setFlying(true);
             } catch (Throwable ignored) {}
 
-            // camera.setReducedDebugInfo(false); // IDE error workaround
             boolean returned = startLocation == null || teleportSafely(camera, startLocation, "パトロール開始地点");
             if (returned) {
                 if (savedInventory != null) {
@@ -449,6 +448,16 @@ public class PatrolManager implements org.bukkit.event.Listener {
                 if (savedArmor != null) {
                     camera.getInventory().setArmorContents(savedArmor);
                 }
+
+                // 安全な場所へ戻った後でのみ、カメラ保護を解除する。
+                gameModeEnforcer.clearCameraOperator();
+                gameModeEnforcer.stop();
+                camera.setGameMode(GameMode.SURVIVAL);
+                try {
+                    camera.setInvulnerable(false);
+                    camera.setFlying(false);
+                    camera.setAllowFlight(false);
+                } catch (Throwable ignored) {}
 
                 cameraUuid = null;
                 startLocation = null;
@@ -464,9 +473,73 @@ public class PatrolManager implements org.bukkit.event.Listener {
                 return false;
             }
         } else {
+            gameModeEnforcer.clearCameraOperator();
+            gameModeEnforcer.stop();
             plugin.getLogger().info("[Patrol] カメラ役がオフラインのため、復帰用状態ファイルを維持したままパトロールタスクのみ停止します。");
             return cameraUuid == null;
         }
+    }
+
+    /**
+     * 高負荷時に巡回タスクだけを一時停止します。
+     * カメラ役は現在地でSpectator・無敵を維持し、復帰処理や状態破棄は行いません。
+     */
+    public boolean pausePatrolForLoad() {
+        Player camera = getCamera();
+        if (camera == null || !camera.isOnline()) {
+            return false;
+        }
+
+        gameModeEnforcer.setCameraOperator(camera.getUniqueId());
+        gameModeEnforcer.start();
+        try {
+            camera.setGameMode(GameMode.SPECTATOR);
+            camera.setInvulnerable(true);
+            camera.setAllowFlight(true);
+            camera.setFlying(true);
+        } catch (Throwable t) {
+            plugin.getLogger().log(Level.WARNING, "[Performance] カメラ役の安全状態を維持できませんでした。", t);
+            return false;
+        }
+
+        // 保護状態を確立してから巡回タスクを停める。
+        if (patrolTask != null) {
+            patrolTask.cancel();
+            patrolTask = null;
+        }
+        stopTracking();
+        if (preLoadTask != null) {
+            preLoadTask.cancel();
+            preLoadTask = null;
+        }
+        return true;
+    }
+
+    /**
+     * 高負荷による一時停止から、保存状態を変更せず巡回だけを再開します。
+     */
+    public boolean resumePatrolAfterLoad() {
+        Player camera = getCamera();
+        if (camera == null || !camera.isOnline() || patrolTask != null) {
+            return false;
+        }
+
+        gameModeEnforcer.setCameraOperator(camera.getUniqueId());
+        gameModeEnforcer.start();
+        try {
+            camera.setGameMode(GameMode.SPECTATOR);
+            camera.setInvulnerable(true);
+            camera.setAllowFlight(true);
+            camera.setFlying(true);
+        } catch (Throwable t) {
+            plugin.getLogger().log(Level.WARNING, "[Performance] カメラ役の安全状態を復旧できませんでした。", t);
+            return false;
+        }
+
+        rankingDisplaySystem.setExcludedPlayer(camera.getUniqueId());
+        rankingDisplaySystem.startRankingDisplay();
+        scheduleNextTick(1L);
+        return true;
     }
 
     /**
