@@ -426,3 +426,13 @@
     - オンライン参加者の周辺はサーバーが保持するため、Patrolからの重複先読みを廃止。
     - 平均MSPTが45msを超えている間は、カメラと巡回状態を維持したまま次の移動だけを延期。
     - 負荷判定と安全な既定値をテストで固定。
+
+## Current Status (2026-10-11, bundled spark load guard)
+- **Version**: 1.9.147
+- **Branch**: `fix/spark-world-statistics-v1.9.147`
+- **Issue**: Paper内蔵Sparkのワールド統計取得に伴う停止を抑制
+- **Changes**:
+    - Paper公式の `config/paper-global.yml` にある `spark.enabled` だけを安全に無効化。
+    - 設定変更前に `paper-global.yml.patrol-backup` を一度だけ作成し、書き込みは一時ファイルから置換。
+    - Spark設定以外のPaper設定とコメントを維持し、内部APIやreflectionには依存しない。
+    - 設定ファイルがない環境、既に無効な環境、バックアップ失敗時もプラグイン起動を継続。

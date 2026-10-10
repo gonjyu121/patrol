@@ -120,6 +120,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
         loadConfigValues();
         applyWorldPerformanceSettings();
+        new PaperSparkGuard(this).apply();
         serverSettingsGuard = new ServerSettingsGuard(this);
         serverSettingsGuard.start();
 
