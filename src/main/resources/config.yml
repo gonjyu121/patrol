@@ -104,6 +104,9 @@ performance:
   disableAutoEventWhilePatrol: false
   debugLog: false
   disableLoadPause: true
+  # 高負荷中はPatrolを停止せず、次のカメラ移動だけを延期します。
+  deferCameraMovesOnHighLoad: true
+  highLoadRetrySeconds: 5
   # サーバーの描画距離とシミュレーション距離をプラグイン起動時に強制上書きする設定
   # (-1 で無効化、正の数でその設定値を強制適用)
   forceViewDistance: 6
