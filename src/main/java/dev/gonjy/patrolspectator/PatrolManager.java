@@ -6,8 +6,14 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.entity.Display;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.Transformation;
+import org.joml.AxisAngle4f;
+import org.joml.Vector3f;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -66,6 +72,8 @@ public class PatrolManager implements org.bukkit.event.Listener {
     // シネマティック追跡用タスク（エンドラ等で使用）
     private BukkitTask trackingTask;
     private org.bukkit.entity.ArmorStand cinematicCameraStand;
+    private BukkitTask recentPlayerAvatarSpawnTask;
+    private ItemDisplay recentPlayerAvatarDisplay;
 
     // 視点切り替え（三人称前方 -> 三人称後方 -> 一人称）用フィールド
     private final List<BukkitTask> perspectiveTasks = new ArrayList<>();
@@ -882,6 +890,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
             // MCIDと説明を2行に分け、長いMCIDでも画面幅に余裕を持たせる。
             MessageUtils.showTitleLargeSmall(camera, nextLocation.name, RecentPlayerLocationStore.LOCATION_MESSAGE);
             camera.sendActionBar(Component.text("またの参加をお待ちしています！", NamedTextColor.GREEN));
+            showRecentPlayerAvatar(camera, loc, recentPlayerLocationStore.loadPlayerHead(nextLocation));
         } else if (!subTitle.isEmpty()) {
             MessageUtils.showTitleLargeSmall(camera, nextLocation.name, subTitle);
         } else {
@@ -1341,6 +1350,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
     }
 
     private void stopTracking() {
+        clearRecentPlayerAvatar();
         if (trackingTask != null) {
             trackingTask.cancel();
             trackingTask = null;
@@ -1355,6 +1365,51 @@ public class PatrolManager implements org.bukkit.event.Listener {
         if (cinematicCameraStand != null) {
             cinematicCameraStand.remove();
             cinematicCameraStand = null;
+        }
+    }
+
+    private void showRecentPlayerAvatar(Player camera, Location cameraLocation, ItemStack playerHead) {
+        clearRecentPlayerAvatar();
+        if (camera == null || cameraLocation == null || cameraLocation.getWorld() == null || playerHead == null) {
+            return;
+        }
+
+        Location avatarLocation = recentPlayerAvatarLocation(cameraLocation);
+        recentPlayerAvatarSpawnTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            recentPlayerAvatarSpawnTask = null;
+            if (!camera.isOnline() || !camera.getWorld().equals(avatarLocation.getWorld())) return;
+
+            try {
+                recentPlayerAvatarDisplay = avatarLocation.getWorld().spawn(avatarLocation, ItemDisplay.class, display -> {
+                    display.setItemStack(playerHead.clone());
+                    display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.HEAD);
+                    display.setBillboard(Display.Billboard.CENTER);
+                    display.setTransformation(new Transformation(
+                            new Vector3f(), new AxisAngle4f(), new Vector3f(1.35f, 1.35f, 1.35f), new AxisAngle4f()));
+                    display.setInvulnerable(true);
+                    display.setPersistent(false);
+                    display.setSilent(true);
+                    display.setViewRange(12.0f);
+                });
+            } catch (Throwable t) {
+                plugin.getLogger().log(Level.WARNING, "[Patrol] 最近の参加者アバターを表示できませんでした。", t);
+            }
+        }, 5L);
+    }
+
+    static Location recentPlayerAvatarLocation(Location cameraLocation) {
+        Location eye = cameraLocation.clone().add(0.0, 1.62, 0.0);
+        return eye.add(cameraLocation.getDirection().normalize().multiply(2.75));
+    }
+
+    private void clearRecentPlayerAvatar() {
+        if (recentPlayerAvatarSpawnTask != null) {
+            recentPlayerAvatarSpawnTask.cancel();
+            recentPlayerAvatarSpawnTask = null;
+        }
+        if (recentPlayerAvatarDisplay != null) {
+            recentPlayerAvatarDisplay.remove();
+            recentPlayerAvatarDisplay = null;
         }
     }
 
