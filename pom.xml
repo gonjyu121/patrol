@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>dev.gonjy</groupId>
   <artifactId>patrol-spectator-plugin</artifactId>
-  <version>1.9.144</version>
+  <version>1.9.145</version>
   <name>PatrolSpectatorPlugin</name>
 
   <properties>

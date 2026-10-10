@@ -38,7 +38,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.144",
-    "description": "配信用パトロールプラグイン（カメラ役の負荷一時停止中死亡防止版）"
+    "version": "1.9.145",
+    "description": "配信用パトロールプラグイン（最近の参加者スキン表示版）"
   }
 }
