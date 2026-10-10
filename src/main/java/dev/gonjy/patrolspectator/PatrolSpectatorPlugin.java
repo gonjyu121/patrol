@@ -74,6 +74,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         public boolean debugLog;
         public int trackingUpdateIntervalTicks;
         public boolean disableLoadPause;
+        public boolean deferCameraMovesOnHighLoad;
+        public int highLoadRetrySeconds;
         public int forceViewDistance;
         public int forceSimulationDistance;
     }
@@ -528,6 +530,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         performanceConf.debugLog = getConfig().getBoolean("performance.debugLog", false);
         performanceConf.trackingUpdateIntervalTicks = getConfig().getInt("patrol.trackingUpdateIntervalTicks", 2);
         performanceConf.disableLoadPause = getConfig().getBoolean("performance.disableLoadPause", false);
+        performanceConf.deferCameraMovesOnHighLoad = getConfig().getBoolean(
+                "performance.deferCameraMovesOnHighLoad", true);
+        performanceConf.highLoadRetrySeconds = Math.max(1,
+                getConfig().getInt("performance.highLoadRetrySeconds", 5));
         performanceConf.forceViewDistance = getConfig().getInt("performance.forceViewDistance", -1);
         performanceConf.forceSimulationDistance = getConfig().getInt("performance.forceSimulationDistance", -1);
 

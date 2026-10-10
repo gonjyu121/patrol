@@ -693,6 +693,15 @@ public class PatrolManager implements org.bukkit.event.Listener {
         // 基本の滞在時間
         int staySeconds = currentDwellSeconds;
 
+        // 高負荷中に新しい遠距離チャンクを読み込まない。巡回そのものやカメラ保護は維持する。
+        TickMonitor tickMonitor = plugin.getTickMonitor();
+        if (tickMonitor != null && tickMonitor.shouldDeferCameraMove()) {
+            if (plugin.getPerformanceConf().debugLog) {
+                plugin.getLogger().info("[Performance] 高負荷のため次のカメラ移動を延期します。");
+            }
+            return plugin.getPerformanceConf().highLoadRetrySeconds;
+        }
+
         // 定期的なサマリログ（5分おき）
         long now = System.currentTimeMillis();
         if (now - lastSummaryLogTime > 5 * 60 * 1000L) {
@@ -1192,22 +1201,20 @@ public class PatrolManager implements org.bukkit.event.Listener {
 
         List<Player> validTargets = engagementSystem.getValidTargets(camera);
         if (!validTargets.isEmpty()) {
-            // プレイヤー観戦が優先される可能性が高い
-            for (Player p : validTargets) {
-                loadChunksAround(p.getLocation());
-            }
+            // オンラインプレイヤーの周辺チャンクはサーバーが既に保持しているため追加ロードしない。
+            return;
         } else if (!touristLocations.isEmpty()) {
             // 観光地巡りになる可能性が高い
             int nextIndex = (currentTourIndex + 1) % touristLocations.size();
             TouristLocation nextLoc = touristLocations.get(nextIndex);
             World w = Bukkit.getWorld(nextLoc.world);
             if (w != null) {
-                loadChunksAround(new Location(w, nextLoc.x, nextLoc.y, nextLoc.z));
+                loadTargetChunk(new Location(w, nextLoc.x, nextLoc.y, nextLoc.z));
             }
         }
     }
 
-    private void loadChunksAround(Location loc) {
+    private void loadTargetChunk(Location loc) {
         if (loc == null || loc.getWorld() == null)
             return;
 
@@ -1215,12 +1222,8 @@ public class PatrolManager implements org.bukkit.event.Listener {
         int chunkX = loc.getBlockX() >> 4;
         int chunkZ = loc.getBlockZ() >> 4;
 
-        // 半径1チャンク分を非同期ロード（負荷を抑えつつ準備）
-        for (int x = -1; x <= 1; x++) {
-            for (int z = -1; z <= 1; z++) {
-                world.getChunkAtAsync(chunkX + x, chunkZ + z);
-            }
-        }
+        // 移動先そのものだけを非同期ロードする。従来の周囲9チャンク先読みは行わない。
+        world.getChunkAtAsync(chunkX, chunkZ);
     }
 
     @org.bukkit.event.EventHandler
