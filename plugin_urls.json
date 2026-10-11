@@ -38,7 +38,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.146",
-    "description": "配信用パトロールプラグイン（観光カメラのチャンク負荷軽減版）"
+    "version": "1.9.148",
+    "description": "配信用パトロールプラグイン（CloudSync認証失敗抑制版）"
   }
 }

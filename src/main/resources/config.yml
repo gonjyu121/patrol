@@ -97,6 +97,8 @@ spawnHazardCleanup:
 
 # Performance / Low-Spec Optimization
 performance:
+  # Paper内蔵Sparkのワールド統計収集による長時間停止を避けます（次回起動から反映）。
+  disableBundledSpark: true
   lowSpecMode: false
   minIntervalSeconds: 5
   maxCameraMovesPerMinute: 3

@@ -426,3 +426,23 @@
     - オンライン参加者の周辺はサーバーが保持するため、Patrolからの重複先読みを廃止。
     - 平均MSPTが45msを超えている間は、カメラと巡回状態を維持したまま次の移動だけを延期。
     - 負荷判定と安全な既定値をテストで固定。
+
+## Current Status (2026-10-11, bundled spark load guard)
+- **Version**: 1.9.147
+- **Branch**: `fix/spark-world-statistics-v1.9.147`
+- **Issue**: Paper内蔵Sparkのワールド統計取得に伴う停止を抑制
+- **Changes**:
+    - Paper公式の `config/paper-global.yml` にある `spark.enabled` だけを安全に無効化。
+    - 設定変更前に `paper-global.yml.patrol-backup` を一度だけ作成し、書き込みは一時ファイルから置換。
+    - Spark設定以外のPaper設定とコメントを維持し、内部APIやreflectionには依存しない。
+    - 設定ファイルがない環境、既に無効な環境、バックアップ失敗時もプラグイン起動を継続。
+
+## Current Status (2026-10-11, CloudSync authentication retry guard)
+- **Version**: 1.9.148
+- **Branch**: `fix/cloud-sync-auth-retry-v1.9.148`
+- **Issue**: CloudSync認証失敗時の無駄な定期再試行を停止
+- **Changes**:
+    - GitHub Gist APIがHTTP 401を返した場合、そのサーバー起動中のCloudSync通信を停止。
+    - 認証エラーは一度だけ簡潔に記録し、APIレスポンス本文をログへ出さない。
+    - 一時的なサーバーエラー等は停止扱いにせず、次回の定期同期で再試行。
+    - 設定修正後はサーバー再起動で同期を再開。

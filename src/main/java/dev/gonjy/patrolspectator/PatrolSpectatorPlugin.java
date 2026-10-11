@@ -120,6 +120,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
         loadConfigValues();
         applyWorldPerformanceSettings();
+        new PaperSparkGuard(this).apply();
         serverSettingsGuard = new ServerSettingsGuard(this);
         serverSettingsGuard.start();
 
@@ -283,7 +284,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         }
 
         // GitHub Periodic Sync
-        if (gistSyncManager.isConfigured()) {
+        if (gistSyncManager.isOperational()) {
             int intervalHours = getConfig().getInt("github.syncIntervalHours", 1);
             if (intervalHours > 0) {
                 getServer().getScheduler().runTaskTimerAsynchronously(this, gistSyncManager::push,
