@@ -436,3 +436,13 @@
     - 設定変更前に `paper-global.yml.patrol-backup` を一度だけ作成し、書き込みは一時ファイルから置換。
     - Spark設定以外のPaper設定とコメントを維持し、内部APIやreflectionには依存しない。
     - 設定ファイルがない環境、既に無効な環境、バックアップ失敗時もプラグイン起動を継続。
+
+## Current Status (2026-10-11, CloudSync authentication retry guard)
+- **Version**: 1.9.148
+- **Branch**: `fix/cloud-sync-auth-retry-v1.9.148`
+- **Issue**: CloudSync認証失敗時の無駄な定期再試行を停止
+- **Changes**:
+    - GitHub Gist APIがHTTP 401を返した場合、そのサーバー起動中のCloudSync通信を停止。
+    - 認証エラーは一度だけ簡潔に記録し、APIレスポンス本文をログへ出さない。
+    - 一時的なサーバーエラー等は停止扱いにせず、次回の定期同期で再試行。
+    - 設定修正後はサーバー再起動で同期を再開。

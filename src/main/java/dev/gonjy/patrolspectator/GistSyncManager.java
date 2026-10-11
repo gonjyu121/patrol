@@ -25,6 +25,7 @@ public class GistSyncManager {
     private final String gistId;
     private final String fileName;
     private final HttpClient httpClient;
+    private final CloudSyncFailureGuard failureGuard;
 
     public GistSyncManager(PatrolSpectatorPlugin plugin) {
         this.plugin = plugin;
@@ -32,6 +33,7 @@ public class GistSyncManager {
         this.token = plugin.getConfig().getString("github.token", "");
         this.gistId = plugin.getConfig().getString("github.gistId", "");
         this.fileName = plugin.getConfig().getString("github.fileName", "player_stats.yml");
+        this.failureGuard = new CloudSyncFailureGuard(log);
         
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
@@ -43,12 +45,16 @@ public class GistSyncManager {
                 && !token.isEmpty() && !gistId.isEmpty();
     }
 
+    public boolean isOperational() {
+        return isConfigured() && failureGuard.canRequest();
+    }
+
     /**
      * GitHub Gistからデータをダウンロードしてローカルファイルを上書きします。
      * 同期的に実行されるため、起動時のメインスレッドまたは非同期タスク内から呼んでください。
      */
     public void pull() {
-        if (!isConfigured()) return;
+        if (!isOperational()) return;
 
         log.info("[CloudSync] GitHubからデータを取得中... (Gist: " + gistId + ")");
         try {
@@ -63,7 +69,7 @@ public class GistSyncManager {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != 200) {
-                log.warning("[CloudSync] プル失敗 (HTTP " + response.statusCode() + "): " + response.body());
+                failureGuard.recordHttpFailure("プル", response.statusCode());
                 return;
             }
 
@@ -86,7 +92,7 @@ public class GistSyncManager {
      * ローカルファイルのデータをGitHub Gistへアップロードします。
      */
     public void push() {
-        if (!isConfigured()) return;
+        if (!isOperational()) return;
 
         log.info("[CloudSync] GitHubへデータを保存中...");
         try {
@@ -120,7 +126,7 @@ public class GistSyncManager {
             if (response.statusCode() == 200) {
                 log.info("[CloudSync] GitHubへの保存が完了しました。");
             } else {
-                log.warning("[CloudSync] プッシュ失敗 (HTTP " + response.statusCode() + "): " + response.body());
+                failureGuard.recordHttpFailure("プッシュ", response.statusCode());
             }
         } catch (Exception e) {
             log.severe("[CloudSync] プッシュ中にエラーが発生しました: " + e.getMessage());
@@ -131,7 +137,7 @@ public class GistSyncManager {
      * 非同期で保存を実行します。
      */
     public void pushAsync() {
-        if (!isConfigured()) return;
+        if (!isOperational()) return;
         Bukkit.getScheduler().runTaskAsynchronously(plugin, this::push);
     }
 }
