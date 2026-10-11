@@ -2,18 +2,14 @@ package dev.gonjy.patrolspectator;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.SkullMeta;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -67,22 +63,16 @@ final class RecentPlayerLocationStore {
 
     TouristLocation record(Player player) {
         if (player == null) return null;
-        return record(player.getUniqueId(), player.getName(), player.getLocation(), createPlayerHead(player),
-                System.currentTimeMillis());
+        return record(player.getUniqueId(), player.getName(), player.getLocation(), System.currentTimeMillis());
     }
 
     TouristLocation record(UUID uuid, String playerName, Location location, long updatedAt) {
-        return record(uuid, playerName, location, null, updatedAt);
-    }
-
-    TouristLocation record(UUID uuid, String playerName, Location location, ItemStack playerHead, long updatedAt) {
         if (uuid == null || playerName == null || location == null || location.getWorld() == null) return null;
 
         List<Entry> entries = readAllUnexpired(updatedAt);
         entries.removeIf(entry -> entry.uuid.equals(uuid));
         entries.add(new Entry(uuid, safePlayerName(playerName), location.getWorld().getName(),
-                location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch(), updatedAt,
-                safeHead(playerHead)));
+                location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch(), updatedAt));
         entries.sort(Comparator.comparingLong(Entry::updatedAt).reversed());
         if (entries.size() > maxEntries) entries = new ArrayList<>(entries.subList(0, maxEntries));
         rewrite(entries);
@@ -112,7 +102,7 @@ final class RecentPlayerLocationStore {
             return new Entry(uuid, name, world,
                     section.getDouble("x"), section.getDouble("y"), section.getDouble("z"),
                     (float) section.getDouble("yaw"), (float) section.getDouble("pitch"),
-                    section.getLong("updatedAt"), decodeHead(section.getString("headData")));
+                    section.getLong("updatedAt"));
         } catch (IllegalArgumentException ignored) {
             return null;
         }
@@ -130,8 +120,6 @@ final class RecentPlayerLocationStore {
             yaml.set(base + ".yaw", entry.yaw);
             yaml.set(base + ".pitch", entry.pitch);
             yaml.set(base + ".updatedAt", entry.updatedAt);
-            String headData = encodeHead(entry.playerHead);
-            if (headData != null) yaml.set(base + ".headData", headData);
         }
         try {
             File parent = file.getParentFile();
@@ -154,63 +142,6 @@ final class RecentPlayerLocationStore {
         return location != null && location.id != null && location.id.startsWith(ID_PREFIX);
     }
 
-    ItemStack loadPlayerHead(TouristLocation location) {
-        UUID uuid = playerUuid(location);
-        if (uuid == null) return new ItemStack(Material.PLAYER_HEAD);
-
-        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
-        return headOrDefault(decodeHead(yaml.getString("players." + uuid + ".headData")));
-    }
-
-    static UUID playerUuid(TouristLocation location) {
-        if (!isRecentPlayerLocation(location)) return null;
-        try {
-            return UUID.fromString(location.id.substring(ID_PREFIX.length()));
-        } catch (IllegalArgumentException ignored) {
-            return null;
-        }
-    }
-
-    private static ItemStack createPlayerHead(Player player) {
-        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
-        try {
-            SkullMeta meta = (SkullMeta) head.getItemMeta();
-            meta.setPlayerProfile(player.getPlayerProfile());
-            head.setItemMeta(meta);
-        } catch (Throwable ignored) {
-            // Geyser/Floodgate側でスキンが公開されていない場合は通常ヘッドを使う。
-        }
-        return head;
-    }
-
-    private static ItemStack safeHead(ItemStack head) {
-        return head != null && head.getType() == Material.PLAYER_HEAD ? head.clone() : null;
-    }
-
-    private static ItemStack headOrDefault(ItemStack head) {
-        ItemStack safe = safeHead(head);
-        return safe == null ? new ItemStack(Material.PLAYER_HEAD) : safe;
-    }
-
-    private static String encodeHead(ItemStack head) {
-        ItemStack safe = safeHead(head);
-        if (safe == null) return null;
-        try {
-            return Base64.getEncoder().encodeToString(safe.serializeAsBytes());
-        } catch (Throwable ignored) {
-            return null;
-        }
-    }
-
-    private static ItemStack decodeHead(String encoded) {
-        if (encoded == null || encoded.isBlank()) return null;
-        try {
-            return safeHead(ItemStack.deserializeBytes(Base64.getDecoder().decode(encoded)));
-        } catch (Throwable ignored) {
-            return null;
-        }
-    }
-
     private static String safePlayerName(String name) {
         String stripped = ChatColor.stripColor(name);
         return stripped == null || stripped.isBlank() ? "Player" : stripped.replaceAll("[\\r\\n]", "");
@@ -224,5 +155,5 @@ final class RecentPlayerLocationStore {
     }
 
     private record Entry(UUID uuid, String playerName, String world, double x, double y, double z,
-                         float yaw, float pitch, long updatedAt, ItemStack playerHead) { }
+                         float yaw, float pitch, long updatedAt) { }
 }
