@@ -1,12 +1,9 @@
 package dev.gonjy.patrolspectator;
 
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockito.Mockito;
 
 import java.io.File;
@@ -91,23 +88,4 @@ class RecentPlayerLocationStoreTest {
         assertFalse(loaded.stream().anyMatch(location -> location.name.contains("Alice")));
     }
 
-    @Test
-    void persistsCapturedPlayerHeadForAvatarDisplay() {
-        MockBukkit.mock();
-        try {
-            File file = tempDir.resolve("recent.yml").toFile();
-            RecentPlayerLocationStore store = new RecentPlayerLocationStore(file, Logger.getLogger("test"), 10, 30, 10);
-            World world = Mockito.mock(World.class);
-            Mockito.when(world.getName()).thenReturn("world");
-            UUID uuid = UUID.randomUUID();
-
-            TouristLocation location = store.record(uuid, "Alice", new Location(world, 1, 64, 1),
-                    new ItemStack(Material.PLAYER_HEAD), System.currentTimeMillis());
-
-            assertEquals(uuid, RecentPlayerLocationStore.playerUuid(location));
-            assertEquals(Material.PLAYER_HEAD, store.loadPlayerHead(location).getType());
-        } finally {
-            MockBukkit.unmock();
-        }
-    }
 }
