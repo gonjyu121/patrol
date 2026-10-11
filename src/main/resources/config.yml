@@ -50,16 +50,12 @@ patrol:
   # 数値を大きくするとネットワーク負荷が下がります
   trackingUpdateIntervalTicks: 2
 
-# YouTube Chat Integration (Safe Mode)
+# YouTube Live Chat Integration
 youtube:
-  enabled: false # Disabled to avoid Google Cloud billing risks
-  client_id: ""
-  client_secret: ""
-  refresh_token: ""
-  # Optional: Fixed Video ID (If empty, auto-detects active stream)
-  video_id: ""
-  # Safety: Max messages per day (Default: 100)
-  max_daily_messages: 100
+  # 認証情報は plugins/PatrolSpectatorPlugin/youtube-api.properties へ保存します。
+  # 未設定・認証失敗・API障害でもMinecraftサーバーは通常稼働します。
+  enabled: false
+  connection_check_minutes: 5
 
 # Discord Integration
 discord:

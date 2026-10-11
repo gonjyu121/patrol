@@ -295,13 +295,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
 
         // YouTube Integration
         youTubeManager = new YouTubeManager(this);
-        if (getConfig().getBoolean("youtube.enabled", false)) {
-            String clientId = getConfig().getString("youtube.client_id");
-            String clientSecret = getConfig().getString("youtube.client_secret");
-            String refreshToken = getConfig().getString("youtube.refresh_token");
-            youTubeManager.initialize(clientId, clientSecret, refreshToken);
-            getServer().getPluginManager().registerEvents(new YouTubeChatListener(this, youTubeManager), this);
-        }
+        youTubeManager.start();
 
         // Auto Start Listener
         if (autoStartConf.enabled) {
@@ -462,6 +456,8 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
             spawnHazardCleanupManager.shutdown();
         if (serverSettingsGuard != null)
             serverSettingsGuard.stop();
+        if (youTubeManager != null)
+            youTubeManager.stop();
 
         // 最後にストレージ保存
         if (statsStorage != null) {
