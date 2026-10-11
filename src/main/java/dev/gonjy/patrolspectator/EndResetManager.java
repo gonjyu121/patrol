@@ -96,7 +96,7 @@ public class EndResetManager implements Listener {
             Bukkit.getScheduler().runTaskLater(plugin, this::resumePendingReset, 200L);
         } else {
             // リセット予定がない場合、ドラゴンの不在をチェック
-            Bukkit.getScheduler().runTaskLater(plugin, this::checkDragonAbsence, 200L); // 10秒後
+            Bukkit.getScheduler().runTaskLater(plugin, () -> checkDragonAbsence(), 200L); // 10秒後
         }
     }
 
@@ -132,18 +132,20 @@ public class EndResetManager implements Listener {
 
     private void startPeriodicCheck() {
         // 5分ごとにドラゴンの不在をチェック
-        Bukkit.getScheduler().runTaskTimer(plugin, this::checkDragonAbsence, 6000L, 6000L);
+        Bukkit.getScheduler().runTaskTimer(plugin, () -> checkDragonAbsence(), 6000L, 6000L);
     }
 
     /**
      * ドラゴンがいない場合、または討伐済みの場合にリセットを開始する
      */
     void checkDragonAbsence() {
+        checkDragonAbsence(getEndWorld());
+    }
+
+    void checkDragonAbsence(World endWorld) {
         if (isResetting) {
             return;
         }
-
-        World endWorld = getEndWorld();
         if (endWorld == null) {
             return;
         }
@@ -157,7 +159,8 @@ public class EndResetManager implements Listener {
 
         if (!hasLiveDragon(endWorld) && !isDragonRespawning(endWorld)) {
             // チャンク未ロードを「討伐」と誤認しないよう、不在推測だけではリセットしない。
-            plugin.getLogger().warning("[EndReset] No loaded Ender Dragon was found, but no reset will be scheduled without a death event.");
+            // これは通常の待機状態なので、5分ごとの警告ログも出さない。
+            return;
         }
     }
 

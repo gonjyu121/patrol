@@ -12,6 +12,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -118,6 +123,38 @@ class EndResetManagerTest {
         when(endWorld.getEntitiesByClass(EnderDragon.class)).thenReturn(java.util.List.of(dragon));
 
         assertTrue(endResetManager.hasLiveDragon(endWorld));
+    }
+
+    @Test
+    void testMissingLoadedDragonIsSilentAndDoesNotScheduleReset() {
+        World endWorld = mock(World.class);
+        when(endWorld.getEntitiesByClass(EnderDragon.class)).thenReturn(java.util.List.of());
+        when(endWorld.getEnderDragonBattle()).thenReturn(null);
+        List<String> messages = new ArrayList<>();
+        Handler handler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                messages.add(record.getMessage());
+            }
+
+            @Override
+            public void flush() {
+            }
+
+            @Override
+            public void close() {
+            }
+        };
+        plugin.getLogger().addHandler(handler);
+
+        try {
+            endResetManager.checkDragonAbsence(endWorld);
+        } finally {
+            plugin.getLogger().removeHandler(handler);
+        }
+
+        assertEquals(-1, endResetManager.getRemainingResetTimeMillis());
+        assertTrue(messages.stream().noneMatch(message -> message.contains("No loaded Ender Dragon")));
     }
 
     private WorldMock createEndWorld() {
