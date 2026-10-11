@@ -38,7 +38,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.149",
-    "description": "配信用パトロールプラグイン（End待機ログ抑制版）"
+    "version": "1.9.150",
+    "description": "配信用パトロールプラグイン（最近の参加地点アバター撤回版）"
   }
 }
