@@ -5,11 +5,12 @@ import org.bukkit.scheduler.BukkitTask;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.LinkedHashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
- * Maintains the read-only YouTube Live connection state.
- * Message reading and posting are intentionally implemented in later issues.
+ * Maintains the YouTube Live connection, safe auto-replies and chat bridge.
  */
 public final class YouTubeManager {
     enum Status {
@@ -35,6 +36,8 @@ public final class YouTubeManager {
     private final Set<String> seenMessageIds = new LinkedHashSet<>();
     private String pageToken;
     private boolean initialChatPage = true;
+    private final Map<String, Long> lastOutboundByPlayer = new HashMap<>();
+    private long lastOutboundAt = Long.MIN_VALUE;
 
     private static final String AUTO_REPLY_TEXT =
             "参加歓迎です！確認不要で、概要欄のサーバー情報からいつでも自由に入って遊んでください！";
@@ -111,22 +114,24 @@ public final class YouTubeManager {
         try {
             YouTubeApiClient.LiveChatPage page = apiClient.listLiveChatMessages(liveChatId, pageToken);
             boolean skipReplies = initialChatPage;
+            java.util.List<YouTubeApiClient.LiveChatMessage> freshMessages = new java.util.ArrayList<>();
             for (YouTubeApiClient.LiveChatMessage message : page.messages()) {
                 if (!seenMessageIds.add(message.id()) || skipReplies) continue;
+                freshMessages.add(message);
                 if (!plugin.getConfig().getBoolean("youtube.auto_reply.enabled", true)) continue;
                 long now = System.currentTimeMillis();
                 if (!autoReplyPolicy.shouldReply(message.authorChannelId(), message.text(), now)) continue;
-                apiClient.insertTextMessage(liveChatId, replyText(message.authorName()));
+                if (message.chatOwner()) continue;
+                apiClient.insertTextMessage(liveChatId,
+                        YouTubeChatBridgeFormatter.autoReply(message.authorName(), AUTO_REPLY_TEXT), true);
                 autoReplyPolicy.recordReply(message.authorChannelId(), now);
                 plugin.getLogger().info("[YouTube] Sent one participation auto-reply.");
             }
             trimSeenMessages();
             initialChatPage = false;
             pageToken = page.nextPageToken();
-            long configuredMinimumMillis = Math.max(60L,
-                    plugin.getConfig().getLong("youtube.poll_interval_seconds", 60L)) * 1_000L;
-            long nextDelayMillis = Math.max(configuredMinimumMillis, page.pollingIntervalMillis());
-            scheduleNextPoll(Math.max(20L, nextDelayMillis / 50L));
+            relayYouTubeMessages(freshMessages, false);
+            scheduleAdaptivePoll(page.pollingIntervalMillis());
         } catch (YouTubeApiClient.ApiException e) {
             update("QUOTA_LIMIT".equals(e.category()) ? Status.QUOTA_LIMIT
                     : "AUTH_ERROR".equals(e.category()) ? Status.AUTH_ERROR : Status.API_ERROR, null);
@@ -144,11 +149,30 @@ public final class YouTubeManager {
                 plugin, this::pollLiveChat, delayTicks);
     }
 
-    private String replyText(String authorName) {
-        if (authorName == null || authorName.isBlank()) return AUTO_REPLY_TEXT;
-        String safeName = authorName.replaceAll("[\\p{Cntrl}\\r\\n]", "").trim();
-        if (safeName.length() > 40) safeName = safeName.substring(0, 40);
-        return safeName.isBlank() ? AUTO_REPLY_TEXT : "@" + safeName + " " + AUTO_REPLY_TEXT;
+    private void relayYouTubeMessages(java.util.List<YouTubeApiClient.LiveChatMessage> messages,
+                                      boolean skipInitialPage) {
+        if (skipInitialPage || !plugin.getConfig().getBoolean("youtube.bridge.youtube_to_minecraft", true)) return;
+        for (YouTubeApiClient.LiveChatMessage message : messages) {
+            if (YouTubeChatBridgeFormatter.isPluginGenerated(message.text(), message.chatOwner())) continue;
+            String formatted = YouTubeChatBridgeFormatter.toMinecraft(message.authorName(), message.text());
+            if (formatted != null) {
+                plugin.getServer().getScheduler().runTask(plugin,
+                        () -> plugin.getServer().broadcastMessage(formatted));
+            }
+        }
+    }
+
+    private void scheduleAdaptivePoll(long apiMinimumMillis) {
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            String cameraName = plugin.getConfig().getString("patrol.autoStart.cameraPlayerName", "OtouGame");
+            boolean participantOnline = plugin.getServer().getOnlinePlayers().stream()
+                    .anyMatch(player -> !player.getName().equalsIgnoreCase(cameraName));
+            long configuredSeconds = participantOnline
+                    ? plugin.getConfig().getLong("youtube.bridge.active_poll_interval_seconds", 30L)
+                    : plugin.getConfig().getLong("youtube.bridge.idle_poll_interval_seconds", 120L);
+            long nextDelayMillis = Math.max(Math.max(30L, configuredSeconds) * 1_000L, apiMinimumMillis);
+            scheduleNextPoll(Math.max(20L, nextDelayMillis / 50L));
+        });
     }
 
     private synchronized void resetPollingState() {
@@ -192,7 +216,38 @@ public final class YouTubeManager {
         return liveChatId;
     }
 
-    public void sendMessage(String message) {
-        // YouTube message posting is intentionally deferred to Issues #77 and #78.
+    public void sendPlayerMessage(String playerName, String message) {
+        if (!plugin.getConfig().getBoolean("youtube.bridge.minecraft_to_youtube", true)) return;
+        String formatted = YouTubeChatBridgeFormatter.toYouTube(playerName, message);
+        if (formatted == null) return;
+
+        long now = System.currentTimeMillis();
+        synchronized (this) {
+            if (status != Status.CONNECTED || liveChatId == null || apiClient == null) return;
+            long globalCooldown = Math.max(1L,
+                    plugin.getConfig().getLong("youtube.bridge.global_send_cooldown_seconds", 5L)) * 1_000L;
+            long playerCooldown = Math.max(globalCooldown,
+                    plugin.getConfig().getLong("youtube.bridge.player_send_cooldown_seconds", 10L) * 1_000L);
+            if (lastOutboundAt != Long.MIN_VALUE && now - lastOutboundAt < globalCooldown) return;
+            Long playerLast = lastOutboundByPlayer.get(playerName.toLowerCase(java.util.Locale.ROOT));
+            if (playerLast != null && now - playerLast < playerCooldown) return;
+            lastOutboundAt = now;
+            lastOutboundByPlayer.put(playerName.toLowerCase(java.util.Locale.ROOT), now);
+        }
+
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                String chatId = liveChatId;
+                if (chatId != null && status == Status.CONNECTED) apiClient.insertTextMessage(chatId, formatted, false);
+            } catch (YouTubeApiClient.ApiException e) {
+                update("QUOTA_LIMIT".equals(e.category()) ? Status.QUOTA_LIMIT
+                        : "AUTH_ERROR".equals(e.category()) ? Status.AUTH_ERROR : Status.API_ERROR, null);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                update(Status.API_ERROR, null);
+            } catch (IOException | RuntimeException e) {
+                update(Status.API_ERROR, null);
+            }
+        });
     }
 }

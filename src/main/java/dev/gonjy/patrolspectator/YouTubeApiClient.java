@@ -75,9 +75,9 @@ final class YouTubeApiClient {
         return parseLiveChatPage(response.body());
     }
 
-    synchronized void insertTextMessage(String liveChatId, String message)
+    synchronized void insertTextMessage(String liveChatId, String message, boolean automatedReply)
             throws IOException, InterruptedException, ApiException {
-        requireQuota(20, true);
+        requireQuota(20, automatedReply);
         JsonObject details = new JsonObject();
         details.addProperty("messageText", message);
         JsonObject snippet = new JsonObject();
@@ -166,7 +166,8 @@ final class YouTubeApiClient {
                     String authorName = string(author, "displayName");
                     String text = string(snippet, "displayMessage");
                     if (id != null && authorChannelId != null && text != null) {
-                        messages.add(new LiveChatMessage(id, authorChannelId, authorName, text));
+                        messages.add(new LiveChatMessage(id, authorChannelId, authorName, text,
+                                bool(author, "isChatOwner")));
                     }
                 }
             }
@@ -199,6 +200,11 @@ final class YouTubeApiClient {
         return value == null || value.isBlank() ? null : value;
     }
 
+    private static boolean bool(JsonObject object, String key) {
+        return object != null && object.has(key) && !object.get(key).isJsonNull()
+                && object.get(key).getAsBoolean();
+    }
+
     private static String encode(String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
@@ -219,5 +225,6 @@ final class YouTubeApiClient {
 
     record LiveChatPage(List<LiveChatMessage> messages, String nextPageToken, long pollingIntervalMillis) {}
 
-    record LiveChatMessage(String id, String authorChannelId, String authorName, String text) {}
+    record LiveChatMessage(String id, String authorChannelId, String authorName, String text,
+                           boolean chatOwner) {}
 }

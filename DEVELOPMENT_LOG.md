@@ -485,3 +485,14 @@
     - 初回取得の過去コメントは返信対象外とし、全体5分・同一視聴者6時間の再返信抑制を追加。
     - 自動返信を1日10件、API利用を1日8,000ユニットに制限し、再起動後も使用量を維持。
     - チャット確認を最短60秒間隔とし、無料の日次クォータ内に収まるよう制御。
+
+## Current Status (2026-10-12, Minecraft / YouTube chat bridge)
+- **Version**: 1.9.153
+- **Branch**: `feature/youtube-chat-bridge-v1.9.153`
+- **Issue**: MinecraftとYouTube Live Chatの双方向連携
+- **Changes**:
+    - 公開Minecraftチャットを `[Minecraft] MCID: 本文` としてYouTubeへ転送。
+    - YouTubeの新着テキストコメントを送信者名付きでMinecraft全体へ表示。
+    - プラグイン自身の投稿はMinecraftへ折り返さず、初回取得の過去コメントも非表示。
+    - 制御文字・装飾コード除去、文字数上限、送信クールダウンを追加。
+    - 一般参加者がいる時30秒、カメラ役だけの時120秒の受信間隔で無料枠を節約。
