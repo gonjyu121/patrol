@@ -1,0 +1,5 @@
+# Copy this file to plugins/PatrolSpectatorPlugin/youtube-api.properties on the server.
+# Never commit the real values. The OAuth token needs the youtube.force-ssl scope.
+clientId=
+clientSecret=
+refreshToken=

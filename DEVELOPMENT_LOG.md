@@ -465,3 +465,13 @@
     - プレイヤーヘッドの取得・保存処理も削除し、不要なプロフィール処理を停止。
     - MCIDと「さんが最後にいた場所」の2行タイトル、再参加案内、地点巡回は維持。
     - 旧データに残るheadDataは読み込まず、次回保存時に除去。
+
+## Current Status (2026-10-12, YouTube Live connection foundation)
+- **Version**: 1.9.151
+- **Branch**: `feature/youtube-live-connection-v1.9.151`
+- **Issue**: YouTube Live Chat連携の安全なOAuth接続基盤
+- **Changes**:
+    - Git管理外の `youtube-api.properties` または環境変数からOAuth認証情報を読み込み。
+    - アクセストークンを安全に更新し、配信中のLive Chat IDを5分間隔で検出。
+    - 認証情報未設定、認証失敗、API障害時もMinecraftサーバーと既存機能の稼働を継続。
+    - 今回は接続基盤のみとし、YouTubeコメント取得・自動応答・Minecraftとの双方向転送は未実装。
