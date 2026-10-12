@@ -56,6 +56,14 @@ youtube:
   # 未設定・認証失敗・API障害でもMinecraftサーバーは通常稼働します。
   enabled: false
   connection_check_minutes: 5
+  # 無料の日次クォータ10,000ユニットに対し、余裕を残して8,000で強制停止します。
+  daily_quota_unit_limit: 8000
+  # 24時間稼働でも無料枠内に収まるよう、チャット確認は最短60秒間隔です。
+  poll_interval_seconds: 60
+  auto_reply:
+    enabled: true
+    # YouTubeへの投稿は1件20ユニット。再起動をまたいで1日10件までに制限します。
+    max_replies_per_day: 10
 
 # Discord Integration
 discord:
