@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class YouTubeApiClientTest {
     @Test
@@ -37,7 +38,7 @@ class YouTubeApiClientTest {
                   "pollingIntervalMillis":5000,
                   "items":[
                     {"id":"m1","snippet":{"type":"textMessageEvent","displayMessage":"参加していい？"},
-                     "authorDetails":{"channelId":"c1","displayName":"viewer"}},
+                     "authorDetails":{"channelId":"c1","displayName":"viewer","isChatOwner":true}},
                     {"id":"m2","snippet":{"type":"newSponsorEvent","displayMessage":"joined"},
                      "authorDetails":{"channelId":"c2","displayName":"member"}}
                   ]
@@ -48,5 +49,6 @@ class YouTubeApiClientTest {
         assertEquals(5000L, page.pollingIntervalMillis());
         assertEquals(1, page.messages().size());
         assertEquals("c1", page.messages().getFirst().authorChannelId());
+        assertTrue(page.messages().getFirst().chatOwner());
     }
 }

@@ -296,6 +296,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         // YouTube Integration
         youTubeManager = new YouTubeManager(this);
         youTubeManager.start();
+        getServer().getPluginManager().registerEvents(new YouTubeChatListener(youTubeManager), this);
 
         // Auto Start Listener
         if (autoStartConf.enabled) {

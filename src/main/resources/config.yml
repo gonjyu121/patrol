@@ -58,12 +58,19 @@ youtube:
   connection_check_minutes: 5
   # 無料の日次クォータ10,000ユニットに対し、余裕を残して8,000で強制停止します。
   daily_quota_unit_limit: 8000
-  # 24時間稼働でも無料枠内に収まるよう、チャット確認は最短60秒間隔です。
-  poll_interval_seconds: 60
   auto_reply:
     enabled: true
     # YouTubeへの投稿は1件20ユニット。再起動をまたいで1日10件までに制限します。
     max_replies_per_day: 10
+  bridge:
+    youtube_to_minecraft: true
+    minecraft_to_youtube: true
+    # 一般参加者がいる時だけ応答性を上げ、カメラ役だけの時は無料枠を節約します。
+    active_poll_interval_seconds: 30
+    idle_poll_interval_seconds: 120
+    # Minecraft側の連投でYouTube投稿クォータを消費しないための送信間隔です。
+    global_send_cooldown_seconds: 5
+    player_send_cooldown_seconds: 10
 
 # Discord Integration
 discord:
