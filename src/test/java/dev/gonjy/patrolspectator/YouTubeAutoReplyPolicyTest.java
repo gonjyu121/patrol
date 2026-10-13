@@ -19,6 +19,13 @@ class YouTubeAutoReplyPolicyTest {
     }
 
     @Test
+    void optionallyRepliesToAnyNonBlankViewerComment() {
+        YouTubeAutoReplyPolicy policy = new YouTubeAutoReplyPolicy(Duration.ofMinutes(5), Duration.ofHours(6));
+        assertTrue(policy.shouldReply("viewer", "こんにちは", 1_000L, true));
+        assertFalse(policy.shouldReply("viewer", "   ", 1_000L, true));
+    }
+
+    @Test
     void appliesGlobalAndPerAuthorCooldowns() {
         YouTubeAutoReplyPolicy policy = new YouTubeAutoReplyPolicy(Duration.ofMinutes(5), Duration.ofHours(6));
         long now = 1_000_000L;

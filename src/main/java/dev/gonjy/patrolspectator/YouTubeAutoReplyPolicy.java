@@ -23,7 +23,13 @@ final class YouTubeAutoReplyPolicy {
     }
 
     synchronized boolean shouldReply(String authorChannelId, String message, long nowMillis) {
-        if (authorChannelId == null || authorChannelId.isBlank() || !isParticipationQuestion(message)) return false;
+        return shouldReply(authorChannelId, message, nowMillis, false);
+    }
+
+    synchronized boolean shouldReply(String authorChannelId, String message, long nowMillis,
+                                     boolean replyToAnyComment) {
+        if (authorChannelId == null || authorChannelId.isBlank() || message == null || message.isBlank()) return false;
+        if (!replyToAnyComment && !isParticipationQuestion(message)) return false;
         if (lastGlobalReplyAt != Long.MIN_VALUE && nowMillis - lastGlobalReplyAt < globalCooldownMillis) return false;
         Long authorLastReply = lastReplyByAuthor.get(authorChannelId);
         return authorLastReply == null || nowMillis - authorLastReply >= authorCooldownMillis;

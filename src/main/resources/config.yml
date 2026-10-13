@@ -60,8 +60,18 @@ youtube:
   daily_quota_unit_limit: 8000
   auto_reply:
     enabled: true
-    # YouTubeへの投稿は1件20ユニット。再起動をまたいで1日10件までに制限します。
-    max_replies_per_day: 10
+    # 各視聴者へ6時間に1回、全体で5分に1回まで返信します。
+    reply_to_any_comment: true
+    message: "ご視聴ありがとうございます！確認は不要です。概要欄のサーバー情報から、ご自由に参加してくださいね！"
+    # 自動返信と無言時案内を合計して、再起動をまたいで1日20件までに制限します。
+    max_replies_per_day: 20
+  idle_announcement:
+    enabled: true
+    # YouTube／Minecraftのどちらにも発言がない状態が続いた時だけ案内します。
+    interval_minutes: 180
+    messages:
+      - "YouTubeのコメントはMinecraft内にも届きます。ゲームに入らなくても、配信チャットから参加者と会話できます！"
+      - "Minecraft内の公開チャットもYouTubeに表示されます。配信を見ながら気軽にコメントしてください！"
   bridge:
     youtube_to_minecraft: true
     minecraft_to_youtube: true
