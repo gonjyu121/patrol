@@ -31,6 +31,11 @@ final class YouTubeChatBridgeFormatter {
         return PATROL_PREFIX + (safeName.isBlank() ? " " : " @" + safeName + " ") + text;
     }
 
+    static String announcement(String text) {
+        String safeText = sanitize(text, 180);
+        return safeText.isBlank() ? null : PATROL_PREFIX + " " + safeText;
+    }
+
     private static String sanitize(String value, int maxLength) {
         if (value == null) return "";
         String sanitized = value.replaceAll("(?i)§[0-9A-FK-ORX]", "")

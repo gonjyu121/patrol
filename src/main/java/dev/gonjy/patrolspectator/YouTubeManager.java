@@ -8,11 +8,16 @@ import java.util.LinkedHashSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
 
 /**
  * Maintains the YouTube Live connection, safe auto-replies and chat bridge.
  */
 public final class YouTubeManager {
+    private static final List<String> DEFAULT_IDLE_ANNOUNCEMENTS = List.of(
+            "YouTubeのコメントはMinecraft内にも届きます。ゲームに入らなくても、配信チャットから参加者と会話できます！",
+            "Minecraft内の公開チャットもYouTubeに表示されます。配信を見ながら気軽にコメントしてください！");
+
     enum Status {
         DISABLED,
         NOT_CONFIGURED,
@@ -38,9 +43,8 @@ public final class YouTubeManager {
     private boolean initialChatPage = true;
     private final Map<String, Long> lastOutboundByPlayer = new HashMap<>();
     private long lastOutboundAt = Long.MIN_VALUE;
-
-    private static final String AUTO_REPLY_TEXT =
-            "参加歓迎です！確認不要で、概要欄のサーバー情報からいつでも自由に入って遊んでください！";
+    private YouTubeIdleAnnouncementPolicy idleAnnouncementPolicy;
+    private int nextIdleAnnouncementIndex;
 
     public YouTubeManager(PatrolSpectatorPlugin plugin) {
         this.plugin = plugin;
@@ -62,8 +66,12 @@ public final class YouTubeManager {
         YouTubeQuotaBudget quotaBudget = new YouTubeQuotaBudget(
                 plugin.getDataFolder().toPath(),
                 plugin.getConfig().getInt("youtube.daily_quota_unit_limit", 8_000),
-                plugin.getConfig().getInt("youtube.auto_reply.max_replies_per_day", 10));
+                plugin.getConfig().getInt("youtube.auto_reply.max_replies_per_day", 20));
         apiClient = new YouTubeApiClient(settings, quotaBudget);
+        long idleMinutes = Math.max(1L,
+                plugin.getConfig().getLong("youtube.idle_announcement.interval_minutes", 180L));
+        idleAnnouncementPolicy = new YouTubeIdleAnnouncementPolicy(
+                Duration.ofMinutes(idleMinutes), System.currentTimeMillis());
         update(Status.CONNECTING, null);
         long periodTicks = Math.max(1L,
                 plugin.getConfig().getLong("youtube.connection_check_minutes", 5L)) * 60L * 20L;
@@ -118,19 +126,27 @@ public final class YouTubeManager {
             for (YouTubeApiClient.LiveChatMessage message : page.messages()) {
                 if (!seenMessageIds.add(message.id()) || skipReplies) continue;
                 freshMessages.add(message);
+                if (!YouTubeChatBridgeFormatter.isPluginGenerated(message.text(), message.chatOwner())) {
+                    idleAnnouncementPolicy.recordActivity(System.currentTimeMillis());
+                }
                 if (!plugin.getConfig().getBoolean("youtube.auto_reply.enabled", true)) continue;
                 long now = System.currentTimeMillis();
-                if (!autoReplyPolicy.shouldReply(message.authorChannelId(), message.text(), now)) continue;
                 if (message.chatOwner()) continue;
+                boolean replyToAny = plugin.getConfig().getBoolean(
+                        "youtube.auto_reply.reply_to_any_comment", true);
+                if (!autoReplyPolicy.shouldReply(message.authorChannelId(), message.text(), now, replyToAny)) continue;
+                String replyText = plugin.getConfig().getString("youtube.auto_reply.message",
+                        "ご視聴ありがとうございます！確認は不要です。概要欄のサーバー情報から、ご自由に参加してくださいね！");
                 apiClient.insertTextMessage(liveChatId,
-                        YouTubeChatBridgeFormatter.autoReply(message.authorName(), AUTO_REPLY_TEXT), true);
+                        YouTubeChatBridgeFormatter.autoReply(message.authorName(), replyText), true);
                 autoReplyPolicy.recordReply(message.authorChannelId(), now);
-                plugin.getLogger().info("[YouTube] Sent one participation auto-reply.");
+                plugin.getLogger().info("[YouTube] Sent one viewer auto-reply.");
             }
             trimSeenMessages();
             initialChatPage = false;
             pageToken = page.nextPageToken();
             relayYouTubeMessages(freshMessages, false);
+            sendIdleAnnouncementIfNeeded();
             scheduleAdaptivePoll(page.pollingIntervalMillis());
         } catch (YouTubeApiClient.ApiException e) {
             update("QUOTA_LIMIT".equals(e.category()) ? Status.QUOTA_LIMIT
@@ -141,6 +157,23 @@ public final class YouTubeManager {
         } catch (IOException | RuntimeException e) {
             update(Status.API_ERROR, null);
         }
+    }
+
+    private void sendIdleAnnouncementIfNeeded() throws IOException, InterruptedException,
+            YouTubeApiClient.ApiException {
+        if (idleAnnouncementPolicy == null
+                || !plugin.getConfig().getBoolean("youtube.idle_announcement.enabled", true)) return;
+        long now = System.currentTimeMillis();
+        if (!idleAnnouncementPolicy.shouldAnnounce(now)) return;
+        List<String> configured = plugin.getConfig().getStringList("youtube.idle_announcement.messages");
+        if (configured.isEmpty()) configured = DEFAULT_IDLE_ANNOUNCEMENTS;
+        String formatted = YouTubeChatBridgeFormatter.announcement(
+                configured.get(nextIdleAnnouncementIndex % configured.size()));
+        if (formatted == null) return;
+        apiClient.insertTextMessage(liveChatId, formatted, true);
+        nextIdleAnnouncementIndex = (nextIdleAnnouncementIndex + 1) % configured.size();
+        idleAnnouncementPolicy.recordAnnouncement(now);
+        plugin.getLogger().info("[YouTube] Sent one idle chat guidance message.");
     }
 
     private synchronized void scheduleNextPoll(long delayTicks) {
@@ -180,6 +213,9 @@ public final class YouTubeManager {
         pageToken = null;
         initialChatPage = true;
         seenMessageIds.clear();
+        if (idleAnnouncementPolicy != null) {
+            idleAnnouncementPolicy.recordActivity(System.currentTimeMillis());
+        }
     }
 
     private void trimSeenMessages() {
@@ -233,6 +269,7 @@ public final class YouTubeManager {
             if (playerLast != null && now - playerLast < playerCooldown) return;
             lastOutboundAt = now;
             lastOutboundByPlayer.put(playerName.toLowerCase(java.util.Locale.ROOT), now);
+            if (idleAnnouncementPolicy != null) idleAnnouncementPolicy.recordActivity(now);
         }
 
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {

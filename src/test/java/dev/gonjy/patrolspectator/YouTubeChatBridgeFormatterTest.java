@@ -15,6 +15,7 @@ class YouTubeChatBridgeFormatterTest {
         assertEquals("§c[YouTube] §fViewer§7: §fこんにちは",
                 YouTubeChatBridgeFormatter.toMinecraft("Viewer", "こんにちは"));
         assertNull(YouTubeChatBridgeFormatter.toYouTube("Player", "   "));
+        assertEquals("[Patrol] 案内です", YouTubeChatBridgeFormatter.announcement("案内です"));
     }
 
     @Test

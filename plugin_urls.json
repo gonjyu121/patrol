@@ -39,6 +39,6 @@
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
     "version": "1.9.153",
-    "description": "配信用パトロールプラグイン（Minecraft・YouTube双方向チャット版）"
+    "description": "配信用パトロールプラグイン（YouTube参加案内・双方向チャット版）"
   }
 }
