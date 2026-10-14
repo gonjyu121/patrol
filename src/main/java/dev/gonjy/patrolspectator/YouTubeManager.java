@@ -16,7 +16,11 @@ import java.util.List;
 public final class YouTubeManager {
     private static final List<String> DEFAULT_IDLE_ANNOUNCEMENTS = List.of(
             "YouTubeのコメントはMinecraft内にも届きます。ゲームに入らなくても、配信チャットから参加者と会話できます！",
-            "Minecraft内の公開チャットもYouTubeに表示されます。配信を見ながら気軽にコメントしてください！");
+            "Minecraft内の公開チャットもYouTubeに表示されます。配信を見ながら気軽にコメントしてください！",
+            "この配信は参加自由です。遊びたくなったら、概要欄のサーバー情報からいつでもご参加ください！",
+            "見るだけでも、コメントだけでも大歓迎です。YouTubeからのコメントはゲーム内の参加者にも届きます！",
+            "配信チャットからMinecraftの参加者へ話しかけられます。気になった場面があれば気軽にコメントしてください！",
+            "Minecraftに入っている方の公開チャットは、このYouTubeチャットにも届きます。一緒に配信へ参加してみませんか？");
 
     enum Status {
         DISABLED,
@@ -44,7 +48,7 @@ public final class YouTubeManager {
     private final Map<String, Long> lastOutboundByPlayer = new HashMap<>();
     private long lastOutboundAt = Long.MIN_VALUE;
     private YouTubeIdleAnnouncementPolicy idleAnnouncementPolicy;
-    private int nextIdleAnnouncementIndex;
+    private final YouTubeAnnouncementRotation idleAnnouncementRotation = new YouTubeAnnouncementRotation();
 
     public YouTubeManager(PatrolSpectatorPlugin plugin) {
         this.plugin = plugin;
@@ -69,7 +73,7 @@ public final class YouTubeManager {
                 plugin.getConfig().getInt("youtube.auto_reply.max_replies_per_day", 20));
         apiClient = new YouTubeApiClient(settings, quotaBudget);
         long idleMinutes = Math.max(1L,
-                plugin.getConfig().getLong("youtube.idle_announcement.interval_minutes", 180L));
+                plugin.getConfig().getLong("youtube.idle_announcement.interval_minutes", 90L));
         idleAnnouncementPolicy = new YouTubeIdleAnnouncementPolicy(
                 Duration.ofMinutes(idleMinutes), System.currentTimeMillis());
         update(Status.CONNECTING, null);
@@ -168,10 +172,9 @@ public final class YouTubeManager {
         List<String> configured = plugin.getConfig().getStringList("youtube.idle_announcement.messages");
         if (configured.isEmpty()) configured = DEFAULT_IDLE_ANNOUNCEMENTS;
         String formatted = YouTubeChatBridgeFormatter.announcement(
-                configured.get(nextIdleAnnouncementIndex % configured.size()));
+                idleAnnouncementRotation.next(configured));
         if (formatted == null) return;
         apiClient.insertTextMessage(liveChatId, formatted, true);
-        nextIdleAnnouncementIndex = (nextIdleAnnouncementIndex + 1) % configured.size();
         idleAnnouncementPolicy.recordAnnouncement(now);
         plugin.getLogger().info("[YouTube] Sent one idle chat guidance message.");
     }
