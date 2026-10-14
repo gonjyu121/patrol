@@ -167,8 +167,12 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         spawnHazardCleanupManager.start();
         spawnResetManager = new SpawnResetManager(this, dungeonManager, spawnHazardCleanupManager);
 
+        // YouTube接続前でも案内タスクを安全に開始できるよう、参照だけ先に用意する。
+        youTubeManager = new YouTubeManager(this);
+        discordWebhookClient.setStreamUrlSupplier(youTubeManager::watchUrl);
+
         // Engagement Broadcaster
-        engagementBroadcaster = new EngagementBroadcaster(this);
+        engagementBroadcaster = new EngagementBroadcaster(this, youTubeManager::watchUrl);
         engagementBroadcaster.start();
 
         // イベントリスナーの登録
@@ -294,7 +298,6 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         }
 
         // YouTube Integration
-        youTubeManager = new YouTubeManager(this);
         youTubeManager.start();
         getServer().getPluginManager().registerEvents(new YouTubeChatListener(youTubeManager), this);
 

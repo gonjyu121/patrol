@@ -37,6 +37,7 @@ public final class YouTubeManager {
     private final PatrolSpectatorPlugin plugin;
     private volatile Status status = Status.DISABLED;
     private volatile String liveChatId;
+    private volatile String watchUrl;
     private YouTubeApiClient apiClient;
     private BukkitTask connectionTask;
     private BukkitTask pollingTask;
@@ -85,9 +86,8 @@ public final class YouTubeManager {
 
     private void refreshConnection() {
         try {
-            String discoveredLiveChatId = apiClient.discoverActiveLiveChatId();
-            update(discoveredLiveChatId == null ? Status.NO_ACTIVE_STREAM : Status.CONNECTED,
-                    discoveredLiveChatId);
+            YouTubeApiClient.ActiveBroadcast broadcast = apiClient.discoverActiveBroadcast();
+            update(broadcast == null ? Status.NO_ACTIVE_STREAM : Status.CONNECTED, broadcast);
         } catch (YouTubeApiClient.ApiException e) {
             Status failureStatus = switch (e.category()) {
                 case "AUTH_ERROR" -> Status.AUTH_ERROR;
@@ -104,12 +104,14 @@ public final class YouTubeManager {
         }
     }
 
-    private synchronized void update(Status nextStatus, String nextLiveChatId) {
+    private synchronized void update(Status nextStatus, YouTubeApiClient.ActiveBroadcast broadcast) {
+        String nextLiveChatId = broadcast == null ? null : broadcast.liveChatId();
         boolean chatChanged = !java.util.Objects.equals(liveChatId, nextLiveChatId);
         boolean changed = status != nextStatus || chatChanged;
         if (chatChanged) resetPollingState();
         status = nextStatus;
         liveChatId = nextLiveChatId;
+        watchUrl = broadcast == null ? null : broadcast.watchUrl();
         if (changed) {
             plugin.getLogger().info("[YouTube] Connection status: " + nextStatus);
         }
@@ -253,6 +255,10 @@ public final class YouTubeManager {
 
     String liveChatId() {
         return liveChatId;
+    }
+
+    String watchUrl() {
+        return status == Status.CONNECTED ? watchUrl : null;
     }
 
     public void sendPlayerMessage(String playerName, String message) {

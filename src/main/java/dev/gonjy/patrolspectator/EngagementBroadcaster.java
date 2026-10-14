@@ -8,6 +8,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.List;
 import java.util.Random;
+import java.util.function.Supplier;
 
 /**
  * Handles periodic in-game announcements to encourage YouTube engagement.
@@ -18,12 +19,18 @@ public class EngagementBroadcaster {
                     + "建築を残したい場合は、初期スポーンから5チャンク以上離れてください。";
 
     private final JavaPlugin plugin;
+    private final Supplier<String> youtubeWatchUrl;
     private final Random random = new Random();
     private BukkitTask broadcastTask;
     private BukkitTask participantGuideTask;
 
     public EngagementBroadcaster(JavaPlugin plugin) {
+        this(plugin, () -> null);
+    }
+
+    EngagementBroadcaster(JavaPlugin plugin, Supplier<String> youtubeWatchUrl) {
         this.plugin = plugin;
+        this.youtubeWatchUrl = youtubeWatchUrl;
     }
 
     /**
@@ -98,10 +105,19 @@ public class EngagementBroadcaster {
         List<String> messages = plugin.getConfig().getStringList("participant_guidance.messages");
         if (messages != null) {
             for (String message : messages) {
-                String formatted = ChatColor.translateAlternateColorCodes('&', message);
+                String resolved = resolveYouTubeUrl(message, youtubeWatchUrl.get());
+                if (resolved == null) continue;
+                String formatted = ChatColor.translateAlternateColorCodes('&', resolved);
                 ParticipantMessageRouter.send(plugin, formatted);
             }
         }
         ParticipantMessageRouter.send(plugin, SPAWN_RESET_NOTICE);
+    }
+
+    static String resolveYouTubeUrl(String message, String watchUrl) {
+        if (message == null) return null;
+        if (!message.contains("{youtube_url}")) return message;
+        if (watchUrl == null || watchUrl.isBlank()) return null;
+        return message.replace("{youtube_url}", watchUrl);
     }
 }

@@ -39,7 +39,7 @@ final class YouTubeApiClient {
         this.quotaBudget = quotaBudget;
     }
 
-    synchronized String discoverActiveLiveChatId() throws IOException, InterruptedException, ApiException {
+    synchronized ActiveBroadcast discoverActiveBroadcast() throws IOException, InterruptedException, ApiException {
         requireQuota(1, false);
         String token = accessToken();
         HttpRequest request = HttpRequest.newBuilder(ACTIVE_BROADCASTS_URI)
@@ -57,9 +57,9 @@ final class YouTubeApiClient {
         if (response.statusCode() != 200) {
             throw new ApiException(response.statusCode(), "API_ERROR");
         }
-        List<String> liveChatIds = parseActiveLiveChatIds(response.body());
-        if (liveChatIds.size() > 1) throw new ApiException(200, "MULTIPLE_ACTIVE_STREAMS");
-        return liveChatIds.isEmpty() ? null : liveChatIds.getFirst();
+        List<ActiveBroadcast> broadcasts = parseActiveBroadcasts(response.body());
+        if (broadcasts.size() > 1) throw new ApiException(200, "MULTIPLE_ACTIVE_STREAMS");
+        return broadcasts.isEmpty() ? null : broadcasts.getFirst();
     }
 
     synchronized LiveChatPage listLiveChatMessages(String liveChatId, String pageToken)
@@ -143,8 +143,13 @@ final class YouTubeApiClient {
     }
 
     static String parseLiveChatId(String responseBody) {
-        List<String> liveChatIds = parseActiveLiveChatIds(responseBody);
-        return liveChatIds.size() == 1 ? liveChatIds.getFirst() : null;
+        ActiveBroadcast broadcast = parseActiveBroadcast(responseBody);
+        return broadcast == null ? null : broadcast.liveChatId();
+    }
+
+    static ActiveBroadcast parseActiveBroadcast(String responseBody) {
+        List<ActiveBroadcast> broadcasts = parseActiveBroadcasts(responseBody);
+        return broadcasts.size() == 1 ? broadcasts.getFirst() : null;
     }
 
     static LiveChatPage parseLiveChatPage(String responseBody) {
@@ -177,21 +182,27 @@ final class YouTubeApiClient {
         }
     }
 
-    private static List<String> parseActiveLiveChatIds(String responseBody) {
-        List<String> liveChatIds = new ArrayList<>();
+    private static List<ActiveBroadcast> parseActiveBroadcasts(String responseBody) {
+        List<ActiveBroadcast> broadcasts = new ArrayList<>();
         try {
             JsonObject root = JsonParser.parseString(responseBody).getAsJsonObject();
             JsonArray items = root.getAsJsonArray("items");
-            if (items == null) return liveChatIds;
+            if (items == null) return broadcasts;
             for (var item : items) {
-                JsonObject snippet = item.getAsJsonObject().getAsJsonObject("snippet");
+                JsonObject object = item.getAsJsonObject();
+                JsonObject snippet = object.getAsJsonObject("snippet");
+                String videoId = string(object, "id");
                 String liveChatId = string(snippet, "liveChatId");
-                if (liveChatId != null && !liveChatIds.contains(liveChatId)) liveChatIds.add(liveChatId);
+                if (videoId != null && liveChatId != null
+                        && videoId.matches("[A-Za-z0-9_-]{6,64}")
+                        && broadcasts.stream().noneMatch(broadcast -> broadcast.liveChatId().equals(liveChatId))) {
+                    broadcasts.add(new ActiveBroadcast(videoId, liveChatId));
+                }
             }
         } catch (RuntimeException ignored) {
             return List.of();
         }
-        return liveChatIds;
+        return broadcasts;
     }
 
     private static String string(JsonObject object, String key) {
@@ -224,6 +235,12 @@ final class YouTubeApiClient {
     }
 
     record LiveChatPage(List<LiveChatMessage> messages, String nextPageToken, long pollingIntervalMillis) {}
+
+    record ActiveBroadcast(String videoId, String liveChatId) {
+        String watchUrl() {
+            return "https://www.youtube.com/watch?v=" + videoId;
+        }
+    }
 
     record LiveChatMessage(String id, String authorChannelId, String authorName, String text,
                            boolean chatOwner) {}
