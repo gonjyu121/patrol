@@ -1,8 +1,9 @@
 package dev.gonjy.patrolspectator;
 
 final class YouTubeChatBridgeFormatter {
-    private static final String MINECRAFT_PREFIX = "[Minecraft]";
-    private static final String PATROL_PREFIX = "[Patrol]";
+    private static final String MINECRAFT_PREFIX = "[マイクラ]";
+    private static final String LEGACY_MINECRAFT_PREFIX = "[Minecraft]";
+    private static final String LEGACY_PATROL_PREFIX = "[Patrol]";
 
     private YouTubeChatBridgeFormatter() {}
 
@@ -23,17 +24,19 @@ final class YouTubeChatBridgeFormatter {
     static boolean isPluginGenerated(String message, boolean chatOwner) {
         if (!chatOwner || message == null) return false;
         String trimmed = message.stripLeading();
-        return trimmed.startsWith(MINECRAFT_PREFIX) || trimmed.startsWith(PATROL_PREFIX);
+        return trimmed.startsWith(MINECRAFT_PREFIX)
+                || trimmed.startsWith(LEGACY_MINECRAFT_PREFIX)
+                || trimmed.startsWith(LEGACY_PATROL_PREFIX);
     }
 
     static String autoReply(String authorName, String text) {
         String safeName = sanitize(authorName, 40);
-        return PATROL_PREFIX + (safeName.isBlank() ? " " : " @" + safeName + " ") + text;
+        return MINECRAFT_PREFIX + (safeName.isBlank() ? " " : " @" + safeName + " ") + text;
     }
 
     static String announcement(String text) {
         String safeText = sanitize(text, 180);
-        return safeText.isBlank() ? null : PATROL_PREFIX + " " + safeText;
+        return safeText.isBlank() ? null : MINECRAFT_PREFIX + " " + safeText;
     }
 
     private static String sanitize(String value, int maxLength) {

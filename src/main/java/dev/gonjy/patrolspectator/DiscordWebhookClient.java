@@ -3,6 +3,7 @@ package dev.gonjy.patrolspectator;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class DiscordWebhookClient {
+    private static final String STREAM_LABEL = "📺 配信中: ";
     private final JavaPlugin plugin;
     private final java.util.concurrent.BlockingQueue<String> messageQueue = new java.util.concurrent.LinkedBlockingQueue<>(
             16);
@@ -10,6 +11,7 @@ public class DiscordWebhookClient {
     private final Thread workerThread;
     private String webhookUrl;
     private boolean enabled = true;
+    private volatile java.util.function.Supplier<String> streamUrlSupplier = () -> null;
 
     public DiscordWebhookClient(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -50,10 +52,38 @@ public class DiscordWebhookClient {
         if (!enabled || this.webhookUrl == null || this.webhookUrl.isEmpty())
             return;
 
+        String streamUrl;
+        try {
+            streamUrl = streamUrlSupplier.get();
+        } catch (RuntimeException ignored) {
+            streamUrl = null;
+        }
+        enqueue(appendStreamUrl(content, streamUrl));
+    }
+
+    /** Chat relay stays compact and does not repeat the stream URL on every player message. */
+    public void sendChat(String content) {
+        if (!enabled || this.webhookUrl == null || this.webhookUrl.isEmpty()) return;
+        enqueue(content);
+    }
+
+    public void setStreamUrlSupplier(java.util.function.Supplier<String> streamUrlSupplier) {
+        this.streamUrlSupplier = streamUrlSupplier == null ? () -> null : streamUrlSupplier;
+    }
+
+    private void enqueue(String content) {
+        if (content == null || content.isBlank()) return;
         // キューが一杯の場合は新しいメッセージを破棄（低負荷設定）
         if (!messageQueue.offer(content)) {
             // オプション：ログに出しても良いが、低スペック用なので静かに破棄
         }
+    }
+
+    static String appendStreamUrl(String content, String streamUrl) {
+        if (content == null || content.isBlank() || streamUrl == null || streamUrl.isBlank()) return content;
+        if (content.contains(streamUrl)) return content;
+        String suffix = "\n" + STREAM_LABEL + streamUrl;
+        return content.length() + suffix.length() <= 2_000 ? content + suffix : content;
     }
 
     public void shutdown() {

@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ParticipantMessageRouterTest {
@@ -46,6 +47,7 @@ class ParticipantMessageRouterTest {
             List<String> messages = config.getStringList("participant_guidance.messages");
             String combined = String.join(" ", messages);
             assertTrue(combined.contains("チャンネル登録"));
+            assertTrue(combined.contains("{youtube_url}"));
             assertTrue(combined.contains("/stats"));
             assertTrue(combined.contains("/patrol rescue"));
             assertTrue(combined.contains("/patrol invite"));
@@ -56,5 +58,14 @@ class ParticipantMessageRouterTest {
     void mandatorySpawnResetNoticeDoesNotDependOnExistingConfigList() {
         assertTrue(EngagementBroadcaster.SPAWN_RESET_NOTICE.contains("鯖主が再生成"));
         assertTrue(EngagementBroadcaster.SPAWN_RESET_NOTICE.contains("5チャンク以上"));
+    }
+
+    @Test
+    void liveUrlPlaceholderIsShownOnlyWhileAStreamIsConnected() {
+        assertEquals("配信: https://www.youtube.com/watch?v=video-123",
+                EngagementBroadcaster.resolveYouTubeUrl(
+                        "配信: {youtube_url}", "https://www.youtube.com/watch?v=video-123"));
+        assertNull(EngagementBroadcaster.resolveYouTubeUrl("配信: {youtube_url}", null));
+        assertEquals("通常案内", EngagementBroadcaster.resolveYouTubeUrl("通常案内", null));
     }
 }

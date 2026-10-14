@@ -61,7 +61,7 @@ public class DiscordListener implements Listener {
         String playerName = event.getPlayer().getName();
         String message = event.getMessage();
         // Format: 💬 Player: Message (Optimized for OneComme TTS)
-        webhookClient.send("💬 " + playerName + ": " + message);
+        webhookClient.sendChat("💬 " + playerName + ": " + message);
     }
 
     @EventHandler

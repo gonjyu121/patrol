@@ -68,10 +68,14 @@ youtube:
   idle_announcement:
     enabled: true
     # YouTube／Minecraftのどちらにも発言がない状態が続いた時だけ案内します。
-    interval_minutes: 180
+    interval_minutes: 90
     messages:
       - "YouTubeのコメントはMinecraft内にも届きます。ゲームに入らなくても、配信チャットから参加者と会話できます！"
       - "Minecraft内の公開チャットもYouTubeに表示されます。配信を見ながら気軽にコメントしてください！"
+      - "この配信は参加自由です。遊びたくなったら、概要欄のサーバー情報からいつでもご参加ください！"
+      - "見るだけでも、コメントだけでも大歓迎です。YouTubeからのコメントはゲーム内の参加者にも届きます！"
+      - "配信チャットからMinecraftの参加者へ話しかけられます。気になった場面があれば気軽にコメントしてください！"
+      - "Minecraftに入っている方の公開チャットは、このYouTubeチャットにも届きます。一緒に配信へ参加してみませんか？"
   bridge:
     youtube_to_minecraft: true
     minecraft_to_youtube: true
@@ -209,6 +213,7 @@ participant_guidance:
   interval_minutes: 30
   messages:
     - "§b[配信] §f24時間配信中！チャンネル登録・高評価で応援お願いします！"
+    - "§b[配信URL] §f{youtube_url}"
     - "§a[使えるコマンド] §f/stats  /patrol rescue  /patrol escape"
     - "§a[TP招待] §f/patrol invite <相手>  /patrol accept  /patrol deny"
 

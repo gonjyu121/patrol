@@ -10,8 +10,12 @@ class YouTubeApiClientTest {
     @Test
     void extractsLiveChatIdFromActiveBroadcast() {
         assertEquals("chat-123", YouTubeApiClient.parseLiveChatId("""
-                {"items":[{"snippet":{"liveChatId":"chat-123"}}]}
+                {"items":[{"id":"video-123","snippet":{"liveChatId":"chat-123"}}]}
                 """));
+        assertEquals("https://www.youtube.com/watch?v=video-123",
+                YouTubeApiClient.parseActiveBroadcast("""
+                        {"items":[{"id":"video-123","snippet":{"liveChatId":"chat-123"}}]}
+                        """).watchUrl());
     }
 
     @Test
@@ -24,8 +28,8 @@ class YouTubeApiClientTest {
     void doesNotGuessWhenMultipleStreamsAreActive() {
         assertNull(YouTubeApiClient.parseLiveChatId("""
                 {"items":[
-                  {"snippet":{"liveChatId":"chat-1"}},
-                  {"snippet":{"liveChatId":"chat-2"}}
+                  {"id":"video-1","snippet":{"liveChatId":"chat-1"}},
+                  {"id":"video-2","snippet":{"liveChatId":"chat-2"}}
                 ]}
                 """));
     }
