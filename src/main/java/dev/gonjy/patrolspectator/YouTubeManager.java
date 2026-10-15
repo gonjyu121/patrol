@@ -15,12 +15,12 @@ import java.util.List;
  */
 public final class YouTubeManager {
     private static final List<String> DEFAULT_IDLE_ANNOUNCEMENTS = List.of(
-            "YouTubeのコメントはMinecraft内にも届きます。ゲームに入らなくても、配信チャットから参加者と会話できます！",
-            "Minecraft内の公開チャットもYouTubeに表示されます。配信を見ながら気軽にコメントしてください！",
-            "この配信は参加自由です。遊びたくなったら、概要欄のサーバー情報からいつでもご参加ください！",
-            "見るだけでも、コメントだけでも大歓迎です。YouTubeからのコメントはゲーム内の参加者にも届きます！",
-            "配信チャットからMinecraftの参加者へ話しかけられます。気になった場面があれば気軽にコメントしてください！",
-            "Minecraftに入っている方の公開チャットは、このYouTubeチャットにも届きます。一緒に配信へ参加してみませんか？");
+            "参加許可は不要です。初参加・途中参加も、ご自由にご参加ください！",
+            "見かけたらそのまま入って大丈夫です。概要欄のサーバー情報から、ご勝手にご参加ください！",
+            "この配信はいつでも自由参加です。遊びたくなった時に、お気軽にお入りください！",
+            "『参加してもいいですか？』の確認は不要です。どなたでもご自由にどうぞ！",
+            "YouTubeとMinecraftの公開チャットは双方向につながっています。参加者との会話もお楽しみください！",
+            "ゲームに入らなくても、YouTubeのコメントから配信に参加できます。気軽に話しかけてください！");
 
     enum Status {
         DISABLED,
@@ -37,10 +37,12 @@ public final class YouTubeManager {
     private final PatrolSpectatorPlugin plugin;
     private volatile Status status = Status.DISABLED;
     private volatile String liveChatId;
+    private volatile String activeVideoId;
     private volatile String watchUrl;
     private YouTubeApiClient apiClient;
     private BukkitTask connectionTask;
     private BukkitTask pollingTask;
+    private BukkitTask streamStartTask;
     private final YouTubeAutoReplyPolicy autoReplyPolicy =
             new YouTubeAutoReplyPolicy(Duration.ofMinutes(5), Duration.ofHours(6));
     private final Set<String> seenMessageIds = new LinkedHashSet<>();
@@ -50,9 +52,11 @@ public final class YouTubeManager {
     private long lastOutboundAt = Long.MIN_VALUE;
     private YouTubeIdleAnnouncementPolicy idleAnnouncementPolicy;
     private final YouTubeAnnouncementRotation idleAnnouncementRotation = new YouTubeAnnouncementRotation();
+    private final YouTubeStreamStartState streamStartState;
 
     public YouTubeManager(PatrolSpectatorPlugin plugin) {
         this.plugin = plugin;
+        streamStartState = new YouTubeStreamStartState(plugin.getDataFolder().toPath());
     }
 
     public void start() {
@@ -106,17 +110,72 @@ public final class YouTubeManager {
 
     private synchronized void update(Status nextStatus, YouTubeApiClient.ActiveBroadcast broadcast) {
         String nextLiveChatId = broadcast == null ? null : broadcast.liveChatId();
+        String nextVideoId = broadcast == null ? null : broadcast.videoId();
         boolean chatChanged = !java.util.Objects.equals(liveChatId, nextLiveChatId);
+        boolean videoChanged = !java.util.Objects.equals(activeVideoId, nextVideoId);
         boolean changed = status != nextStatus || chatChanged;
         if (chatChanged) resetPollingState();
+        if (videoChanged) cancelStreamStartTask();
         status = nextStatus;
         liveChatId = nextLiveChatId;
+        activeVideoId = nextVideoId;
         watchUrl = broadcast == null ? null : broadcast.watchUrl();
         if (changed) {
             plugin.getLogger().info("[YouTube] Connection status: " + nextStatus);
         }
-        if (nextStatus == Status.CONNECTED && nextLiveChatId != null) scheduleNextPoll(1L);
-        else cancelPollingTask();
+        if (nextStatus == Status.CONNECTED && nextLiveChatId != null) {
+            scheduleNextPoll(1L);
+            scheduleStreamStartAnnouncement(nextVideoId);
+        } else {
+            cancelPollingTask();
+            cancelStreamStartTask();
+        }
+    }
+
+    private synchronized void scheduleStreamStartAnnouncement(String videoId) {
+        if (!plugin.getConfig().getBoolean("youtube.stream_start_announcement.enabled", true)
+                || !streamStartState.needsAnnouncement(videoId)
+                || streamStartTask != null) return;
+        long delaySeconds = Math.max(1L,
+                plugin.getConfig().getLong("youtube.stream_start_announcement.delay_seconds", 90L));
+        streamStartTask = plugin.getServer().getScheduler().runTaskLaterAsynchronously(
+                plugin, () -> sendStreamStartAnnouncement(videoId), delaySeconds * 20L);
+    }
+
+    private void sendStreamStartAnnouncement(String videoId) {
+        synchronized (this) {
+            streamStartTask = null;
+            if (status != Status.CONNECTED || liveChatId == null
+                    || !java.util.Objects.equals(activeVideoId, videoId)
+                    || !streamStartState.needsAnnouncement(videoId)) return;
+        }
+
+        try {
+            String message = plugin.getConfig().getString("youtube.stream_start_announcement.message",
+                    "参加許可は不要です。初参加・途中参加も、概要欄のサーバー情報からご自由にご参加ください！");
+            String formatted = YouTubeChatBridgeFormatter.announcement(message);
+            if (formatted == null) return;
+            String chatId = liveChatId;
+            if (chatId == null) return;
+            apiClient.insertTextMessage(chatId, formatted, true);
+            try {
+                streamStartState.markAnnounced(videoId);
+            } catch (IOException e) {
+                plugin.getLogger().warning("[YouTube] Stream-start guidance was sent, but its state could not be saved.");
+            }
+            if (idleAnnouncementPolicy != null) {
+                idleAnnouncementPolicy.recordAnnouncement(System.currentTimeMillis());
+            }
+            plugin.getLogger().info("[YouTube] Sent the one-time stream-start participation guidance.");
+        } catch (YouTubeApiClient.ApiException e) {
+            update("QUOTA_LIMIT".equals(e.category()) ? Status.QUOTA_LIMIT
+                    : "AUTH_ERROR".equals(e.category()) ? Status.AUTH_ERROR : Status.API_ERROR, null);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            update(Status.API_ERROR, null);
+        } catch (IOException | RuntimeException e) {
+            update(Status.API_ERROR, null);
+        }
     }
 
     private void pollLiveChat() {
@@ -237,12 +296,20 @@ public final class YouTubeManager {
         }
     }
 
+    private synchronized void cancelStreamStartTask() {
+        if (streamStartTask != null) {
+            streamStartTask.cancel();
+            streamStartTask = null;
+        }
+    }
+
     public void stop() {
         if (connectionTask != null) {
             connectionTask.cancel();
             connectionTask = null;
         }
         cancelPollingTask();
+        cancelStreamStartTask();
     }
 
     public boolean isEnabled() {
