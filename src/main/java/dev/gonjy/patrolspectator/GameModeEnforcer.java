@@ -46,15 +46,6 @@ public final class GameModeEnforcer implements Listener {
         task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             UUID cam = cameraOperator;
             for (Player p : Bukkit.getOnlinePlayers()) {
-                // OtouGame に強制OP付与 (24/7 配信アカウント用)
-                if (p.getName().equalsIgnoreCase("OtouGame") && !p.isOp()) {
-                    try {
-                        p.setOp(true);
-                        plugin.getLogger().info("[Patrol] OtouGame に強制OP権限を付与しました。");
-                    } catch (Throwable ignored) {
-                    }
-                }
-
                 if (cam != null && p.getUniqueId().equals(cam)) {
                     // カメラ役は確実にスペクテイターモードかつ飛行状態にする
                     if (p.getGameMode() != GameMode.SPECTATOR) {
@@ -168,10 +159,6 @@ public final class GameModeEnforcer implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
-        // OtouGame へのOP付与
-        if (p.getName().equalsIgnoreCase("OtouGame") && !p.isOp()) {
-            p.setOp(true);
-        }
         ensurePlayerIsSurvival(p);
     }
 
