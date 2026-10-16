@@ -38,7 +38,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.156",
+    "version": "1.9.157",
     "description": "配信用パトロールプラグイン（YouTube案内ローテーション版）"
   }
 }

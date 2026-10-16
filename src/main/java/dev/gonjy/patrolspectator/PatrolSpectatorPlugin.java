@@ -310,11 +310,6 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
                     Player joinedPlayer = event.getPlayer();
                     String playerName = joinedPlayer.getName();
                     if (playerName.equalsIgnoreCase(autoStartConf.cameraPlayerName)) {
-                        // カメラプレイヤーにOPを付与（未取得時のみ）
-                        if (!joinedPlayer.isOp()) {
-                            joinedPlayer.setOp(true);
-                            getLogger().info("[AutoStart] Camera player " + playerName + " granted OP automatically.");
-                        }
                         getLogger().info("Camera player " + playerName + " joined. Starting patrol in 40 ticks...");
                         // Delay slightly to ensure player is fully logged in
                         getServer().getScheduler().runTaskLater(PatrolSpectatorPlugin.this, () -> {
