@@ -539,3 +539,12 @@
 - カメラ役のスペクテイターモード、無敵化、自動パトロール開始は維持します。
 - 管理権限はサーバー管理者が明示的に付与したOPまたは既存の権限設定だけを使用します。
 - ビルド済み主要クラスに `setOp` 参照が残っていないことを回帰テストで確認します。
+
+## Current Status (2026-10-20, unsupported showCoordinates warning suppression)
+
+- **Version**: `1.9.158`
+- **Branch**: `fix/show-coordinates-warning-v1.9.158`
+- **Issue**: `#90`
+- `showCoordinates` は公開GameRule APIで利用可能な場合だけ適用し、未対応のJava/Paper環境では安全にスキップします。
+- Bedrock専用ルールをJavaの `/gamerule` へフォールバックしていたために出ていた、ワールドごとの起動警告を解消します。
+- `locator_bar` の既存コマンドフォールバックと、その他のサーバールール適用は維持します。
