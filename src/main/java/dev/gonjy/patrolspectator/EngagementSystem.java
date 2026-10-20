@@ -29,9 +29,9 @@ public final class EngagementSystem {
             setDynamicRule(world, new String[]{"keepInventory", "keep_inventory", "minecraft:keep_inventory"}, false);
 
             // Bedrock/Java 1.21.11+ 用のルールをAPIで安全に適用
-            // API で認識されない場合はコマンドフォールバックで確実に設定
             setDynamicRuleWithFallback(world, new String[] { "locator_bar", "minecraft:locator_bar", "locatorBar" }, false, "locator_bar");
-            setDynamicRuleWithFallback(world, new String[] { "show_coordinates", "minecraft:show_coordinates", "showCoordinates" }, false, "showCoordinates");
+            // showCoordinates はBedrock専用であり、Java/Paperのコマンドへはフォールバックしない。
+            setDynamicRule(world, new String[] { "show_coordinates", "minecraft:show_coordinates", "showCoordinates" }, false);
         }
     }
 
@@ -73,9 +73,9 @@ public final class EngagementSystem {
                 setDynamicRuleIfNotMatch(world, new String[]{"keepInventory", "keep_inventory", "minecraft:keep_inventory"}, false);
                 setDynamicRuleIfNotMatch(world, new String[]{"playersSleepingPercentage", "players_sleeping_percentage", "minecraft:players_sleeping_percentage"}, 0);
 
-                // 動的な設定（ログなし）。API で認識されない場合はコマンドで設定
+                // 動的な設定（ログなし）
                 setDynamicRuleWithFallbackQuiet(world, new String[] { "locator_bar", "minecraft:locator_bar", "locatorBar" }, false, "locator_bar");
-                setDynamicRuleWithFallbackQuiet(world, new String[] { "show_coordinates", "minecraft:show_coordinates", "showCoordinates" }, false, "showCoordinates");
+                setDynamicRuleIfNotMatch(world, new String[] { "show_coordinates", "minecraft:show_coordinates", "showCoordinates" }, false);
 
             } catch (Throwable ignored) {
             }
