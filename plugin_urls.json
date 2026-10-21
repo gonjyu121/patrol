@@ -38,7 +38,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.158",
-    "description": "配信用パトロールプラグイン（未対応ゲームルール警告抑制版）"
+    "version": "1.9.159",
+    "description": "配信用パトロールプラグイン（現行スポーン設定イベント対応版）"
   }
 }

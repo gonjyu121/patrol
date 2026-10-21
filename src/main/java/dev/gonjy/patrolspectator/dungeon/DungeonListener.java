@@ -1,5 +1,6 @@
 package dev.gonjy.patrolspectator.dungeon;
 
+import com.destroystokyo.paper.event.player.PlayerSetSpawnEvent;
 import dev.gonjy.patrolspectator.PatrolSpectatorPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -14,7 +15,6 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerSpawnChangeEvent;
 import org.bukkit.Material;
 import org.bukkit.GameMode;
 import org.bukkit.scheduler.BukkitTask;
@@ -170,8 +170,8 @@ public class DungeonListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onSpawnChange(PlayerSpawnChangeEvent event) {
-        Location newSpawn = event.getNewSpawn();
+    public void onSpawnChange(PlayerSetSpawnEvent event) {
+        Location newSpawn = event.getLocation();
         if (shouldBlockSpawnChange(newSpawn != null && manager.isInDungeon(newSpawn))) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(ChatColor.RED + "死の迷宮内をリスポーン地点に登録することはできません。");

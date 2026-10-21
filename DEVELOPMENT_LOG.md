@@ -548,3 +548,12 @@
 - `showCoordinates` は公開GameRule APIで利用可能な場合だけ適用し、未対応のJava/Paper環境では安全にスキップします。
 - Bedrock専用ルールをJavaの `/gamerule` へフォールバックしていたために出ていた、ワールドごとの起動警告を解消します。
 - `locator_bar` の既存コマンドフォールバックと、その他のサーバールール適用は維持します。
+
+## Current Status (2026-10-21, current player spawn event migration)
+
+- **Version**: `1.9.159`
+- **Branch**: `fix/player-set-spawn-event-v1.9.159`
+- **Issue**: `#92`
+- 迷宮内へのリスポーン地点登録を拒否する処理を、削除予定の `PlayerSpawnChangeEvent` からPaper公式の `PlayerSetSpawnEvent` へ移行します。
+- 設定先の判定、イベントのキャンセル、プレイヤーへの拒否通知は維持します。
+- 起動時の非推奨イベント登録警告を解消し、迷宮・Patrolのその他の挙動は変更しません。
