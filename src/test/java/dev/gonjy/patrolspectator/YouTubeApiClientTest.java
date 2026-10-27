@@ -55,4 +55,13 @@ class YouTubeApiClientTest {
         assertEquals("c1", page.messages().getFirst().authorChannelId());
         assertTrue(page.messages().getFirst().chatOwner());
     }
+
+    @Test
+    void extractsOnlyAllowlistedOAuthErrorCodes() {
+        assertEquals("invalid_grant", YouTubeApiClient.parseOAuthError(
+                "{\"error\":\"invalid_grant\",\"error_description\":\"sensitive detail\"}"));
+        assertEquals("unknown", YouTubeApiClient.parseOAuthError(
+                "{\"error\":\"unexpected_internal_code\"}"));
+        assertEquals("unknown", YouTubeApiClient.parseOAuthError("not-json"));
+    }
 }

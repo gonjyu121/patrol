@@ -130,7 +130,7 @@ final class YouTubeApiClient {
                 .build();
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != 200) {
-            throw new ApiException(response.statusCode(), "AUTH_ERROR");
+            throw new ApiException(response.statusCode(), "AUTH_ERROR", parseOAuthError(response.body()));
         }
 
         JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
@@ -182,6 +182,20 @@ final class YouTubeApiClient {
         }
     }
 
+    static String parseOAuthError(String responseBody) {
+        try {
+            JsonObject json = JsonParser.parseString(responseBody).getAsJsonObject();
+            String error = string(json, "error");
+            return switch (error == null ? "" : error) {
+                case "invalid_client", "invalid_grant", "unauthorized_client",
+                     "access_denied", "temporarily_unavailable" -> error;
+                default -> "unknown";
+            };
+        } catch (RuntimeException ignored) {
+            return "unknown";
+        }
+    }
+
     private static List<ActiveBroadcast> parseActiveBroadcasts(String responseBody) {
         List<ActiveBroadcast> broadcasts = new ArrayList<>();
         try {
@@ -223,15 +237,22 @@ final class YouTubeApiClient {
     static final class ApiException extends Exception {
         private final int statusCode;
         private final String category;
+        private final String reason;
 
         ApiException(int statusCode, String category) {
+            this(statusCode, category, null);
+        }
+
+        ApiException(int statusCode, String category, String reason) {
             super(category + " (HTTP " + statusCode + ")");
             this.statusCode = statusCode;
             this.category = category;
+            this.reason = reason;
         }
 
         int statusCode() { return statusCode; }
         String category() { return category; }
+        String reason() { return reason; }
     }
 
     record LiveChatPage(List<LiveChatMessage> messages, String nextPageToken, long pollingIntervalMillis) {}
