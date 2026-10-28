@@ -38,7 +38,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.159",
-    "description": "配信用パトロールプラグイン（現行スポーン設定イベント対応版）"
+    "version": "1.9.160",
+    "description": "配信用パトロールプラグイン（YouTube OAuth診断改善・依存プラグイン更新版）"
   }
 }

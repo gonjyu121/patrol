@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-10-28 - v1.9.160 YouTube OAuth診断改善・依存更新
+
+- **Version**: `1.9.160`
+- **Branch**: `maintenance/dependencies-youtube-diagnostics-v1.9.160`
+- OAuthトークン交換失敗時に、秘密情報を出さず `invalid_client` / `invalid_grant` 等の安全な理由コードを表示。
+- 認証エラーごとに確認対象を具体的に案内し、5分間隔の再試行で同じ警告を連続出力しないよう維持。
+- Geyser、ViaVersion、ViaBackwardsを含む配布依存プラグインを公式配布元から再取得。
+
 ## v1.9.143 - BEチャット用サーバー設定を自動修復
 
 - 起動時と5分間隔で `server.properties` の `enforce-secure-profile=false` を確認・修復。

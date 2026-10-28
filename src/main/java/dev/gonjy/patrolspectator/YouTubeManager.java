@@ -99,6 +99,9 @@ public final class YouTubeManager {
                 case "QUOTA_LIMIT" -> Status.QUOTA_LIMIT;
                 default -> Status.API_ERROR;
             };
+            if (failureStatus == Status.AUTH_ERROR && status != Status.AUTH_ERROR) {
+                plugin.getLogger().warning(authFailureMessage(e));
+            }
             update(failureStatus, null);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -106,6 +109,20 @@ public final class YouTubeManager {
         } catch (IOException | RuntimeException e) {
             update(Status.API_ERROR, null);
         }
+    }
+
+    static String authFailureMessage(YouTubeApiClient.ApiException exception) {
+        String guidance = switch (exception.reason() == null ? "" : exception.reason()) {
+            case "invalid_client" -> "clientId と clientSecret が同じ有効なOAuthクライアントの値か確認してください。";
+            case "invalid_grant" -> "refreshToken が失効・取消済み、または別のOAuthクライアントで発行されていないか確認してください。";
+            case "unauthorized_client" -> "OAuthクライアントの種類と許可設定を確認してください。";
+            case "access_denied" -> "Googleアカウント側でYouTubeアクセスが許可されているか確認してください。";
+            case "temporarily_unavailable" -> "Google OAuthが一時的に利用できません。時間を置いて再試行してください。";
+            default -> "clientId・clientSecret・refreshTokenの組み合わせを確認してください。";
+        };
+        String reason = exception.reason() == null ? "unknown" : exception.reason();
+        return "[YouTube] OAuth認証に失敗しました (HTTP " + exception.statusCode()
+                + ", reason=" + reason + ")。" + guidance;
     }
 
     private synchronized void update(Status nextStatus, YouTubeApiClient.ActiveBroadcast broadcast) {
