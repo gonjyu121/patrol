@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-01 - v1.9.162 YouTube参加案内へ接続先を直接掲載
+
+- **Version**: `1.9.162`
+- **Branch**: `feature/youtube-direct-connection-guide-v1.9.162`
+- 配信開始案内、無言時案内、視聴者への自動返信へJava版の公開接続先を直接掲載。
+- Falix APIから現在のBE版公開ホストとGeyserポートを取得し、ポート変更後も古い接続先を投稿しないよう対応。
+- Falix APIが利用できない場合はJava版だけを安全に掲載し、管理画面URLや秘密情報を投稿しない入力検証を追加。
+
 ## 2026-11-01 - v1.9.161 YouTube参加案内の旧間隔を自動移行
 
 - **Version**: `1.9.161`

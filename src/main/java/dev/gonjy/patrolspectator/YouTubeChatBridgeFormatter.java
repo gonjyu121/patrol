@@ -31,11 +31,11 @@ final class YouTubeChatBridgeFormatter {
 
     static String autoReply(String authorName, String text) {
         String safeName = sanitize(authorName, 40);
-        return MINECRAFT_PREFIX + (safeName.isBlank() ? " " : " @" + safeName + " ") + text;
+        return sanitize(MINECRAFT_PREFIX + (safeName.isBlank() ? " " : " @" + safeName + " ") + text, 200);
     }
 
     static String announcement(String text) {
-        String safeText = sanitize(text, 180);
+        String safeText = sanitize(text, 190);
         return safeText.isBlank() ? null : MINECRAFT_PREFIX + " " + safeText;
     }
 
