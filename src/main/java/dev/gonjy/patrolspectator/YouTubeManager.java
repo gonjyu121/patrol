@@ -14,6 +14,8 @@ import java.util.List;
  * Maintains the YouTube Live connection, safe auto-replies and chat bridge.
  */
 public final class YouTubeManager {
+    private static final long LEGACY_IDLE_ANNOUNCEMENT_MINUTES = 180L;
+    private static final long DEFAULT_IDLE_ANNOUNCEMENT_MINUTES = 90L;
     private static final List<String> DEFAULT_IDLE_ANNOUNCEMENTS = List.of(
             "参加許可は不要です。初参加・途中参加も、ご自由にご参加ください！",
             "見かけたらそのまま入って大丈夫です。概要欄のサーバー情報から、ご勝手にご参加ください！",
@@ -53,6 +55,7 @@ public final class YouTubeManager {
     private YouTubeIdleAnnouncementPolicy idleAnnouncementPolicy;
     private final YouTubeAnnouncementRotation idleAnnouncementRotation = new YouTubeAnnouncementRotation();
     private final YouTubeStreamStartState streamStartState;
+    private boolean streamStartAlreadyAnnouncedLogged;
 
     public YouTubeManager(PatrolSpectatorPlugin plugin) {
         this.plugin = plugin;
@@ -77,10 +80,17 @@ public final class YouTubeManager {
                 plugin.getConfig().getInt("youtube.daily_quota_unit_limit", 8_000),
                 plugin.getConfig().getInt("youtube.auto_reply.max_replies_per_day", 20));
         apiClient = new YouTubeApiClient(settings, quotaBudget);
-        long idleMinutes = Math.max(1L,
-                plugin.getConfig().getLong("youtube.idle_announcement.interval_minutes", 90L));
+        long configuredIdleMinutes = plugin.getConfig().getLong(
+                "youtube.idle_announcement.interval_minutes", DEFAULT_IDLE_ANNOUNCEMENT_MINUTES);
+        long idleMinutes = resolveIdleAnnouncementMinutes(configuredIdleMinutes);
+        if (configuredIdleMinutes == LEGACY_IDLE_ANNOUNCEMENT_MINUTES) {
+            plugin.getConfig().set("youtube.idle_announcement.interval_minutes", idleMinutes);
+            plugin.saveConfig();
+            plugin.getLogger().info("[YouTube] 無言時案内の旧標準間隔を180分から90分へ移行しました。");
+        }
         idleAnnouncementPolicy = new YouTubeIdleAnnouncementPolicy(
                 Duration.ofMinutes(idleMinutes), System.currentTimeMillis());
+        plugin.getLogger().info("[YouTube] 無言時案内の間隔: " + idleMinutes + "分");
         update(Status.CONNECTING, null);
         long periodTicks = Math.max(1L,
                 plugin.getConfig().getLong("youtube.connection_check_minutes", 5L)) * 60L * 20L;
@@ -132,7 +142,10 @@ public final class YouTubeManager {
         boolean videoChanged = !java.util.Objects.equals(activeVideoId, nextVideoId);
         boolean changed = status != nextStatus || chatChanged;
         if (chatChanged) resetPollingState();
-        if (videoChanged) cancelStreamStartTask();
+        if (videoChanged) {
+            cancelStreamStartTask();
+            streamStartAlreadyAnnouncedLogged = false;
+        }
         status = nextStatus;
         liveChatId = nextLiveChatId;
         activeVideoId = nextVideoId;
@@ -151,12 +164,25 @@ public final class YouTubeManager {
 
     private synchronized void scheduleStreamStartAnnouncement(String videoId) {
         if (!plugin.getConfig().getBoolean("youtube.stream_start_announcement.enabled", true)
-                || !streamStartState.needsAnnouncement(videoId)
                 || streamStartTask != null) return;
+        if (!streamStartState.needsAnnouncement(videoId)) {
+            if (!streamStartAlreadyAnnouncedLogged && videoId != null && !videoId.isBlank()) {
+                plugin.getLogger().info("[YouTube] この配信には開始時の参加案内を送信済みです。重複投稿を省略します。");
+                streamStartAlreadyAnnouncedLogged = true;
+            }
+            return;
+        }
         long delaySeconds = Math.max(1L,
                 plugin.getConfig().getLong("youtube.stream_start_announcement.delay_seconds", 90L));
         streamStartTask = plugin.getServer().getScheduler().runTaskLaterAsynchronously(
                 plugin, () -> sendStreamStartAnnouncement(videoId), delaySeconds * 20L);
+    }
+
+    static long resolveIdleAnnouncementMinutes(long configuredMinutes) {
+        if (configuredMinutes == LEGACY_IDLE_ANNOUNCEMENT_MINUTES) {
+            return DEFAULT_IDLE_ANNOUNCEMENT_MINUTES;
+        }
+        return Math.max(1L, configuredMinutes);
     }
 
     private void sendStreamStartAnnouncement(String videoId) {
