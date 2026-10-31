@@ -39,6 +39,7 @@ class YouTubeAnnouncementRotationTest {
             YamlConfiguration config = YamlConfiguration.loadConfiguration(
                     new InputStreamReader(stream, StandardCharsets.UTF_8));
             List<String> messages = config.getStringList("youtube.idle_announcement.messages");
+            assertEquals(90L, config.getLong("youtube.idle_announcement.interval_minutes"));
             assertEquals(6, messages.size());
             assertTrue(messages.subList(0, 4).stream().allMatch(message ->
                     message.contains("参加") || message.contains("入って")));
@@ -49,5 +50,13 @@ class YouTubeAnnouncementRotationTest {
             assertTrue(config.getString("youtube.stream_start_announcement.message", "")
                     .contains("ご自由にご参加"));
         }
+    }
+
+    @Test
+    void migratesOnlyTheLegacyThreeHourIdleInterval() {
+        assertEquals(90L, YouTubeManager.resolveIdleAnnouncementMinutes(180L));
+        assertEquals(60L, YouTubeManager.resolveIdleAnnouncementMinutes(60L));
+        assertEquals(240L, YouTubeManager.resolveIdleAnnouncementMinutes(240L));
+        assertEquals(1L, YouTubeManager.resolveIdleAnnouncementMinutes(0L));
     }
 }
