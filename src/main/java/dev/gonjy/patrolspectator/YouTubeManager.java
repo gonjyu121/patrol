@@ -14,6 +14,7 @@ import java.util.List;
  * Maintains the YouTube Live connection, safe auto-replies and chat bridge.
  */
 public final class YouTubeManager {
+    private static final long INITIAL_CHAT_RECENT_WINDOW_MILLIS = Duration.ofMinutes(5).toMillis();
     private static final long LEGACY_IDLE_ANNOUNCEMENT_MINUTES = 180L;
     private static final long DEFAULT_IDLE_ANNOUNCEMENT_MINUTES = 90L;
     private static final List<String> DEFAULT_IDLE_ANNOUNCEMENTS = List.of(
@@ -50,6 +51,7 @@ public final class YouTubeManager {
     private final Set<String> seenMessageIds = new LinkedHashSet<>();
     private String pageToken;
     private boolean initialChatPage = true;
+    private long chatConnectedAtMillis;
     private final Map<String, Long> lastOutboundByPlayer = new HashMap<>();
     private long lastOutboundAt = Long.MIN_VALUE;
     private YouTubeIdleAnnouncementPolicy idleAnnouncementPolicy;
@@ -233,19 +235,32 @@ public final class YouTubeManager {
         try {
             YouTubeApiClient.LiveChatPage page = apiClient.listLiveChatMessages(liveChatId, pageToken);
             boolean skipReplies = initialChatPage;
+            long now = System.currentTimeMillis();
+            int skippedHistory = 0;
+            int skippedOwner = 0;
+            int skippedPolicy = 0;
             java.util.List<YouTubeApiClient.LiveChatMessage> freshMessages = new java.util.ArrayList<>();
             for (YouTubeApiClient.LiveChatMessage message : page.messages()) {
-                if (!seenMessageIds.add(message.id()) || skipReplies) continue;
+                if (!seenMessageIds.add(message.id())) continue;
+                if (skipReplies && !isRecentInitialMessage(message, chatConnectedAtMillis, now)) {
+                    skippedHistory++;
+                    continue;
+                }
                 freshMessages.add(message);
                 if (!YouTubeChatBridgeFormatter.isPluginGenerated(message.text(), message.chatOwner())) {
                     idleAnnouncementPolicy.recordActivity(System.currentTimeMillis());
                 }
                 if (!plugin.getConfig().getBoolean("youtube.auto_reply.enabled", true)) continue;
-                long now = System.currentTimeMillis();
-                if (message.chatOwner()) continue;
+                if (message.chatOwner()) {
+                    skippedOwner++;
+                    continue;
+                }
                 boolean replyToAny = plugin.getConfig().getBoolean(
                         "youtube.auto_reply.reply_to_any_comment", true);
-                if (!autoReplyPolicy.shouldReply(message.authorChannelId(), message.text(), now, replyToAny)) continue;
+                if (!autoReplyPolicy.shouldReply(message.authorChannelId(), message.text(), now, replyToAny)) {
+                    skippedPolicy++;
+                    continue;
+                }
                 String replyText = plugin.getConfig().getString("youtube.auto_reply.message",
                         "ご視聴ありがとうございます！確認は不要です。概要欄のサーバー情報から、ご自由に参加してくださいね！");
                 apiClient.insertTextMessage(liveChatId,
@@ -256,6 +271,10 @@ public final class YouTubeManager {
             }
             trimSeenMessages();
             initialChatPage = false;
+            if (skippedHistory + skippedOwner + skippedPolicy > 0) {
+                plugin.getLogger().info("[YouTube] Auto-reply summary: history=" + skippedHistory
+                        + ", owner=" + skippedOwner + ", cooldown_or_policy=" + skippedPolicy + ".");
+            }
             pageToken = page.nextPageToken();
             relayYouTubeMessages(freshMessages, false);
             sendIdleAnnouncementIfNeeded();
@@ -269,6 +288,14 @@ public final class YouTubeManager {
         } catch (IOException | RuntimeException e) {
             update(Status.API_ERROR, null);
         }
+    }
+
+    static boolean isRecentInitialMessage(YouTubeApiClient.LiveChatMessage message,
+                                          long connectedAtMillis, long nowMillis) {
+        Long publishedAt = message.publishedAtMillis();
+        return publishedAt != null
+                && publishedAt >= connectedAtMillis - INITIAL_CHAT_RECENT_WINDOW_MILLIS
+                && publishedAt <= nowMillis + Duration.ofMinutes(1).toMillis();
     }
 
     private void sendIdleAnnouncementIfNeeded() throws IOException, InterruptedException,
@@ -347,6 +374,7 @@ public final class YouTubeManager {
         cancelPollingTask();
         pageToken = null;
         initialChatPage = true;
+        chatConnectedAtMillis = System.currentTimeMillis();
         seenMessageIds.clear();
         if (idleAnnouncementPolicy != null) {
             idleAnnouncementPolicy.recordActivity(System.currentTimeMillis());
