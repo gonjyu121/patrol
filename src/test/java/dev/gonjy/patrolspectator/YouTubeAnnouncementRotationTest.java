@@ -49,6 +49,9 @@ class YouTubeAnnouncementRotationTest {
             assertEquals(90L, config.getLong("youtube.stream_start_announcement.delay_seconds"));
             assertTrue(config.getString("youtube.stream_start_announcement.message", "")
                     .contains("ご自由にご参加"));
+            assertTrue(config.getBoolean("youtube.connection_guide.enabled"));
+            assertEquals("otougame.falixsrv.me",
+                    config.getString("youtube.connection_guide.java_address"));
         }
     }
 

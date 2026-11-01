@@ -56,6 +56,8 @@ public final class YouTubeManager {
     private final YouTubeAnnouncementRotation idleAnnouncementRotation = new YouTubeAnnouncementRotation();
     private final YouTubeStreamStartState streamStartState;
     private boolean streamStartAlreadyAnnouncedLogged;
+    private volatile YouTubeConnectionGuide connectionGuide =
+            new YouTubeConnectionGuide(null, null, null);
 
     public YouTubeManager(PatrolSpectatorPlugin plugin) {
         this.plugin = plugin;
@@ -80,6 +82,7 @@ public final class YouTubeManager {
                 plugin.getConfig().getInt("youtube.daily_quota_unit_limit", 8_000),
                 plugin.getConfig().getInt("youtube.auto_reply.max_replies_per_day", 20));
         apiClient = new YouTubeApiClient(settings, quotaBudget);
+        refreshConnectionGuide();
         long configuredIdleMinutes = plugin.getConfig().getLong(
                 "youtube.idle_announcement.interval_minutes", DEFAULT_IDLE_ANNOUNCEMENT_MINUTES);
         long idleMinutes = resolveIdleAnnouncementMinutes(configuredIdleMinutes);
@@ -196,7 +199,7 @@ public final class YouTubeManager {
         try {
             String message = plugin.getConfig().getString("youtube.stream_start_announcement.message",
                     "参加許可は不要です。初参加・途中参加も、概要欄のサーバー情報からご自由にご参加ください！");
-            String formatted = YouTubeChatBridgeFormatter.announcement(message);
+            String formatted = YouTubeChatBridgeFormatter.announcement(withConnectionGuide(message));
             if (formatted == null) return;
             String chatId = liveChatId;
             if (chatId == null) return;
@@ -246,7 +249,8 @@ public final class YouTubeManager {
                 String replyText = plugin.getConfig().getString("youtube.auto_reply.message",
                         "ご視聴ありがとうございます！確認は不要です。概要欄のサーバー情報から、ご自由に参加してくださいね！");
                 apiClient.insertTextMessage(liveChatId,
-                        YouTubeChatBridgeFormatter.autoReply(message.authorName(), replyText), true);
+                        YouTubeChatBridgeFormatter.autoReply(message.authorName(),
+                                withConnectionGuide(replyText)), true);
                 autoReplyPolicy.recordReply(message.authorChannelId(), now);
                 plugin.getLogger().info("[YouTube] Sent one viewer auto-reply.");
             }
@@ -276,11 +280,35 @@ public final class YouTubeManager {
         List<String> configured = plugin.getConfig().getStringList("youtube.idle_announcement.messages");
         if (configured.isEmpty()) configured = DEFAULT_IDLE_ANNOUNCEMENTS;
         String formatted = YouTubeChatBridgeFormatter.announcement(
-                idleAnnouncementRotation.next(configured));
+                withConnectionGuide(idleAnnouncementRotation.next(configured)));
         if (formatted == null) return;
         apiClient.insertTextMessage(liveChatId, formatted, true);
         idleAnnouncementPolicy.recordAnnouncement(now);
         plugin.getLogger().info("[YouTube] Sent one idle chat guidance message.");
+    }
+
+    private String withConnectionGuide(String message) {
+        if (!plugin.getConfig().getBoolean("youtube.connection_guide.enabled", true)) return message;
+        return connectionGuide.appendTo(message);
+    }
+
+    private void refreshConnectionGuide() {
+        String javaAddress = plugin.getConfig().getString("youtube.connection_guide.java_address",
+                plugin.getConfig().getString("discord.server_ip", ""));
+        connectionGuide = new YouTubeConnectionGuide(javaAddress, null, null);
+        FalixApiSettings falixSettings = FalixApiSettings.load(plugin.getDataFolder().toPath());
+        if (!falixSettings.configured()) {
+            plugin.getLogger().info("[YouTube] 接続案内はJava版のみ掲載します（Falix API未設定）。");
+            return;
+        }
+        new FalixApiClient().inspect(falixSettings).thenAccept(result -> {
+            connectionGuide = connectionGuide.withFalix(result);
+            if (connectionGuide.text().contains("BE版:")) {
+                plugin.getLogger().info("[YouTube] Java版・BE版の公開接続先を参加案内へ掲載します。");
+            } else {
+                plugin.getLogger().warning("[YouTube] BE版の公開接続先を取得できないため、Java版のみ掲載します。");
+            }
+        });
     }
 
     private synchronized void scheduleNextPoll(long delayTicks) {

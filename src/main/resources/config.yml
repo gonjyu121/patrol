@@ -82,6 +82,11 @@ youtube:
     # 新しいライブ配信を検出してから投稿するまでの待機時間です。
     delay_seconds: 90
     message: "参加許可は不要です。初参加・途中参加も、概要欄のサーバー情報からご自由にご参加ください！"
+  connection_guide:
+    enabled: true
+    # YouTubeの参加案内へ掲載する公開用Java版アドレスです。管理画面URLや秘密情報は設定しないでください。
+    # BE版アドレスとポートはfalix-api.propertiesから自動取得します。
+    java_address: "otougame.falixsrv.me"
   bridge:
     youtube_to_minecraft: true
     minecraft_to_youtube: true
