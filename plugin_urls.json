@@ -38,7 +38,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.164",
-    "description": "配信用パトロールプラグイン（BE版操作応答の軽量化・依存プラグイン更新版）"
+    "version": "1.9.165",
+    "description": "配信用パトロールプラグイン（Paper 26.3・Java 25対応版）"
   }
 }

@@ -1,5 +1,15 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-03 - v1.9.165 Paper 26.3・Java 25対応
+
+- **Version**: `1.9.165`
+- **Branch**: `maintenance/paper-26.3-java25-v1.9.165`
+- Paper APIを26.3の安定版build 238へ更新し、プラグインのAPI対象を26.3へ変更。
+- Paper 26.3の必須実行環境に合わせ、コンパイルと配布更新処理をJava 25へ移行。
+- Java 25対応のMaven Compiler Plugin 3.16.0とSurefire 3.6.1へ更新。
+- 26.3 Registry APIに対応するMockBukkit 4.118.0とJUnit 6.1.3へテスト基盤を更新。
+- 26.3対応済みのGeyser、Floodgate、Via系、WorldEdit等を配布時に再取得して検証。
+
 ## 2026-11-03 - v1.9.164 BE版のインベントリ操作を優先
 
 - **Version**: `1.9.164`

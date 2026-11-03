@@ -2,7 +2,7 @@
 name: PatrolSpectatorPlugin
 main: dev.gonjy.patrolspectator.PatrolSpectatorPlugin
 version: ${project.version}
-api-version: '1.21'
+api-version: '26.3'
 authors: [ 'gonjy' ]
 softdepend: [ 'WorldEdit', 'Geyser-Spigot', 'floodgate' ]
 commands:

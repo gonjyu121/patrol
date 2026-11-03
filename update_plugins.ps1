@@ -85,7 +85,7 @@ if (Test-Path $pomPath) {
 
 try {
     # Run build
-    $cmdArgs = "/c build_jdk21.bat"
+    $cmdArgs = "/c build_jdk25.bat"
     Write-Host ("Executing: cmd " + $cmdArgs) -ForegroundColor Gray
     
     $process = Start-Process -FilePath "cmd" -ArgumentList $cmdArgs -NoNewWindow -Wait -PassThru
