@@ -1,14 +1,14 @@
 @echo off
 REM ===================================================================
-REM Build Script with Portable JDK 21
+REM Build Script with Portable JDK 25 for Paper 26.3
 REM ===================================================================
 
 setlocal
 
 REM Set JAVA_HOME to the portable JDK
-set "JAVA_HOME=%~dp0.maven\jdk21\jdk-21.0.9+10"
+set "JAVA_HOME=%~dp0.maven\jdk25\jdk-25.0.5+8"
 if not exist "%JAVA_HOME%\bin\java.exe" (
-    echo ERROR: Portable Java not found at "%JAVA_HOME%"
+    echo ERROR: Portable Java 25 not found at "%JAVA_HOME%"
     exit /b 1
 )
 
@@ -26,7 +26,7 @@ REM Change to project directory
 cd /d "%~dp0"
 
 echo ========================================
-echo PatrolSpectatorPlugin Build (JDK 21)
+echo PatrolSpectatorPlugin Build (JDK 25 / Paper 26.3)
 echo ========================================
 echo.
 echo JAVA_HOME: %JAVA_HOME%
@@ -53,9 +53,7 @@ echo Generated JAR files:
 dir /b target\*.jar 2>nul
 echo.
 
-REM ====================================================
-REM ビルドしたJARをpluginsフォルダにコピー
-REM ====================================================
+REM Copy the built JAR to the local plugin archive.
 if not exist "%~dp0plugins" mkdir "%~dp0plugins"
 for %%f in (target\PatrolSpectatorPlugin-*.jar) do (
     echo Copying %%f to plugins\...
@@ -64,4 +62,3 @@ for %%f in (target\PatrolSpectatorPlugin-*.jar) do (
 )
 
 endlocal
-
