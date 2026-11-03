@@ -116,6 +116,10 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        if (BedrockInteractionPerformanceMigration.apply(getConfig())) {
+            saveConfig();
+            getLogger().info("[Performance] BE版の操作応答を優先する軽量設定へ旧標準値を移行しました。");
+        }
         // 観光地リストはPatrolManager側で動的に初期生成・保存されるように変更しました
 
         loadConfigValues();
@@ -190,7 +194,9 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         patrolManager = new PatrolManager(this, engagementSystem, participationManager, gameModeEnforcer,
                 rankingDisplaySystem);
         getServer().getPluginManager().registerEvents(patrolManager, this);
-        getServer().getPluginManager().registerEvents(new SpectatedInventoryMirror(this, patrolManager), this);
+        if (getConfig().getBoolean("patrol.mirrorObservedContainers", false)) {
+            getServer().getPluginManager().registerEvents(new SpectatedInventoryMirror(this, patrolManager), this);
+        }
 
         // ルール適用（Bedrock/Java 1.21.11+ 対応）
         engagementSystem.applyServerRules();
@@ -524,7 +530,7 @@ public class PatrolSpectatorPlugin extends JavaPlugin {
         performanceConf.disableAutoEventWhilePatrol = getConfig().getBoolean("performance.disableAutoEventWhilePatrol",
                 false);
         performanceConf.debugLog = getConfig().getBoolean("performance.debugLog", false);
-        performanceConf.trackingUpdateIntervalTicks = getConfig().getInt("patrol.trackingUpdateIntervalTicks", 2);
+        performanceConf.trackingUpdateIntervalTicks = getConfig().getInt("patrol.trackingUpdateIntervalTicks", 4);
         performanceConf.disableLoadPause = getConfig().getBoolean("performance.disableLoadPause", false);
         performanceConf.deferCameraMovesOnHighLoad = getConfig().getBoolean(
                 "performance.deferCameraMovesOnHighLoad", true);
