@@ -40,7 +40,7 @@ public final class EngagementSystem {
     private <T> void setDynamicRule(org.bukkit.World world, String[] candidates, T value) {
         for (String name : candidates) {
             try {
-                org.bukkit.GameRule<?> rule = org.bukkit.GameRule.getByName(name);
+                org.bukkit.GameRule<?> rule = BukkitRegistryResolver.gameRule(name);
                 if (rule != null) {
                     Object current = world.getGameRuleValue(rule);
                     if (current != null && current.equals(value)) {
@@ -86,7 +86,7 @@ public final class EngagementSystem {
     private <T> void setDynamicRuleIfNotMatch(org.bukkit.World world, String[] candidates, T value) {
         for (String name : candidates) {
             try {
-                org.bukkit.GameRule<?> rule = org.bukkit.GameRule.getByName(name);
+                org.bukkit.GameRule<?> rule = BukkitRegistryResolver.gameRule(name);
                 if (rule != null) {
                     Object current = world.getGameRuleValue(rule);
                     if (current != null && current.equals(value)) {
@@ -109,7 +109,7 @@ public final class EngagementSystem {
     private <T> void setDynamicRuleWithFallback(org.bukkit.World world, String[] candidates, T value, String commandRuleName) {
         for (String name : candidates) {
             try {
-                org.bukkit.GameRule<?> rule = org.bukkit.GameRule.getByName(name);
+                org.bukkit.GameRule<?> rule = BukkitRegistryResolver.gameRule(name);
                 if (rule != null) {
                     Object current = world.getGameRuleValue(rule);
                     if (current != null && current.equals(value)) {
@@ -140,7 +140,7 @@ public final class EngagementSystem {
     private <T> void setDynamicRuleWithFallbackQuiet(org.bukkit.World world, String[] candidates, T value, String commandRuleName) {
         for (String name : candidates) {
             try {
-                org.bukkit.GameRule<?> rule = org.bukkit.GameRule.getByName(name);
+                org.bukkit.GameRule<?> rule = BukkitRegistryResolver.gameRule(name);
                 if (rule != null) {
                     Object current = world.getGameRuleValue(rule);
                     if (current != null && current.equals(value)) {
@@ -299,7 +299,10 @@ public final class EngagementSystem {
             return;
 
         try {
-            org.bukkit.Sound sound = org.bukkit.Sound.valueOf(soundName);
+            org.bukkit.Sound sound = BukkitRegistryResolver.sound(soundName);
+            if (sound == null) {
+                throw new IllegalArgumentException(soundName);
+            }
             player.playSound(player.getLocation(), sound, volume, pitch);
         } catch (IllegalArgumentException e) {
             log.warning("無効な音名: " + soundName);
