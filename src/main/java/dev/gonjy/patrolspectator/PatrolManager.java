@@ -988,7 +988,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
             currentPerspective = PerspectivePhase.FRONT_VIEW;
 
             // 追従タスクの開始 (1tick毎に滑らかに追従)
-            int updateInterval = Math.max(1, plugin.getConfig().getInt("patrol.trackingUpdateIntervalTicks", 1));
+            int updateInterval = Math.max(1, plugin.getConfig().getInt("patrol.trackingUpdateIntervalTicks", 4));
             trackingTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
                 if (!camera.isOnline() || !target.isValid() || !camera.getGameMode().equals(GameMode.SPECTATOR)) {
                     stopTracking();
@@ -1302,7 +1302,7 @@ public class PatrolManager implements org.bukkit.event.Listener {
             // プレイヤーにアーマースタンドを観戦させる
             camera.setSpectatorTarget(cinematicCameraStand);
 
-            int updateInterval = plugin.getConfig().getInt("patrol.trackingUpdateIntervalTicks", 2);
+            int updateInterval = Math.max(1, plugin.getConfig().getInt("patrol.trackingUpdateIntervalTicks", 4));
             trackingTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
                 if (!camera.isOnline() || !target.isValid() || !camera.getGameMode().equals(GameMode.SPECTATOR)) {
                     stopTracking();

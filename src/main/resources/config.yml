@@ -1,7 +1,8 @@
 # src/main/resources/config.yml（差し替え）
 patrol:
   # 観戦中の参加者が開いたチェスト等を、カメラ役にも読み取り専用で表示します。
-  mirrorObservedContainers: true
+  # BE版のインベントリ応答を優先するため標準では無効です。
+  mirrorObservedContainers: false
   intervalSeconds: 5
   announce: true
   titles:
@@ -48,7 +49,7 @@ patrol:
     secondsBefore: 3 # 移動の3秒前に事前読み込みを開始
   # シネマティック追跡の更新間隔（ticks）: 1=最速(20fps), 2=標準(10fps), 4=軽量(5fps)
   # 数値を大きくするとネットワーク負荷が下がります
-  trackingUpdateIntervalTicks: 2
+  trackingUpdateIntervalTicks: 4
 
 # YouTube Live Chat Integration
 youtube:
@@ -141,7 +142,8 @@ performance:
   disableWorldScan: false
   disableAutoEventWhilePatrol: false
   debugLog: false
-  disableLoadPause: true
+  # 高負荷が続く時はパトロール演出を一時停止し、参加者の操作を優先します。
+  disableLoadPause: false
   # 高負荷中はPatrolを停止せず、次のカメラ移動だけを延期します。
   deferCameraMovesOnHighLoad: true
   highLoadRetrySeconds: 5

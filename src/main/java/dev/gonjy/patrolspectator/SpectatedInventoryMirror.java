@@ -34,7 +34,7 @@ final class SpectatedInventoryMirror implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onInventoryOpen(InventoryOpenEvent event) {
-        if (!plugin.getConfig().getBoolean("patrol.mirrorObservedContainers", true)) return;
+        if (!plugin.getConfig().getBoolean("patrol.mirrorObservedContainers", false)) return;
         if (!(event.getPlayer() instanceof Player target)) return;
         if (!isMirrorableInventory(event.getInventory().getType())) return;
         if (!patrolManager.isObservingPlayer(target.getUniqueId())) return;
