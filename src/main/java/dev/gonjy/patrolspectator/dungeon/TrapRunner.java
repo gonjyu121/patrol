@@ -188,12 +188,12 @@ public class TrapRunner {
             String[] names) {
         for (String name : names) {
             try {
-                org.bukkit.attribute.Attribute attribute = org.bukkit.attribute.Attribute.valueOf(name);
+                org.bukkit.attribute.Attribute attribute = dev.gonjy.patrolspectator.BukkitRegistryResolver.attribute(name);
                 org.bukkit.attribute.AttributeInstance instance = entity.getAttribute(attribute);
                 if (instance != null)
                     return instance;
-            } catch (IllegalArgumentException ignored) {
-                // Paperの世代による列挙名差を吸収する。
+            } catch (RuntimeException ignored) {
+                // Paperの世代による名称差を吸収する。
             }
         }
         return null;

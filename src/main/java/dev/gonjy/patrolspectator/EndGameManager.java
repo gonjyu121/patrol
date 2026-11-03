@@ -584,20 +584,7 @@ public class EndGameManager implements Listener {
     private org.bukkit.attribute.AttributeInstance getSafeAttribute(org.bukkit.attribute.Attributable entity, String[] names) {
         for (String name : names) {
             try {
-                // 1. Enum.valueOf (1.20以前)
-                // 2. static field (1.21+)
-                // 両方を試すためにリフレクションを使用するか、単に valueOf を試す
-                // ここでは列挙型としての名前解決を試みる
-                Attribute attr = null;
-                try {
-                    attr = Attribute.valueOf(name);
-                } catch (Exception e) {
-                    // 1.21+ ではフィールドとして存在する場合があるため、リフレクションで取得を試みる
-                    try {
-                        java.lang.reflect.Field field = Attribute.class.getField(name);
-                        attr = (Attribute) field.get(null);
-                    } catch (Exception ignored) {}
-                }
+                Attribute attr = BukkitRegistryResolver.attribute(name);
 
                 if (attr != null) {
                     return entity.getAttribute(attr);

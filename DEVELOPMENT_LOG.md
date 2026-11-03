@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-04 - v1.9.166 Paper 26.3 Registry API対応
+
+- **Version**: `1.9.166`
+- **Branch**: `maintenance/paper-26.3-registry-api-v1.9.166`
+- GameRule、Sound、Attributeの名前解決を廃止予定のenum APIからPaper 26.3のRegistry APIへ移行。
+- camelCase、旧enum名、名前空間付き名称を共通リゾルバーで正規化。
+- Paperの将来版で対象APIが削除されても起動できるよう互換性を強化。
+
 ## 2026-11-03 - v1.9.165 Paper 26.3・Java 25対応
 
 - **Version**: `1.9.165`
