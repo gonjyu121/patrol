@@ -12,6 +12,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -170,15 +171,25 @@ final class YouTubeApiClient {
                     String authorChannelId = string(author, "channelId");
                     String authorName = string(author, "displayName");
                     String text = string(snippet, "displayMessage");
+                    Long publishedAtMillis = parsePublishedAtMillis(string(snippet, "publishedAt"));
                     if (id != null && authorChannelId != null && text != null) {
                         messages.add(new LiveChatMessage(id, authorChannelId, authorName, text,
-                                bool(author, "isChatOwner")));
+                                bool(author, "isChatOwner"), publishedAtMillis));
                     }
                 }
             }
             return new LiveChatPage(List.copyOf(messages), nextPageToken, pollingIntervalMillis);
         } catch (RuntimeException e) {
             return new LiveChatPage(List.of(), null, 60_000L);
+        }
+    }
+
+    private static Long parsePublishedAtMillis(String value) {
+        if (value == null) return null;
+        try {
+            return Instant.parse(value).toEpochMilli();
+        } catch (RuntimeException ignored) {
+            return null;
         }
     }
 
@@ -264,5 +275,5 @@ final class YouTubeApiClient {
     }
 
     record LiveChatMessage(String id, String authorChannelId, String authorName, String text,
-                           boolean chatOwner) {}
+                           boolean chatOwner, Long publishedAtMillis) {}
 }

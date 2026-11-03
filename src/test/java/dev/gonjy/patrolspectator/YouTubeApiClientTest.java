@@ -2,6 +2,8 @@ package dev.gonjy.patrolspectator;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -41,7 +43,8 @@ class YouTubeApiClientTest {
                   "nextPageToken":"next-1",
                   "pollingIntervalMillis":5000,
                   "items":[
-                    {"id":"m1","snippet":{"type":"textMessageEvent","displayMessage":"参加していい？"},
+                    {"id":"m1","snippet":{"type":"textMessageEvent","displayMessage":"参加していい？",
+                     "publishedAt":"2026-11-01T00:00:30Z"},
                      "authorDetails":{"channelId":"c1","displayName":"viewer","isChatOwner":true}},
                     {"id":"m2","snippet":{"type":"newSponsorEvent","displayMessage":"joined"},
                      "authorDetails":{"channelId":"c2","displayName":"member"}}
@@ -54,6 +57,8 @@ class YouTubeApiClientTest {
         assertEquals(1, page.messages().size());
         assertEquals("c1", page.messages().getFirst().authorChannelId());
         assertTrue(page.messages().getFirst().chatOwner());
+        assertEquals(Instant.parse("2026-11-01T00:00:30Z").toEpochMilli(),
+                page.messages().getFirst().publishedAtMillis());
     }
 
     @Test
