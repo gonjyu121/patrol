@@ -38,7 +38,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.166",
-    "description": "配信用パトロールプラグイン（Paper 26.3 Registry API対応版）"
+    "version": "1.9.167",
+    "description": "配信用パトロールプラグイン（Paper 26.3 Adventure Component対応版）"
   }
 }

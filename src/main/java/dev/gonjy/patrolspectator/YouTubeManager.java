@@ -1,5 +1,6 @@
 package dev.gonjy.patrolspectator;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.IOException;
@@ -352,7 +353,7 @@ public final class YouTubeManager {
             String formatted = YouTubeChatBridgeFormatter.toMinecraft(message.authorName(), message.text());
             if (formatted != null) {
                 plugin.getServer().getScheduler().runTask(plugin,
-                        () -> plugin.getServer().broadcastMessage(formatted));
+                        () -> plugin.getServer().broadcast(Component.text(formatted)));
             }
         }
     }
