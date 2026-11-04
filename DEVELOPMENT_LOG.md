@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-04 - v1.9.167 PaperイベントメッセージのComponent化
+
+- **Version**: `1.9.167`
+- **Branch**: `maintenance/paper-26.3-event-components-v1.9.167`
+- カメラ役の死亡メッセージ抑制を`PlayerDeathEvent#deathMessage`へ移行。
+- キック理由をAdventure Componentから安全にプレーンテキスト化して記録。
+- YouTubeチャットのMinecraft全体配信を`Server#broadcast(Component)`へ移行。
+
 ## 2026-11-04 - v1.9.166 Paper 26.3 Registry API対応
 
 - **Version**: `1.9.166`

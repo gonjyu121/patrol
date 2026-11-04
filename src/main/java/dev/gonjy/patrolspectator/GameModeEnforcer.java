@@ -226,7 +226,7 @@ public final class GameModeEnforcer implements Listener {
     public void onPlayerDeath(PlayerDeathEvent e) {
         if (active && isCameraPlayer(e.getEntity())) {
             // カメラ役が万が一死んだ場合、デスメッセージを消去し、即座にリスポーンさせる
-            e.setDeathMessage(null);
+            e.deathMessage(null);
             e.getDrops().clear();
             e.setDroppedExp(0);
             

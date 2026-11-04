@@ -2,6 +2,7 @@ package dev.gonjy.patrolspectator;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -1227,7 +1228,8 @@ public class PatrolManager implements org.bukkit.event.Listener {
 
     @org.bukkit.event.EventHandler
     public void onPlayerKick(org.bukkit.event.player.PlayerKickEvent e) {
-        plugin.getLogger().warning("[KickLog] Player " + e.getPlayer().getName() + " was kicked: " + e.getReason());
+        String reason = PlainTextComponentSerializer.plainText().serialize(e.reason());
+        plugin.getLogger().warning("[KickLog] Player " + e.getPlayer().getName() + " was kicked: " + reason);
         if (cameraUuid != null && e.getPlayer().getUniqueId().equals(cameraUuid)) {
             plugin.getLogger().warning("[KickLog] カメラ役がキックされました！再ログインを待ちます。");
             stopTracking();
