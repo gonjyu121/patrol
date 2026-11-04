@@ -1,8 +1,11 @@
 package dev.gonjy.patrolspectator;
 
-import org.bukkit.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.title.Title;
+import java.time.Duration;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -348,16 +351,13 @@ public final class EngagementSystem {
 
     private void notifyMilestone(Player player, long milestoneMs) {
         long hours = milestoneMs / 3600000L;
-        String message = ChatColor.GOLD + "🎉 素晴らしい！プレイ時間が " 
-                + ChatColor.YELLOW + hours + "時間" 
-                + ChatColor.GOLD + " を突破しました！";
-
-        player.sendMessage(message);
-        // Title通知の追加
-        player.sendTitle(
-                org.bukkit.ChatColor.GOLD + "🎉 Milestone Reached! 🎉",
-                org.bukkit.ChatColor.YELLOW + "累計プレイ時間 " + hours + "時間突破！",
-                10, 70, 20);
+        player.sendMessage(Component.text("🎉 素晴らしい！プレイ時間が ", NamedTextColor.GOLD)
+                .append(Component.text(hours + "時間", NamedTextColor.YELLOW))
+                .append(Component.text(" を突破しました！", NamedTextColor.GOLD)));
+        player.showTitle(Title.title(
+                Component.text("🎉 Milestone Reached! 🎉", NamedTextColor.GOLD),
+                Component.text("累計プレイ時間 " + hours + "時間突破！", NamedTextColor.YELLOW),
+                Title.Times.times(Duration.ofMillis(500), Duration.ofMillis(3500), Duration.ofMillis(1000))));
 
         playNamedSound(player, "UI_TOAST_CHALLENGE_COMPLETE", 1.0f, 1.0f);
 
@@ -400,19 +400,17 @@ public final class EngagementSystem {
     }
 
     private void notifyRankUp(Player player, String rank) {
-        org.bukkit.ChatColor color = getLegacyRankColor(rank);
-
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + player.getName() + " さんがランク "
-                + color + rank 
-                + ChatColor.YELLOW + " になりました！");
-
-        player.sendMessage(ChatColor.GOLD + "✨ ランクアップ！ ✨ 新しいランク: " + color + rank);
-
-        // Title通知の追加
-        player.sendTitle(
-                org.bukkit.ChatColor.GOLD + "✨ RANK UP! ✨",
-                org.bukkit.ChatColor.YELLOW + "新ランク: " + getLegacyRankColor(rank) + rank,
-                10, 80, 20);
+        NamedTextColor color = getRankColor(rank);
+        Component announcement = Component.text(player.getName() + " さんがランク ", NamedTextColor.YELLOW)
+                .append(Component.text(rank, color))
+                .append(Component.text(" になりました！", NamedTextColor.YELLOW));
+        CameraMessageRouter.send(plugin, announcement);
+        player.sendMessage(Component.text("✨ ランクアップ！ ✨ 新しいランク: ", NamedTextColor.GOLD)
+                .append(Component.text(rank, color)));
+        player.showTitle(Title.title(
+                Component.text("✨ RANK UP! ✨", NamedTextColor.GOLD),
+                Component.text("新ランク: ", NamedTextColor.YELLOW).append(Component.text(rank, color)),
+                Title.Times.times(Duration.ofMillis(500), Duration.ofMillis(4000), Duration.ofMillis(1000))));
 
         playNamedSound(player, "ENTITY_PLAYER_LEVELUP", 1.0f, 0.8f);
 
@@ -423,19 +421,29 @@ public final class EngagementSystem {
     }
 
 
-    private org.bukkit.ChatColor getLegacyRankColor(String rank) {
+    private NamedTextColor getRankColor(String rank) {
         switch (rank) {
             case "Bronze":
-                return org.bukkit.ChatColor.GOLD;
+                return NamedTextColor.GOLD;
             case "Silver":
-                return org.bukkit.ChatColor.GRAY;
+                return NamedTextColor.GRAY;
             case "Gold":
-                return org.bukkit.ChatColor.YELLOW;
+                return NamedTextColor.YELLOW;
             case "Legend":
-                return org.bukkit.ChatColor.LIGHT_PURPLE;
+                return NamedTextColor.LIGHT_PURPLE;
             default:
-                return org.bukkit.ChatColor.WHITE;
+                return NamedTextColor.WHITE;
         }
+    }
+
+    private String getLegacyRankCode(String rank) {
+        return switch (rank) {
+            case "Bronze" -> "§6";
+            case "Silver" -> "§7";
+            case "Gold" -> "§e";
+            case "Legend" -> "§d";
+            default -> "§f";
+        };
     }
 
     /**
@@ -490,7 +498,7 @@ public final class EngagementSystem {
         }
         bar.append("§7]");
 
-        return "§f次のランク: " + getLegacyRankColor(nextRank) + nextRank + " §7(" + requirement + ")\n" +
+        return "§f次のランク: " + getLegacyRankCode(nextRank) + nextRank + " §7(" + requirement + ")\n" +
                 bar.toString() + " §e" + percent + "%";
     }
 }

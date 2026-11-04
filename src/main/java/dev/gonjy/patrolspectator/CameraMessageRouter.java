@@ -3,6 +3,7 @@ package dev.gonjy.patrolspectator;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import net.kyori.adventure.text.Component;
 
 import java.util.Collection;
 import java.util.List;
@@ -13,6 +14,13 @@ public final class CameraMessageRouter {
     }
 
     public static void send(JavaPlugin plugin, String message) {
+        Player camera = findCamera(plugin);
+        if (camera != null) {
+            camera.sendMessage(message);
+        }
+    }
+
+    public static void send(JavaPlugin plugin, Component message) {
         Player camera = findCamera(plugin);
         if (camera != null) {
             camera.sendMessage(message);
