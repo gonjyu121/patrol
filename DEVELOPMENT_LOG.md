@@ -1,5 +1,12 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-04 - v1.9.168 Java 25 Webhook URI対応
+
+- **Version**: `1.9.168`
+- **Branch**: `maintenance/java25-webhook-uri-v1.9.168`
+- Discord WebhookのURL生成を非推奨の`URL(String)`から`URI#create(...).toURL()`へ移行。
+- 通常メッセージとファイル添付の両方をJava 25対応。
+
 ## 2026-11-04 - v1.9.167 PaperイベントメッセージのComponent化
 
 - **Version**: `1.9.167`
