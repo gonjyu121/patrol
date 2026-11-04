@@ -38,7 +38,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.168",
-    "description": "配信用パトロールプラグイン（Java 25 Webhook URI対応版）"
+    "version": "1.9.169",
+    "description": "配信用パトロールプラグイン（参加者通知のAdventure Component対応版）"
   }
 }

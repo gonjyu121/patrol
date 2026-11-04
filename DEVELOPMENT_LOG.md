@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-05 - v1.9.169 参加者通知のAdventure Component化
+
+- **Version**: `1.9.169`
+- **Branch**: `maintenance/paper-26.3-engagement-components-v1.9.169`
+- プレイ時間マイルストーンとランクアップのチャット通知をAdventure Componentへ移行。
+- タイトル表示を非推奨の`sendTitle` APIから`showTitle(Title)`へ移行。
+- カメラ役専用メッセージでComponentをそのまま送信できるよう拡張。
+
 ## 2026-11-04 - v1.9.168 Java 25 Webhook URI対応
 
 - **Version**: `1.9.168`
