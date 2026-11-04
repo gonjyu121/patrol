@@ -108,7 +108,7 @@ public class DiscordWebhookClient {
     private void sendInternal(String content) {
         // ... (existing code remains mostly same, just for context)
         try {
-            java.net.URL url = new java.net.URL(webhookUrl);
+            java.net.URL url = java.net.URI.create(webhookUrl).toURL();
             java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);
@@ -140,7 +140,7 @@ public class DiscordWebhookClient {
 
     private void sendMultipartInternal(java.io.File file, String content) throws java.io.IOException {
         String boundary = "===" + System.currentTimeMillis() + "===";
-        java.net.URL url = new java.net.URL(webhookUrl);
+        java.net.URL url = java.net.URI.create(webhookUrl).toURL();
         java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
         connection.setDoOutput(true);
         connection.setRequestMethod("POST");

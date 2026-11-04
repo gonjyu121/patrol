@@ -38,7 +38,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.167",
-    "description": "配信用パトロールプラグイン（Paper 26.3 Adventure Component対応版）"
+    "version": "1.9.168",
+    "description": "配信用パトロールプラグイン（Java 25 Webhook URI対応版）"
   }
 }
