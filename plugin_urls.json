@@ -38,7 +38,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.176",
-    "description": "配信用パトロールプラグイン（迷宮ボス名のAdventure Component対応版）"
+    "version": "1.9.177",
+    "description": "配信用パトロールプラグイン（エンドリセット通知のAdventure Component対応版）"
   }
 }
