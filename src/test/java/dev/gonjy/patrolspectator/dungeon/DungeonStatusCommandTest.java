@@ -1,5 +1,7 @@
 package dev.gonjy.patrolspectator.dungeon;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
@@ -31,9 +33,11 @@ class DungeonStatusCommandTest {
 
         new DungeonCommand(manager).onCommand(sender, mock(Command.class), "dungeon", new String[] {"status"});
 
-        ArgumentCaptor<String> messages = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Component> messages = ArgumentCaptor.forClass(Component.class);
         verify(sender, atLeastOnce()).sendMessage(messages.capture());
-        List<String> output = messages.getAllValues();
+        List<String> output = messages.getAllValues().stream()
+                .map(PlainTextComponentSerializer.plainText()::serialize)
+                .toList();
         assertTrue(output.stream().anyMatch(line -> line.contains("B1〜B22")));
         assertTrue(output.stream().anyMatch(line -> line.contains("22/22階")));
         assertTrue(output.stream().noneMatch(line -> line.contains("1234") || line.contains("5678")));

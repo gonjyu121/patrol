@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-06 - v1.9.183 迷宮管理コマンドのAdventure Component化
+
+- **Version**: `1.9.183`
+- **Branch**: `maintenance/paper-26.3-dungeon-command-components-v1.9.183`
+- 迷宮管理コマンドの応答とヘルプをAdventure Componentへ移行。
+- ヘルプのコマンド部と説明部の色分けをComponent結合で維持。
+- 非推奨`ChatColor`と旧式のセクション記号による色指定を除去。
+
 ## 2026-11-06 - v1.9.182 賞金首通知のAdventure Component化
 
 - **Version**: `1.9.182`
