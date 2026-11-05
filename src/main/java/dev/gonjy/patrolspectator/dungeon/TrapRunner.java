@@ -1,8 +1,8 @@
 package dev.gonjy.patrolspectator.dungeon;
 
 import dev.gonjy.patrolspectator.PatrolSpectatorPlugin;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
@@ -50,24 +50,24 @@ public class TrapRunner {
     }
 
     private void runTeleportTrap(Player p) {
-        p.sendMessage(ChatColor.DARK_PURPLE + "足元の魔方陣が光り輝き、空間が歪む…！");
+        p.sendMessage(Component.text("足元の魔方陣が光り輝き、空間が歪む…！", NamedTextColor.DARK_PURPLE));
         Location center = manager.getCenter();
         if (center == null)
             return;
 
         Location target = findSafeLocation(center, p.getLocation(), 28, 2);
         if (target == null) {
-            p.sendMessage(ChatColor.GRAY + "魔方陣は行き先を見失い、静かに消えた…。");
+            p.sendMessage(Component.text("魔方陣は行き先を見失い、静かに消えた…。", NamedTextColor.GRAY));
             return;
         }
         target.setYaw(p.getLocation().getYaw());
         target.setPitch(p.getLocation().getPitch());
         p.teleport(target);
-        p.sendMessage(ChatColor.RED + "迷宮の別の通路へ飛ばされた！");
+        p.sendMessage(Component.text("迷宮の別の通路へ飛ばされた！", NamedTextColor.RED));
     }
 
     private void runMobTrap(Player p, Location loc) {
-        p.sendMessage(ChatColor.DARK_RED + "けたたましい警報音が鳴り響き、転送陣が開いた！【モンスターハウス】");
+        p.sendMessage(Component.text("けたたましい警報音が鳴り響き、転送陣が開いた！【モンスターハウス】", NamedTextColor.DARK_RED));
 
         int floor = Math.max(1, manager.getFloor(loc));
         int floorCount = manager.getFloorCount();
@@ -100,7 +100,7 @@ public class TrapRunner {
     }
 
     public void runWaterTrap(Player p, Location loc) {
-        p.sendMessage(ChatColor.BLUE + "水面が激しく揺れ、三叉槍を構えたドラウンドが這い出してきた！");
+        p.sendMessage(Component.text("水面が激しく揺れ、三叉槍を構えたドラウンドが這い出してきた！", NamedTextColor.BLUE));
         loc.getWorld().playSound(loc, org.bukkit.Sound.ENTITY_PLAYER_SPLASH, 1.0f, 0.5f);
 
         for (int i = 0; i < 4; i++) {
@@ -125,7 +125,7 @@ public class TrapRunner {
     }
 
     private void runDebuffTrap(Player p) {
-        p.sendMessage(ChatColor.GRAY + "どこからともなく不気味な笑い声が聞こえる…");
+        p.sendMessage(Component.text("どこからともなく不気味な笑い声が聞こえる…", NamedTextColor.GRAY));
         p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_WITCH_CELEBRATE, 1.0f, 0.8f);
 
         p.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.BLINDNESS, 100, 0));
@@ -134,20 +134,20 @@ public class TrapRunner {
     }
 
     private void runExplosionTrap(Player p, Location loc) {
-        p.sendMessage(ChatColor.RED + "導火線の燃える音が聞こえる…！");
+        p.sendMessage(Component.text("導火線の燃える音が聞こえる…！", NamedTextColor.RED));
         loc.getWorld().playSound(loc, org.bukkit.Sound.ENTITY_TNT_PRIMED, 1.0f, 1.0f);
 
         new BukkitRunnable() {
             @Override
             public void run() {
                 loc.getWorld().createExplosion(loc, 3.0f, false, false);
-                p.sendMessage(ChatColor.DARK_RED + "ドカンッ！！");
+                p.sendMessage(Component.text("ドカンッ！！", NamedTextColor.DARK_RED));
             }
         }.runTaskLater(plugin, 40L); // 2秒後
     }
 
     private void runPitfallTrap(Player p, Location loc) {
-        p.sendMessage(ChatColor.GOLD + "足元の床が崩れ落ちた！");
+        p.sendMessage(Component.text("足元の床が崩れ落ちた！", NamedTextColor.GOLD));
         loc.getWorld().playSound(loc, org.bukkit.Sound.BLOCK_STONE_BREAK, 1.0f, 0.5f);
 
         // 岩盤で充填された床下へ転送すると窒息して行動不能になるため、落下演出とダメージだけにする。
@@ -180,7 +180,7 @@ public class TrapRunner {
         if (damage != null) {
             damage.setBaseValue(Math.min(100.0, damage.getBaseValue() * damageMultiplier));
         }
-        mob.setCustomName(ChatColor.DARK_RED + "地下" + floor + "階の魔物");
+        mob.customName(Component.text("地下" + floor + "階の魔物", NamedTextColor.DARK_RED));
         mob.setCustomNameVisible(progress >= 0.67);
     }
 
