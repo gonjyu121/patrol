@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-05 - v1.9.177 エンドリセット通知のAdventure Component化
+
+- **Version**: `1.9.177`
+- **Branch**: `maintenance/paper-26.3-end-reset-components-v1.9.177`
+- エンドリセットの開始・カウントダウン・完了通知をAdventure Componentへ移行。
+- エンドから退避した参加者への通知をComponent APIへ移行。
+- `EndResetManager`の非推奨`ChatColor`依存を除去。
+
 ## 2026-11-05 - v1.9.176 迷宮ボス名のAdventure Component化
 
 - **Version**: `1.9.176`

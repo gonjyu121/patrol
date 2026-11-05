@@ -1,7 +1,8 @@
 package dev.gonjy.patrolspectator;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.EnderDragon;
@@ -249,11 +250,11 @@ public class EndResetManager implements Listener {
         scheduleResetTask(delayTicks);
 
         // アナウンス開始
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "========================================");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "🐉 " + reason);
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "エンドワールドは " + resetDelayMinutes + "分後 にリセットされます。");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "エリトラなどのアイテム回収はお早めにお願いします！");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "========================================");
+        CameraMessageRouter.send(plugin, Component.text("========================================", NamedTextColor.RED));
+        CameraMessageRouter.send(plugin, Component.text("🐉 " + reason, NamedTextColor.GOLD));
+        CameraMessageRouter.send(plugin, Component.text("エンドワールドは " + resetDelayMinutes + "分後 にリセットされます。", NamedTextColor.YELLOW));
+        CameraMessageRouter.send(plugin, Component.text("エリトラなどのアイテム回収はお早めにお願いします！", NamedTextColor.YELLOW));
+        CameraMessageRouter.send(plugin, Component.text("========================================", NamedTextColor.RED));
 
         if (plugin.getDiscordWebhookClient() != null) {
             plugin.getDiscordWebhookClient().send("🐉 **[End Reset Scheduled]** " + reason + " エンドワールドは **" + resetDelayMinutes + "分後** に再生成されます。");
@@ -286,7 +287,8 @@ public class EndResetManager implements Listener {
                 if (delay > 0) {
                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
                         if (scheduledResetTime > 0) {
-                            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "[EndReset] " + ChatColor.YELLOW + "エンドリセットまで残り " + min + "分 です！");
+                            CameraMessageRouter.send(plugin, Component.text("[EndReset] ", NamedTextColor.RED)
+                                    .append(Component.text("エンドリセットまで残り " + min + "分 です！", NamedTextColor.YELLOW)));
                         }
                     }, delay);
                 }
@@ -298,7 +300,8 @@ public class EndResetManager implements Listener {
         if (delay30s > 0) {
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (scheduledResetTime > 0) {
-                    dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "[EndReset] " + ChatColor.YELLOW + "エンドリセットまで残り 30秒 です！退避してください！");
+                    CameraMessageRouter.send(plugin, Component.text("[EndReset] ", NamedTextColor.RED)
+                            .append(Component.text("エンドリセットまで残り 30秒 です！退避してください！", NamedTextColor.YELLOW)));
                 }
             }, delay30s);
         }
@@ -355,7 +358,7 @@ public class EndResetManager implements Listener {
 
         // 事前通知
         String msg = "[EndReset] エンドワールドのリセット処理を開始します。一時的にサーバーが重くなる可能性があります。";
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + msg);
+        CameraMessageRouter.send(plugin, Component.text(msg, NamedTextColor.RED));
         if (plugin.getDiscordWebhookClient() != null) {
             plugin.getDiscordWebhookClient().send("🔄 **End Resetting...** World maintenance in progress.");
         }
@@ -368,7 +371,7 @@ public class EndResetManager implements Listener {
 
         for (Player p : endWorld.getPlayers()) {
             p.teleport(safeSpawn);
-            p.sendMessage(ChatColor.YELLOW + "[EndReset] エンドワールドがリセットされるため、メインワールドに移動しました。");
+            p.sendMessage(Component.text("[EndReset] エンドワールドがリセットされるため、メインワールドに移動しました。", NamedTextColor.YELLOW));
         }
 
         // 2. プレイヤーのテレポート完了とチャンクチケット解放を待つため、20tick (1秒) 後にアンロードを実行
@@ -401,7 +404,7 @@ public class EndResetManager implements Listener {
                     return;
                 } else {
                     plugin.getLogger().severe("[EndReset] Failed to unload End world after multiple attempts! Reset aborted.");
-                    dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.DARK_RED + "[EndReset] エンドワールドのアンロードに失敗しました。リセットを中止します。");
+                    CameraMessageRouter.send(plugin, Component.text("[EndReset] エンドワールドのアンロードに失敗しました。リセットを中止します。", NamedTextColor.DARK_RED));
                     isResetting = false;
                     return;
                 }
@@ -500,15 +503,15 @@ public class EndResetManager implements Listener {
         plugin.getConfig().set("end.lastResetTime", System.currentTimeMillis());
         plugin.saveConfig();
 
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GREEN + "[EndReset] エンドワールドのリセットが完了しました！");
+        CameraMessageRouter.send(plugin, Component.text("[EndReset] エンドワールドのリセットが完了しました！", NamedTextColor.GREEN));
 
         if (isHardMode) {
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "⚠ エンドワールドから強大なエネルギー反応を検知しました... (HARD MODE)");
+            CameraMessageRouter.send(plugin, Component.text("⚠ エンドワールドから強大なエネルギー反応を検知しました... (HARD MODE)", NamedTextColor.RED));
             if (plugin.getDiscordWebhookClient() != null) {
                 plugin.getDiscordWebhookClient().send("🐉 **The Void Dragon** has appeared! (Difficulty: **HARD**)");
             }
         } else {
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GREEN + "エンドワールドのエネルギー反応は正常です。(NORMAL MODE)");
+            CameraMessageRouter.send(plugin, Component.text("エンドワールドのエネルギー反応は正常です。(NORMAL MODE)", NamedTextColor.GREEN));
             if (plugin.getDiscordWebhookClient() != null) {
                 plugin.getDiscordWebhookClient().send("🐉 **The Void Dragon** has appeared! (Difficulty: Normal)");
             }
