@@ -1,5 +1,12 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-05 - v1.9.170 Paper 26.3無敵状態API対応
+
+- **Version**: `1.9.170`
+- **Branch**: `maintenance/paper-26.3-invulnerability-api-v1.9.170`
+- カメラ役の無敵状態確認を非推奨の`isInvulnerable()`から`isMarkedInvulnerable()`へ移行。
+- `setInvulnerable(boolean)`で設定した状態を正しく判定するPaper 26.3 APIへ統一。
+
 ## 2026-11-05 - v1.9.169 参加者通知のAdventure Component化
 
 - **Version**: `1.9.169`
