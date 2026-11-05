@@ -1,7 +1,8 @@
 package dev.gonjy.patrolspectator;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -117,7 +118,9 @@ public class TickMonitor {
         if (camera != null) {
             pausedCameraId = camera.getUniqueId();
             isPausedDueToLoad = true;
-            camera.sendMessage(ChatColor.RED + "⚠️ サーバー負荷が高いため、パトロールを自動的に一時停止しました。負荷が落ち着くと自動で再開します...");
+            camera.sendMessage(Component.text(
+                    "⚠️ サーバー負荷が高いため、パトロールを自動的に一時停止しました。負荷が落ち着くと自動で再開します...",
+                    NamedTextColor.RED));
         } else {
             isPausedDueToLoad = false;
         }
@@ -140,7 +143,9 @@ public class TickMonitor {
         Player camera = Bukkit.getPlayer(pausedCameraId);
         if (camera != null && camera.isOnline()) {
             plugin.getLogger().info("[✅] サーバー負荷が安定したため、パトロールを自動再開します。");
-            camera.sendMessage(ChatColor.GREEN + "✅ サーバー負荷が安定したため、パトロールを自動再開します！");
+            camera.sendMessage(Component.text(
+                    "✅ サーバー負荷が安定したため、パトロールを自動再開します！",
+                    NamedTextColor.GREEN));
             
             if (plugin.getPatrolManager().resumePatrolAfterLoad()) {
                 isPausedDueToLoad = false;
