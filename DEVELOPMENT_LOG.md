@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-05 - v1.9.174 統計表示のAdventure Component化
+
+- **Version**: `1.9.174`
+- **Branch**: `maintenance/paper-26.3-stats-components-v1.9.174`
+- `/stats`の色付き統計表示をAdventure Componentへ移行。
+- ランク進捗の既存色コードをComponentへ変換して表示互換性を維持。
+- Paper 26.3で非推奨となった`ChatColor`依存を`StatsCommand`から除去。
+
 ## 2026-11-05 - v1.9.173 Paper 26.3 PluginMeta対応
 
 - **Version**: `1.9.173`
