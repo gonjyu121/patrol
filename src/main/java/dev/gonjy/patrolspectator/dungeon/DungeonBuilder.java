@@ -1,11 +1,14 @@
 package dev.gonjy.patrolspectator.dungeon;
 
 import dev.gonjy.patrolspectator.PatrolSpectatorPlugin;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.sign.Side;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
@@ -258,10 +261,10 @@ public class DungeonBuilder {
                 wallSign.setFacing(org.bukkit.block.BlockFace.NORTH);
                 sign.setBlockData(wallSign);
             }
-            sign.setLine(0, ChatColor.DARK_RED + "☠ [死の迷宮] ☠");
-            sign.setLine(1, ChatColor.RED + "死はアイテム散布");
-            sign.setLine(2, ChatColor.GOLD + "最深部に超レア宝箱");
-            sign.setLine(3, ChatColor.DARK_PURPLE + "ボス討伐でクリア");
+            sign.getSide(Side.FRONT).line(0, Component.text("☠ [死の迷宮] ☠", NamedTextColor.DARK_RED));
+            sign.getSide(Side.FRONT).line(1, Component.text("死はアイテム散布", NamedTextColor.RED));
+            sign.getSide(Side.FRONT).line(2, Component.text("最深部に超レア宝箱", NamedTextColor.GOLD));
+            sign.getSide(Side.FRONT).line(3, Component.text("ボス討伐でクリア", NamedTextColor.DARK_PURPLE));
             sign.update();
         }
 
@@ -274,10 +277,10 @@ public class DungeonBuilder {
                 wallSign.setFacing(org.bukkit.block.BlockFace.NORTH);
                 sign.setBlockData(wallSign);
             }
-            sign.setLine(0, ChatColor.GOLD + "【 攻略心得 】");
-            sign.setLine(1, ChatColor.DARK_GRAY + "・ベッド設置不可");
-            sign.setLine(2, ChatColor.DARK_GRAY + "・水辺の罠に注意");
-            sign.setLine(3, ChatColor.DARK_GRAY + "・奪い合い自由");
+            sign.getSide(Side.FRONT).line(0, Component.text("【 攻略心得 】", NamedTextColor.GOLD));
+            sign.getSide(Side.FRONT).line(1, Component.text("・ベッド設置不可", NamedTextColor.DARK_GRAY));
+            sign.getSide(Side.FRONT).line(2, Component.text("・水辺の罠に注意", NamedTextColor.DARK_GRAY));
+            sign.getSide(Side.FRONT).line(3, Component.text("・奪い合い自由", NamedTextColor.DARK_GRAY));
             sign.update();
         }
 
@@ -382,19 +385,19 @@ public class DungeonBuilder {
         Location signLoc = center.clone().add(0, 0, -2); // 入口の少し手前
         signLoc.getBlock().setType(Material.OAK_SIGN);
         org.bukkit.block.Sign sign = (org.bukkit.block.Sign) signLoc.getBlock().getState();
-        sign.setLine(0, ChatColor.DARK_RED + "[ 死の迷宮 ]");
-        sign.setLine(1, ChatColor.BLACK + "奥地に超レア報酬");
-        sign.setLine(2, ChatColor.RED + "死はアイテム散布");
-        sign.setLine(3, ChatColor.DARK_BLUE + "ボス討伐で新生");
+        sign.getSide(Side.FRONT).line(0, Component.text("[ 死の迷宮 ]", NamedTextColor.DARK_RED));
+        sign.getSide(Side.FRONT).line(1, Component.text("奥地に超レア報酬", NamedTextColor.BLACK));
+        sign.getSide(Side.FRONT).line(2, Component.text("死はアイテム散布", NamedTextColor.RED));
+        sign.getSide(Side.FRONT).line(3, Component.text("ボス討伐で新生", NamedTextColor.DARK_BLUE));
         sign.update();
 
         Location ruleLoc = signLoc.clone().add(1, 0, 0);
         ruleLoc.getBlock().setType(Material.OAK_SIGN);
         org.bukkit.block.Sign ruleSign = (org.bukkit.block.Sign) ruleLoc.getBlock().getState();
-        ruleSign.setLine(0, ChatColor.BOLD + "攻略の鍵");
-        ruleSign.setLine(1, "水には近づくな");
-        ruleSign.setLine(2, "宝箱には罠あり");
-        ruleSign.setLine(3, "命を大事に");
+        ruleSign.getSide(Side.FRONT).line(0, Component.text("攻略の鍵").decorate(TextDecoration.BOLD));
+        ruleSign.getSide(Side.FRONT).line(1, Component.text("水には近づくな"));
+        ruleSign.getSide(Side.FRONT).line(2, Component.text("宝箱には罠あり"));
+        ruleSign.getSide(Side.FRONT).line(3, Component.text("命を大事に"));
         ruleSign.update();
     }
 
