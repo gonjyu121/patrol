@@ -134,7 +134,7 @@ public final class GameModeEnforcer implements Listener {
                 if (!p.isFlying()) {
                     p.setFlying(true);
                 }
-                if (!p.isInvulnerable()) {
+                if (!p.isMarkedInvulnerable()) {
                     p.setInvulnerable(true);
                 }
             } catch (Throwable ignored) {}
