@@ -1,5 +1,12 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-05 - v1.9.171 負荷監視通知のAdventure Component化
+
+- **Version**: `1.9.171`
+- **Branch**: `maintenance/paper-26.3-tick-monitor-components-v1.9.171`
+- 高負荷によるパトロール一時停止・再開通知をAdventure Componentへ移行。
+- Paper 26.3で非推奨となった`ChatColor`依存を`TickMonitor`から除去。
+
 ## 2026-11-05 - v1.9.170 Paper 26.3無敵状態API対応
 
 - **Version**: `1.9.170`

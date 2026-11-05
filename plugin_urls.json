@@ -38,7 +38,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.170",
-    "description": "配信用パトロールプラグイン（Paper 26.3無敵状態API対応版）"
+    "version": "1.9.171",
+    "description": "配信用パトロールプラグイン（負荷監視通知のAdventure Component対応版）"
   }
 }
