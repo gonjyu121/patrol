@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-05 - v1.9.180 迷宮看板のAdventure Component化
+
+- **Version**: `1.9.180`
+- **Branch**: `maintenance/paper-26.3-dungeon-sign-components-v1.9.180`
+- 迷宮入口・攻略心得・ルール看板をAdventure Componentへ移行。
+- 看板の色と太字装飾をComponent APIで維持。
+- 非推奨の`ChatColor`・`Sign#setLine`依存を除去。
+
 ## 2026-11-05 - v1.9.179 迷宮報酬本のAdventure Component化
 
 - **Version**: `1.9.179`

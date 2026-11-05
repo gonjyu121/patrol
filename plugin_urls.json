@@ -38,7 +38,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.179",
-    "description": "配信用パトロールプラグイン（迷宮報酬本のAdventure Component対応版）"
+    "version": "1.9.180",
+    "description": "配信用パトロールプラグイン（迷宮看板のAdventure Component対応版）"
   }
 }
