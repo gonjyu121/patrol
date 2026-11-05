@@ -29,5 +29,6 @@ class BukkitRegistryResolverTest {
         assertFalse(source.indexOf("GameRule.getByName(") >= 0);
         assertFalse(source.indexOf("Sound.valueOf(") >= 0);
         assertFalse(source.indexOf("Attribute.valueOf(") >= 0);
+        assertFalse(source.indexOf("Registry.STRUCTURE") >= 0);
     }
 }

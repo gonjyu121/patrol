@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-06 - v1.9.185 構造物RegistryのPaper RegistryAccess対応
+
+- **Version**: `1.9.185`
+- **Branch**: `maintenance/paper-26.3-structure-registry-v1.9.185`
+- 遠方村探索の構造物検索を非推奨`Registry.STRUCTURE`からPaper `RegistryAccess`へ移行。
+- 構造物の名前解決を`BukkitRegistryResolver`へ集約。
+- 平原・砂漠・タイガ村の探索順序とフォールバック挙動を維持。
+
 ## 2026-11-06 - v1.9.184 タイトル表示のAdventure API化
 
 - **Version**: `1.9.184`
