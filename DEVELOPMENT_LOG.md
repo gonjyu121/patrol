@@ -1,5 +1,12 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-05 - v1.9.173 Paper 26.3 PluginMeta対応
+
+- **Version**: `1.9.173`
+- **Branch**: `maintenance/paper-26.3-plugin-meta-v1.9.173`
+- 診断コマンドのプラグインバージョン取得を`getPluginMeta()`へ移行。
+- Patrol・Geyser・Floodgateの表示バージョンを非推奨APIに依存せず取得。
+
 ## 2026-11-05 - v1.9.172 定期案内のAdventure Component化
 
 - **Version**: `1.9.172`
