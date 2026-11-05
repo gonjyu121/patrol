@@ -53,6 +53,20 @@ class RecentPlayerLocationStoreTest {
     }
 
     @Test
+    void stripsLegacyFormattingAndLineBreaksFromPlayerName() {
+        File file = tempDir.resolve("recent.yml").toFile();
+        RecentPlayerLocationStore store = new RecentPlayerLocationStore(file, Logger.getLogger("test"), 10, 30, 10);
+        World world = Mockito.mock(World.class);
+        Mockito.when(world.getName()).thenReturn("world");
+
+        TouristLocation location = store.record(UUID.randomUUID(), "§cAlice\r\nAdmin",
+                new Location(world, 1, 64, 1), 1_000_000L);
+
+        assertNotNull(location);
+        assertEquals("§bAliceAdmin", location.name);
+    }
+
+    @Test
     void keepsOnlyLatestEntryForSamePlayer() {
         File file = tempDir.resolve("recent.yml").toFile();
         RecentPlayerLocationStore store = new RecentPlayerLocationStore(file, Logger.getLogger("test"), 10, 30, 10);
