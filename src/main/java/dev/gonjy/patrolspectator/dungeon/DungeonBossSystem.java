@@ -1,6 +1,7 @@
 package dev.gonjy.patrolspectator.dungeon;
 
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
@@ -25,22 +26,22 @@ public class DungeonBossSystem {
     public void spawnBoss(Location loc, int floor) {
         int choice = random.nextInt(3);
         LivingEntity boss;
-        String bossName;
+        Component bossName;
 
         switch (choice) {
             case 0:
                 boss = (LivingEntity) loc.getWorld().spawnEntity(loc, EntityType.PIGLIN_BRUTE);
-                bossName = ChatColor.GOLD + "迷宮の狂守護者 (Piglin Brute)";
+                bossName = Component.text("迷宮の狂守護者 (Piglin Brute)", NamedTextColor.GOLD);
                 setupBossAttributes(boss, bossName, 100.0 + floor * 8.0, 10.0 + floor * 0.5, floor);
                 break;
             case 1:
                 boss = (LivingEntity) loc.getWorld().spawnEntity(loc, EntityType.WARDEN);
-                bossName = ChatColor.DARK_AQUA + "深淵の這い寄る影 (Warden)";
+                bossName = Component.text("深淵の這い寄る影 (Warden)", NamedTextColor.DARK_AQUA);
                 setupBossAttributes(boss, bossName, 500.0 + floor * 12.0, 30.0 + floor * 0.5, floor);
                 break;
             default:
                 boss = (LivingEntity) loc.getWorld().spawnEntity(loc, EntityType.WITHER);
-                bossName = ChatColor.GRAY + "死の宣告者 (Wither)";
+                bossName = Component.text("死の宣告者 (Wither)", NamedTextColor.GRAY);
                 setupBossAttributes(boss, bossName, 300.0 + floor * 10.0, 15.0 + floor * 0.5, floor);
                 break;
         }
@@ -48,8 +49,8 @@ public class DungeonBossSystem {
         loc.getWorld().strikeLightningEffect(loc);
     }
 
-    private void setupBossAttributes(LivingEntity boss, String name, double health, double damage, int floor) {
-        boss.setCustomName(ChatColor.DARK_RED + "地下" + floor + "階 " + name);
+    private void setupBossAttributes(LivingEntity boss, Component name, double health, double damage, int floor) {
+        boss.customName(Component.text("地下" + floor + "階 ", NamedTextColor.DARK_RED).append(name));
         boss.setCustomNameVisible(true);
 
         // ボス識別タグの付与
@@ -84,7 +85,7 @@ public class DungeonBossSystem {
         ItemStack item = new ItemStack(Material.NETHERITE_INGOT, coreCount);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.DARK_PURPLE + "迷宮主の核");
+            meta.displayName(Component.text("迷宮主の核", NamedTextColor.DARK_PURPLE));
             item.setItemMeta(meta);
         }
         loot.add(item);

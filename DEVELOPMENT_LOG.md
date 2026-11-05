@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-05 - v1.9.176 迷宮ボス名のAdventure Component化
+
+- **Version**: `1.9.176`
+- **Branch**: `maintenance/paper-26.3-dungeon-boss-components-v1.9.176`
+- 迷宮ボスの表示名をAdventure Componentへ移行。
+- ボス報酬「迷宮主の核」のアイテム名をComponent APIへ移行。
+- 非推奨の`ChatColor`・`setCustomName`・`setDisplayName`依存を除去。
+
 ## 2026-11-05 - v1.9.175 参加者名整形のAdventure対応
 
 - **Version**: `1.9.175`
