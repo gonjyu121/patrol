@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-05 - v1.9.179 迷宮報酬本のAdventure Component化
+
+- **Version**: `1.9.179`
+- **Branch**: `maintenance/paper-26.3-dungeon-loot-book-components-v1.9.179`
+- 迷宮報酬「死者の手記」の題名・著者・本文をAdventure Componentへ移行。
+- 本文内の色分けをComponent結合で維持。
+- 非推奨の`ChatColor`・文字列版`BookMeta` API依存を除去。
+
 ## 2026-11-05 - v1.9.178 迷宮トラップ通知のAdventure Component化
 
 - **Version**: `1.9.178`
