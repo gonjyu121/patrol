@@ -479,7 +479,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
         org.bukkit.Location targetLoc = null;
 
         try {
-            org.bukkit.generator.structure.Structure plainsVillage = org.bukkit.Registry.STRUCTURE.get(org.bukkit.NamespacedKey.minecraft("village_plains"));
+            org.bukkit.generator.structure.Structure plainsVillage = BukkitRegistryResolver.structure("village_plains");
             if (plainsVillage != null) {
                 org.bukkit.util.StructureSearchResult result = world.locateNearestStructure(searchOrigin, plainsVillage, 150, false);
                 if (result != null && result.getLocation() != null) {
@@ -488,7 +488,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             }
 
             if (targetLoc == null) {
-                org.bukkit.generator.structure.Structure desertVillage = org.bukkit.Registry.STRUCTURE.get(org.bukkit.NamespacedKey.minecraft("village_desert"));
+                org.bukkit.generator.structure.Structure desertVillage = BukkitRegistryResolver.structure("village_desert");
                 if (desertVillage != null) {
                     org.bukkit.util.StructureSearchResult result = world.locateNearestStructure(searchOrigin, desertVillage, 150, false);
                     if (result != null && result.getLocation() != null) {
@@ -498,7 +498,7 @@ public class PatrolCommand implements CommandExecutor, TabCompleter {
             }
 
             if (targetLoc == null) {
-                org.bukkit.generator.structure.Structure taigaVillage = org.bukkit.Registry.STRUCTURE.get(org.bukkit.NamespacedKey.minecraft("village_taiga"));
+                org.bukkit.generator.structure.Structure taigaVillage = BukkitRegistryResolver.structure("village_taiga");
                 if (taigaVillage != null) {
                     org.bukkit.util.StructureSearchResult result = world.locateNearestStructure(searchOrigin, taigaVillage, 150, false);
                     if (result != null && result.getLocation() != null) {
