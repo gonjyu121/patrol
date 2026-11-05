@@ -1,13 +1,20 @@
 package dev.gonjy.patrolspectator;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.title.Title;
 import org.bukkit.entity.Player;
+
+import java.time.Duration;
 
 /**
  * メッセージ表示やタイトル表示に関するユーティリティクラス。
  */
-@SuppressWarnings("deprecation") // Using legacy sendTitle for compatibility
 public class MessageUtils {
 
+    private static final LegacyComponentSerializer LEGACY_SECTION = LegacyComponentSerializer.legacySection();
     private static PatrolSpectatorPlugin.TitleConf titleConf;
 
     /**
@@ -30,7 +37,9 @@ public class MessageUtils {
             return;
         try {
             // 上段を名称（大）、下段を「観光地」
-            p.sendTitle("§l" + name, "§7観光地", titleConf.fadeIn, titleConf.stay, titleConf.fadeOut);
+            showTitle(p,
+                    Component.text(name).decorate(TextDecoration.BOLD),
+                    Component.text("観光地", NamedTextColor.GRAY));
         } catch (Throwable ignored) {
         }
     }
@@ -46,9 +55,23 @@ public class MessageUtils {
         if (p == null || titleConf == null || !titleConf.enabled)
             return;
         try {
-            p.sendTitle(title, subtitle, titleConf.fadeIn, titleConf.stay, titleConf.fadeOut);
+            showTitle(p, LEGACY_SECTION.deserialize(title), LEGACY_SECTION.deserialize(subtitle));
         } catch (Throwable ignored) {
         }
+    }
+
+    private static void showTitle(Player player, Component title, Component subtitle) {
+        player.showTitle(Title.title(
+                title,
+                subtitle,
+                Title.Times.times(
+                        ticksToDuration(titleConf.fadeIn),
+                        ticksToDuration(titleConf.stay),
+                        ticksToDuration(titleConf.fadeOut))));
+    }
+
+    private static Duration ticksToDuration(int ticks) {
+        return Duration.ofMillis(Math.max(0, ticks) * 50L);
     }
 
     /**

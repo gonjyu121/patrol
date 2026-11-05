@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-06 - v1.9.184 タイトル表示のAdventure API化
+
+- **Version**: `1.9.184`
+- **Branch**: `maintenance/paper-26.3-message-utils-titles-v1.9.184`
+- 観光地名と汎用タイトル表示をAdventure `Title` APIへ移行。
+- 設定値のfade-in・表示・fade-out時間をtickからDurationへ変換して維持。
+- 既存呼び出し元のセクション色コードをLegacy Componentとして解釈し、表示互換性を維持。
+
 ## 2026-11-06 - v1.9.183 迷宮管理コマンドのAdventure Component化
 
 - **Version**: `1.9.183`
