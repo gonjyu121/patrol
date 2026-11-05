@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-05 - v1.9.181 賞金首コマンドのAdventure Component化
+
+- **Version**: `1.9.181`
+- **Branch**: `maintenance/paper-26.3-bounty-command-components-v1.9.181`
+- 賞金首コマンドのヘルプ・一覧・入力結果表示をAdventure Componentへ移行。
+- 賞金額・依頼者など複数色の表示をComponent結合で維持。
+- `BountyCommand`の非推奨`ChatColor`依存と抑制指定を除去。
+
 ## 2026-11-05 - v1.9.180 迷宮看板のAdventure Component化
 
 - **Version**: `1.9.180`
