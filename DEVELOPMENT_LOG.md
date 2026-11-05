@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-05 - v1.9.178 迷宮トラップ通知のAdventure Component化
+
+- **Version**: `1.9.178`
+- **Branch**: `maintenance/paper-26.3-trap-runner-components-v1.9.178`
+- 迷宮トラップの参加者向け通知をAdventure Componentへ移行。
+- トラップで召喚する魔物の表示名をComponent APIへ移行。
+- `TrapRunner`の非推奨`ChatColor`・`setCustomName`依存を除去。
+
 ## 2026-11-05 - v1.9.177 エンドリセット通知のAdventure Component化
 
 - **Version**: `1.9.177`
