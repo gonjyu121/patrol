@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-06 - v1.9.182 賞金首通知のAdventure Component化
+
+- **Version**: `1.9.182`
+- **Branch**: `maintenance/paper-26.3-bounty-manager-components-v1.9.182`
+- 賞金首の登録・討伐通知をAdventure Componentへ移行。
+- ターゲット・賞金・依頼者・討伐者の色分けをComponent結合で維持。
+- 報酬獲得通知をComponent化し、非推奨`ChatColor`依存と抑制指定を除去。
+
 ## 2026-11-05 - v1.9.181 賞金首コマンドのAdventure Component化
 
 - **Version**: `1.9.181`

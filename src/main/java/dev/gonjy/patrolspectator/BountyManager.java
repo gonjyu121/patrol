@@ -1,7 +1,8 @@
 package dev.gonjy.patrolspectator;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -16,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 賞金首システムを管理するクラス
  */
-@SuppressWarnings("deprecation")
 public class BountyManager implements Listener {
 
     private final PatrolSpectatorPlugin plugin;
@@ -41,12 +41,15 @@ public class BountyManager implements Listener {
         activeBounties.put(target.getUniqueId(), bounty);
 
         // ゲーム内通知
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.DARK_RED + "☠ 新たな賞金首が手配されました！ ☠");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "ターゲット: " + ChatColor.YELLOW + target.getName());
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "賞金: " + ChatColor.GOLD + "ダイヤモンド " + (int) amount + "個");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "依頼者: " + ChatColor.GRAY + issuer);
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        CameraMessageRouter.send(plugin, Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.RED));
+        CameraMessageRouter.send(plugin, Component.text("☠ 新たな賞金首が手配されました！ ☠", NamedTextColor.DARK_RED));
+        CameraMessageRouter.send(plugin, Component.text("ターゲット: ", NamedTextColor.RED)
+                .append(Component.text(target.getName(), NamedTextColor.YELLOW)));
+        CameraMessageRouter.send(plugin, Component.text("賞金: ", NamedTextColor.RED)
+                .append(Component.text("ダイヤモンド " + (int) amount + "個", NamedTextColor.GOLD)));
+        CameraMessageRouter.send(plugin, Component.text("依頼者: ", NamedTextColor.RED)
+                .append(Component.text(issuer, NamedTextColor.GRAY)));
+        CameraMessageRouter.send(plugin, Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.RED));
 
         // Discord通知
         sendDiscordAlert(target.getName(), (int) amount, issuer, true);
@@ -86,17 +89,20 @@ public class BountyManager implements Listener {
             String killerName = (killer != null) ? killer.getName() : "環境ダメージ/モブ";
 
             // ゲーム内通知
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "⚔ 賞金首が討ち取られました！ ⚔");
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "ターゲット: " + victim.getName());
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "討伐者: " + ChatColor.RED + killerName);
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            CameraMessageRouter.send(plugin, Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
+            CameraMessageRouter.send(plugin, Component.text("⚔ 賞金首が討ち取られました！ ⚔", NamedTextColor.GOLD));
+            CameraMessageRouter.send(plugin, Component.text("ターゲット: " + victim.getName(), NamedTextColor.YELLOW));
+            CameraMessageRouter.send(plugin, Component.text("討伐者: ", NamedTextColor.YELLOW)
+                    .append(Component.text(killerName, NamedTextColor.RED)));
+            CameraMessageRouter.send(plugin, Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
 
             // 報酬付与（キラーがいる場合のみ）
             if (killer != null) {
                 int diamondCount = (int) bounty.getAmount();
                 killer.getInventory().addItem(new ItemStack(Material.DIAMOND, diamondCount));
-                killer.sendMessage(ChatColor.GREEN + "💰 賞金としてダイヤモンド " + diamondCount + "個を獲得しました！");
+                killer.sendMessage(Component.text(
+                        "💰 賞金としてダイヤモンド " + diamondCount + "個を獲得しました！",
+                        NamedTextColor.GREEN));
 
                 // Discord通知
                 sendDiscordClaimAlert(victim.getName(), killerName, diamondCount);
