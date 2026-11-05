@@ -101,7 +101,7 @@ final class ServerDiagnosticsService {
                 Bukkit.getServer().getPort(),
                 Bukkit.getOnlinePlayers().size(),
                 Bukkit.getWorlds().stream().map(World::getName).toList(),
-                plugin.getDescription().getVersion(),
+                plugin.getPluginMeta().getVersion(),
                 patrolManager.isRunning(),
                 patrolManager.getCameraPlayer() == null ? "NONE" : patrolManager.getCameraPlayer().getName(),
                 coreInitialized,
@@ -126,7 +126,7 @@ final class ServerDiagnosticsService {
     }
 
     private static String pluginVersion(Plugin dependency) {
-        return dependency == null ? "NOT INSTALLED" : dependency.getDescription().getVersion();
+        return dependency == null ? "NOT INSTALLED" : dependency.getPluginMeta().getVersion();
     }
 
     private static String valueOrUnknown(Integer value) {
