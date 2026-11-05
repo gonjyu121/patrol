@@ -1,7 +1,8 @@
 package dev.gonjy.patrolspectator;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -9,11 +10,17 @@ import org.bukkit.scheduler.BukkitTask;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Handles periodic in-game announcements to encourage YouTube engagement.
  */
 public class EngagementBroadcaster {
+    private static final Pattern ALTERNATE_COLOR_CODE = Pattern.compile("(?i)&([0-9A-FK-ORX])");
+    private static final Pattern URL = Pattern.compile("https?://\\S+");
+    private static final LegacyComponentSerializer LEGACY_SECTION = LegacyComponentSerializer.legacySection();
+
     static final String SPAWN_RESET_NOTICE =
             "§e[土地について] §f初期スポーン周辺は、荒れ方によって鯖主が再生成する場合があります。"
                     + "建築を残したい場合は、初期スポーンから5チャンク以上離れてください。";
@@ -94,10 +101,7 @@ public class EngagementBroadcaster {
 
         String message = messages.get(random.nextInt(messages.size()));
         
-        // Translate color codes (just in case & is used, though § is in config)
-        String formattedMessage = ChatColor.translateAlternateColorCodes('&', message);
-        
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, formattedMessage);
+        CameraMessageRouter.send(plugin, deserializeLegacyColors(message));
     }
 
     /** Sends compact command and channel guidance to every online player, including the stream camera. */
@@ -107,11 +111,27 @@ public class EngagementBroadcaster {
             for (String message : messages) {
                 String resolved = resolveYouTubeUrl(message, youtubeWatchUrl.get());
                 if (resolved == null) continue;
-                String formatted = ChatColor.translateAlternateColorCodes('&', resolved);
-                ParticipantMessageRouter.send(plugin, formatted);
+                ParticipantMessageRouter.send(plugin, deserializeLegacyColors(resolved));
             }
         }
-        ParticipantMessageRouter.send(plugin, SPAWN_RESET_NOTICE);
+        ParticipantMessageRouter.send(plugin, deserializeLegacyColors(SPAWN_RESET_NOTICE));
+    }
+
+    static Component deserializeLegacyColors(String message) {
+        Component result = Component.empty();
+        Matcher urls = URL.matcher(message);
+        int cursor = 0;
+        while (urls.find()) {
+            result = result.append(deserializeNonUrlSegment(message.substring(cursor, urls.start())))
+                    .append(Component.text(urls.group()));
+            cursor = urls.end();
+        }
+        return result.append(deserializeNonUrlSegment(message.substring(cursor)));
+    }
+
+    private static Component deserializeNonUrlSegment(String message) {
+        String normalized = ALTERNATE_COLOR_CODE.matcher(message).replaceAll("§$1");
+        return LEGACY_SECTION.deserialize(normalized);
     }
 
     static String resolveYouTubeUrl(String message, String watchUrl) {

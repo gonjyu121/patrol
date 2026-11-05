@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-05 - v1.9.172 定期案内のAdventure Component化
+
+- **Version**: `1.9.172`
+- **Branch**: `maintenance/paper-26.3-engagement-broadcaster-components-v1.9.172`
+- YouTube誘導と参加者向け定期案内をAdventure Componentへ移行。
+- 既存設定の`&`・`§`色コード互換性を維持し、URL内の通常の`&`は保持。
+- 参加者全員向けルーターにComponent送信を追加。
+
 ## 2026-11-05 - v1.9.171 負荷監視通知のAdventure Component化
 
 - **Version**: `1.9.171`
