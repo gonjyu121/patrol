@@ -1,6 +1,7 @@
 package dev.gonjy.patrolspectator;
 
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
@@ -18,6 +19,9 @@ import java.util.logging.Logger;
 
 /** Stores recent participant locations separately from the permanent tour list. */
 final class RecentPlayerLocationStore {
+    private static final LegacyComponentSerializer LEGACY_SECTION = LegacyComponentSerializer.legacySection();
+    private static final PlainTextComponentSerializer PLAIN_TEXT = PlainTextComponentSerializer.plainText();
+
     static final String ID_PREFIX = "recent_player_";
     static final String LOCATION_MESSAGE = "§fさんが最後にいた場所";
     static final String RETURN_MESSAGE = "§aまたの参加をお待ちしています！";
@@ -143,8 +147,8 @@ final class RecentPlayerLocationStore {
     }
 
     private static String safePlayerName(String name) {
-        String stripped = ChatColor.stripColor(name);
-        return stripped == null || stripped.isBlank() ? "Player" : stripped.replaceAll("[\\r\\n]", "");
+        String stripped = PLAIN_TEXT.serialize(LEGACY_SECTION.deserialize(name));
+        return stripped.isBlank() ? "Player" : stripped.replaceAll("[\\r\\n]", "");
     }
 
     private static String worldType(String worldName) {

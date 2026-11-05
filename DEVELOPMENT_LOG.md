@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-05 - v1.9.175 参加者名整形のAdventure対応
+
+- **Version**: `1.9.175`
+- **Branch**: `maintenance/paper-26.3-recent-player-name-components-v1.9.175`
+- 最近の参加地点へ保存するMCIDの色コード除去をAdventure serializerへ移行。
+- Paper 26.3で非推奨となった`ChatColor.stripColor()`依存を除去。
+- 色付きMCIDと改行を安全に除去する既存挙動を維持。
+
 ## 2026-11-05 - v1.9.174 統計表示のAdventure Component化
 
 - **Version**: `1.9.174`
