@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-06 - v1.9.187 Discordチャット転記のAsyncChatEvent対応
+
+- **Version**: `1.9.187`
+- **Branch**: `maintenance/paper-26.3-discord-async-chat-v1.9.187`
+- MinecraftからDiscordへのチャット転記をPaper `AsyncChatEvent`へ移行。
+- Adventure Componentの本文をPlainText化して既存のWebhook形式を維持。
+- キャンセル済みチャットを転記しないMONITOR監視へ統一し、非推奨イベントと抑制指定を除去。
+
 ## 2026-11-06 - v1.9.186 YouTubeチャット転記のAsyncChatEvent対応
 
 - **Version**: `1.9.186`
