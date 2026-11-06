@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-06 - v1.9.188 迷宮リスナーのAdventure Component化
+
+- **Version**: `1.9.188`
+- **Branch**: `maintenance/paper-26.3-dungeon-listener-components-v1.9.188`
+- 迷宮内警告・死亡演出・階層踏破・完全踏破通知をAdventure Componentへ移行。
+- 階層踏破・脱出・永続特典タイトルをAdventure `Title` APIへ移行し、表示時間を維持。
+- ボス名取得を`customName()`へ移行し、非推奨`ChatColor`・`getCustomName()`・文字列タイトルAPIを除去。
+
 ## 2026-11-06 - v1.9.187 Discordチャット転記のAsyncChatEvent対応
 
 - **Version**: `1.9.187`
