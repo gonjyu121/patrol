@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-06 - v1.9.190 エンド戦表示のAdventure Component化
+
+- **Version**: `1.9.190`
+- **Branch**: `maintenance/paper-26.3-endgame-components-v1.9.190`
+- エンダードラゴン戦の通知とカスタム名をAdventure Componentへ移行。
+- ボスバーをAdventure `BossBar` APIへ移行し、エンド内プレイヤーへの表示同期を維持。
+- 戦闘難易度・特殊攻撃・討伐判定・報酬ロジックは変更せず、非推奨抑制を除去。
+
 ## 2026-11-06 - v1.9.189 自動イベント表示のAdventure Component化
 
 - **Version**: `1.9.189`

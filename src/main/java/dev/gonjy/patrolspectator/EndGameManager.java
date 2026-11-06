@@ -1,7 +1,9 @@
 package dev.gonjy.patrolspectator;
 
+import net.kyori.adventure.bossbar.BossBar;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
@@ -24,7 +26,6 @@ import java.util.Comparator;
 import java.util.Random;
 import java.util.UUID;
 
-@SuppressWarnings("deprecation")
 public class EndGameManager implements Listener {
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -40,7 +41,8 @@ public class EndGameManager implements Listener {
     // ドラゴンへのダメージを追跡
     private final java.util.Map<UUID, Double> dragonDamageMap = new java.util.HashMap<>();
     // エンダードラゴンのボスバー管理
-    private org.bukkit.boss.BossBar bossBar;
+    private BossBar bossBar;
+    private final java.util.Set<UUID> bossBarViewers = new java.util.HashSet<>();
     private BukkitTask bossBarSyncTask;
 
     public EndGameManager(JavaPlugin plugin, PlayerStatsStorage statsStorage,
@@ -108,16 +110,18 @@ public class EndGameManager implements Listener {
 
         World world = dragon.getWorld();
         boolean hard = isHardMode();
-        String title = hard ? (ChatColor.RED + "☠ Void Dragon ☠") : (ChatColor.LIGHT_PURPLE + "エンダードラゴン");
-        org.bukkit.boss.BarColor color = hard ? org.bukkit.boss.BarColor.PURPLE : org.bukkit.boss.BarColor.PINK;
-        org.bukkit.boss.BarStyle style = hard ? org.bukkit.boss.BarStyle.SEGMENTED_10 : org.bukkit.boss.BarStyle.SOLID;
+        Component title = hard
+                ? Component.text("☠ Void Dragon ☠", NamedTextColor.RED)
+                : Component.text("エンダードラゴン", NamedTextColor.LIGHT_PURPLE);
+        BossBar.Color color = hard ? BossBar.Color.PURPLE : BossBar.Color.PINK;
+        BossBar.Overlay overlay = hard ? BossBar.Overlay.NOTCHED_10 : BossBar.Overlay.PROGRESS;
 
         if (bossBar == null) {
-            bossBar = Bukkit.createBossBar(title, color, style);
+            bossBar = BossBar.bossBar(title, 1.0f, color, overlay);
         } else {
-            bossBar.setTitle(title);
-            bossBar.setColor(color);
-            bossBar.setStyle(style);
+            bossBar.name(title);
+            bossBar.color(color);
+            bossBar.overlay(overlay);
         }
 
         // HP計算
@@ -125,21 +129,24 @@ public class EndGameManager implements Listener {
         double maxHealth = (healthAttr != null) ? healthAttr.getValue() : 200.0;
         double currentHealth = Math.max(0.0, Math.min(dragon.getHealth(), maxHealth));
         double progress = maxHealth > 0 ? (currentHealth / maxHealth) : 0.0;
-        bossBar.setProgress(Math.max(0.0, Math.min(1.0, progress)));
-        bossBar.setVisible(true);
+        bossBar.progress((float) Math.max(0.0, Math.min(1.0, progress)));
 
         // プレイヤーの同期
         java.util.List<Player> endPlayers = world.getPlayers();
         java.util.Set<UUID> endPlayerUuids = new java.util.HashSet<>();
         for (Player p : endPlayers) {
             endPlayerUuids.add(p.getUniqueId());
-            if (!bossBar.getPlayers().contains(p)) {
-                bossBar.addPlayer(p);
+            if (bossBarViewers.add(p.getUniqueId())) {
+                p.showBossBar(bossBar);
             }
         }
-        for (Player p : new java.util.ArrayList<>(bossBar.getPlayers())) {
-            if (!endPlayerUuids.contains(p.getUniqueId())) {
-                bossBar.removePlayer(p);
+        for (UUID viewerId : new java.util.HashSet<>(bossBarViewers)) {
+            if (!endPlayerUuids.contains(viewerId)) {
+                Player viewer = Bukkit.getPlayer(viewerId);
+                if (viewer != null) {
+                    viewer.hideBossBar(bossBar);
+                }
+                bossBarViewers.remove(viewerId);
             }
         }
     }
@@ -149,8 +156,13 @@ public class EndGameManager implements Listener {
      */
     public synchronized void removeBossBar() {
         if (bossBar != null) {
-            bossBar.removeAll();
-            bossBar.setVisible(false);
+            for (UUID viewerId : new java.util.HashSet<>(bossBarViewers)) {
+                Player viewer = Bukkit.getPlayer(viewerId);
+                if (viewer != null) {
+                    viewer.hideBossBar(bossBar);
+                }
+            }
+            bossBarViewers.clear();
             bossBar = null;
         }
     }
@@ -198,8 +210,8 @@ public class EndGameManager implements Listener {
         boolean needsSetup = false;
 
         // 名前が設定されていない、または異なる場合に再適用
-        String expectedName = ChatColor.RED + "Void Dragon";
-        if (dragon.getCustomName() == null || !dragon.getCustomName().equals(expectedName)) {
+        Component expectedName = Component.text("Void Dragon", NamedTextColor.RED);
+        if (!expectedName.equals(dragon.customName())) {
             needsSetup = true;
         }
 
@@ -248,7 +260,7 @@ public class EndGameManager implements Listener {
 
             String timestamp = LocalDateTime.now().format(TIME_FORMATTER);
             String message = String.format("[%s] ⚠ ヴォイド・ドラゴン (Void Dragon) が出現しました！ (HARD MODE)", timestamp);
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + message);
+            CameraMessageRouter.send(plugin, Component.text(message, NamedTextColor.RED));
             if (discordWebhookClient != null) {
                 discordWebhookClient.send("🐉 **[ボス出現]** " + message);
             }
@@ -258,7 +270,7 @@ public class EndGameManager implements Listener {
 
     private void setupHardDragon(EnderDragon dragon) {
         // 名前変更
-        dragon.setCustomName(ChatColor.RED + "Void Dragon");
+        dragon.customName(Component.text("Void Dragon", NamedTextColor.RED));
         dragon.setCustomNameVisible(true);
 
         // 体力強化 (通常200 -> 600)
@@ -311,7 +323,7 @@ public class EndGameManager implements Listener {
 
             // プレイヤーへの通知
             for (Player p : dragon.getWorld().getPlayers()) {
-                p.sendMessage(ChatColor.RED + "⚠ ヴォイド・ドラゴンが軍団を召喚しました！");
+                p.sendMessage(Component.text("⚠ ヴォイド・ドラゴンが軍団を召喚しました！", NamedTextColor.RED));
             }
 
         }, 45 * 20L, 45 * 20L);
@@ -339,7 +351,7 @@ public class EndGameManager implements Listener {
             }
 
             if (struck) {
-                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "⚡ Void Lightning!!");
+                CameraMessageRouter.send(plugin, Component.text("⚡ Void Lightning!!", NamedTextColor.RED));
             }
 
         }, 20 * 20L, 20 * 20L);
@@ -385,8 +397,9 @@ public class EndGameManager implements Listener {
             }
 
             if (roared) {
-                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.DARK_PURPLE + "📢 " + ChatColor.RED + "ヴォイド・ドラゴンの咆哮がエンドに響き渡った！");
-                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GRAY + "（周囲のエンダーマンが興奮している...）");
+                CameraMessageRouter.send(plugin, Component.text("📢 ", NamedTextColor.DARK_PURPLE)
+                        .append(Component.text("ヴォイド・ドラゴンの咆哮がエンドに響き渡った！", NamedTextColor.RED)));
+                CameraMessageRouter.send(plugin, Component.text("（周囲のエンダーマンが興奮している...）", NamedTextColor.GRAY));
             }
 
         }, 35 * 20L, 35 * 20L);
@@ -494,9 +507,9 @@ public class EndGameManager implements Listener {
 
         if (killer != null) {
             // 共通の討伐メッセージ (通常モードでも表示)
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + killer.getName() + " が エンダードラゴン を討伐しました！");
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            CameraMessageRouter.send(plugin, Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
+            CameraMessageRouter.send(plugin, Component.text(killer.getName() + " が エンダードラゴン を討伐しました！", NamedTextColor.YELLOW));
+            CameraMessageRouter.send(plugin, Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
         } else {
             plugin.getLogger().warning("[Debug] Ender Dragon death detected, but no player found to credit.");
         }
@@ -507,12 +520,14 @@ public class EndGameManager implements Listener {
             statsStorage.setHardDragonSlayer(killer.getUniqueId(), true);
 
             String timestamp = LocalDateTime.now().format(TIME_FORMATTER);
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "⚔️ 伝説の誕生！ ⚔️");
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + killer.getName() + " が " + ChatColor.RED + "ヴォイド・ドラゴン"
-                    + ChatColor.YELLOW + " を討伐しました！ (HARD MODE)");
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.AQUA + "称号 [★] が付与されました！ " + ChatColor.GRAY + "[" + timestamp + "]");
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            CameraMessageRouter.send(plugin, Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
+            CameraMessageRouter.send(plugin, Component.text("⚔️ 伝説の誕生！ ⚔️", NamedTextColor.GOLD));
+            CameraMessageRouter.send(plugin, Component.text(killer.getName() + " が ", NamedTextColor.YELLOW)
+                    .append(Component.text("ヴォイド・ドラゴン", NamedTextColor.RED))
+                    .append(Component.text(" を討伐しました！ (HARD MODE)", NamedTextColor.YELLOW)));
+            CameraMessageRouter.send(plugin, Component.text("称号 [★] が付与されました！ ", NamedTextColor.AQUA)
+                    .append(Component.text("[" + timestamp + "]", NamedTextColor.GRAY)));
+            CameraMessageRouter.send(plugin, Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
 
             if (discordWebhookClient != null) {
                 discordWebhookClient.send(
@@ -530,9 +545,9 @@ public class EndGameManager implements Listener {
         Player player = event.getPlayer();
         if (bossBar != null) {
             if (player.getWorld().getEnvironment() == World.Environment.THE_END) {
-                bossBar.addPlayer(player);
+                showBossBar(player);
             } else {
-                bossBar.removePlayer(player);
+                hideBossBar(player);
             }
         }
     }
@@ -541,14 +556,14 @@ public class EndGameManager implements Listener {
     public void onPlayerJoin(org.bukkit.event.player.PlayerJoinEvent event) {
         Player player = event.getPlayer();
         if (bossBar != null && player.getWorld().getEnvironment() == World.Environment.THE_END) {
-            bossBar.addPlayer(player);
+            showBossBar(player);
         }
     }
 
     @EventHandler
     public void onPlayerQuit(org.bukkit.event.player.PlayerQuitEvent event) {
         if (bossBar != null) {
-            bossBar.removePlayer(event.getPlayer());
+            hideBossBar(event.getPlayer());
         }
     }
 
@@ -559,9 +574,9 @@ public class EndGameManager implements Listener {
             Player player = event.getPlayer();
             if (bossBar != null) {
                 if (event.getTo().getWorld().getEnvironment() == World.Environment.THE_END) {
-                    bossBar.addPlayer(player);
+                    showBossBar(player);
                 } else {
-                    bossBar.removePlayer(player);
+                    hideBossBar(player);
                 }
             }
         }
@@ -573,11 +588,23 @@ public class EndGameManager implements Listener {
             Player player = event.getPlayer();
             if (bossBar != null) {
                 if (event.getRespawnLocation().getWorld().getEnvironment() == World.Environment.THE_END) {
-                    bossBar.addPlayer(player);
+                    showBossBar(player);
                 } else {
-                    bossBar.removePlayer(player);
+                    hideBossBar(player);
                 }
             }
+        }
+    }
+
+    private void showBossBar(Player player) {
+        if (bossBar != null && bossBarViewers.add(player.getUniqueId())) {
+            player.showBossBar(bossBar);
+        }
+    }
+
+    private void hideBossBar(Player player) {
+        if (bossBar != null && bossBarViewers.remove(player.getUniqueId())) {
+            player.hideBossBar(bossBar);
         }
     }
 
