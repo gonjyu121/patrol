@@ -38,7 +38,7 @@
   },
   "build_plugin": {
     "name": "PatrolSpectatorPlugin",
-    "version": "1.9.186",
-    "description": "配信用パトロールプラグイン（YouTubeチャットのAsyncChatEvent対応版）"
+    "version": "1.9.187",
+    "description": "配信用パトロールプラグイン（DiscordチャットのAsyncChatEvent対応版）"
   }
 }

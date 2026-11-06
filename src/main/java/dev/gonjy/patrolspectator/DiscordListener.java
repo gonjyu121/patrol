@@ -1,9 +1,11 @@
 package dev.gonjy.patrolspectator;
 
+import io.papermc.paper.event.player.AsyncChatEvent;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -11,9 +13,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.HashSet;
 import java.util.Set;
 
-@SuppressWarnings("deprecation")
 public class DiscordListener implements Listener {
 
+    private static final PlainTextComponentSerializer PLAIN_TEXT = PlainTextComponentSerializer.plainText();
     private final JavaPlugin plugin;
     private final DiscordWebhookClient webhookClient;
     private final Set<Integer> crowdAlertThresholds = new HashSet<>();
@@ -51,15 +53,15 @@ public class DiscordListener implements Listener {
         }
     }
 
-    @EventHandler
-    public void onPlayerChat(AsyncPlayerChatEvent event) {
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerChat(AsyncChatEvent event) {
         // Chat notification enabled by default or specific config
         if (!plugin.getConfig().getBoolean("discord.notifications.chat", true)) {
             return;
         }
 
         String playerName = event.getPlayer().getName();
-        String message = event.getMessage();
+        String message = PLAIN_TEXT.serialize(event.message());
         // Format: 💬 Player: Message (Optimized for OneComme TTS)
         webhookClient.sendChat("💬 " + playerName + ": " + message);
     }
