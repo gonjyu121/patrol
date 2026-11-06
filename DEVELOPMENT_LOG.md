@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-06 - v1.9.191 ランキング表示のAdventure Component化
+
+- **Version**: `1.9.191`
+- **Branch**: `maintenance/paper-26.3-ranking-components-v1.9.191`
+- 7種類のランキングタイトル・見出し・順位行をAdventure Componentへ移行。
+- 討伐称号`[★]`の色分けと従来のタイトル表示時間を維持し、Discord要約は装飾コードなしで生成。
+- 最後に残っていた`ChatColor`・文字列タイトルAPI・非推奨抑制を除去。
+
 ## 2026-11-06 - v1.9.190 エンド戦表示のAdventure Component化
 
 - **Version**: `1.9.190`
