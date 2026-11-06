@@ -2,8 +2,10 @@ package dev.gonjy.patrolspectator.dungeon;
 
 import com.destroystokyo.paper.event.player.PlayerSetSpawnEvent;
 import dev.gonjy.patrolspectator.PatrolSpectatorPlugin;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -18,6 +20,8 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.Material;
 import org.bukkit.GameMode;
 import org.bukkit.scheduler.BukkitTask;
+
+import java.time.Duration;
 
 public class DungeonListener implements Listener {
 
@@ -124,7 +128,7 @@ public class DungeonListener implements Listener {
         if (manager.isInDungeon(event.getBlock().getLocation())) {
             if (!event.getPlayer().isOp()) {
                 event.setCancelled(true);
-                event.getPlayer().sendMessage(ChatColor.RED + "迷宮の壁を傷つけることはできません…");
+                send(event.getPlayer(), "迷宮の壁を傷つけることはできません…", NamedTextColor.RED);
             }
         }
     }
@@ -134,7 +138,7 @@ public class DungeonListener implements Listener {
         if (manager.isInDungeon(event.getBlock().getLocation())) {
             if (!event.getPlayer().isOp()) {
                 event.setCancelled(true);
-                event.getPlayer().sendMessage(ChatColor.RED + "迷宮を汚すことは許されません…");
+                send(event.getPlayer(), "迷宮を汚すことは許されません…", NamedTextColor.RED);
             }
         }
     }
@@ -156,11 +160,15 @@ public class DungeonListener implements Listener {
         long totalDeaths = stats.getGlobalDeathCount();
 
         // メッセージ表示 (Wizardry風)
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.DARK_RED + "======== [ 迷宮の供物 ] ========");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + player.getName() + " が死の迷宮の糧となりました…");
         dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin,
-                ChatColor.GRAY + "この迷宮は既に " + ChatColor.RED + totalDeaths + ChatColor.GRAY + " 人の血を吸いました…");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.DARK_RED + "================================");
+                Component.text("======== [ 迷宮の供物 ] ========", NamedTextColor.DARK_RED));
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin,
+                Component.text(player.getName() + " が死の迷宮の糧となりました…", NamedTextColor.RED));
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, Component.text("この迷宮は既に ", NamedTextColor.GRAY)
+                .append(Component.text(totalDeaths, NamedTextColor.RED))
+                .append(Component.text(" 人の血を吸いました…", NamedTextColor.GRAY)));
+        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin,
+                Component.text("================================", NamedTextColor.DARK_RED));
 
         // 死亡時の雷エフェクトと全体サウンドパニック演出
         deathLoc.getWorld().strikeLightningEffect(deathLoc);
@@ -174,7 +182,7 @@ public class DungeonListener implements Listener {
         Location newSpawn = event.getLocation();
         if (shouldBlockSpawnChange(newSpawn != null && manager.isInDungeon(newSpawn))) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage(ChatColor.RED + "死の迷宮内をリスポーン地点に登録することはできません。");
+            send(event.getPlayer(), "死の迷宮内をリスポーン地点に登録することはできません。", NamedTextColor.RED);
         }
     }
 
@@ -212,7 +220,7 @@ public class DungeonListener implements Listener {
             if ((dx > 30.5 && dx < 36) || (dz > 30.5 && dz < 36) || (dy > 10.5 && dy < 15)) {
                 Material type = loc.getBlock().getType();
                 if (type == Material.STONE || type == Material.DEEPSLATE || type == Material.DIRT) {
-                    p.sendMessage(ChatColor.RED + "迷宮の外へ逃げることはできません…");
+                    send(p, "迷宮の外へ逃げることはできません…", NamedTextColor.RED);
                     Location exit = center.clone().add(0, 0, -35);
                     exit.setY(center.getWorld().getHighestBlockYAt(exit) + 1.0);
                     p.teleport(exit);
@@ -270,18 +278,18 @@ public class DungeonListener implements Listener {
         switch (choice) {
             case 0: // 爆発
                 loc.getWorld().createExplosion(loc, 2.0f, false, false);
-                p.sendMessage(ChatColor.RED + "宝箱に仕掛けられた爆弾が爆発した！");
+                send(p, "宝箱に仕掛けられた爆弾が爆発した！", NamedTextColor.RED);
                 break;
             case 1: // 毒・衰弱
                 p.addPotionEffect(
                         new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.POISON, 200, 1));
                 p.addPotionEffect(
                         new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.WITHER, 200, 1));
-                p.sendMessage(ChatColor.DARK_PURPLE + "宝箱から毒ガスが噴き出した！");
+                send(p, "宝箱から毒ガスが噴き出した！", NamedTextColor.DARK_PURPLE);
                 break;
             case 2: // 奇襲 (MobTrapを流用)
                 trapRunner.triggerTrap(p, loc); // Mobなどの既存Trapを発動
-                p.sendMessage(ChatColor.DARK_RED + "宝箱を開ける音を聞きつけ、魔物が集まってきた！");
+                send(p, "宝箱を開ける音を聞きつけ、魔物が集まってきた！", NamedTextColor.DARK_RED);
                 break;
         }
     }
@@ -315,18 +323,26 @@ public class DungeonListener implements Listener {
             // ボスが倒された！
             String name = killer.getName();
 
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "======== [ 地下" + floor + "階 踏破 ] ========");
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + name + " が " + ChatColor.RED + entity.getCustomName()
-                    + ChatColor.YELLOW + " を討伐しました！");
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, dungeonCompleted
-                    ? ChatColor.AQUA + "最下層が攻略され、迷宮の再構築が始まります…"
-                    : ChatColor.AQUA + "地下" + (floor + 1) + "階への道が開かれました。梯子を探してください。");
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "==============================");
+            Component bossName = entity.customName() != null
+                    ? entity.customName()
+                    : Component.text(entity.getName());
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin,
+                    Component.text("======== [ 地下" + floor + "階 踏破 ] ========", NamedTextColor.GOLD));
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin,
+                    Component.text(name + " が ", NamedTextColor.YELLOW)
+                            .append(bossName.colorIfAbsent(NamedTextColor.RED))
+                            .append(Component.text(" を討伐しました！", NamedTextColor.YELLOW)));
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, Component.text(dungeonCompleted
+                    ? "最下層が攻略され、迷宮の再構築が始まります…"
+                    : "地下" + (floor + 1) + "階への道が開かれました。梯子を探してください。", NamedTextColor.AQUA));
+            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin,
+                    Component.text("==============================", NamedTextColor.GOLD));
 
             // 全体Titleアニメーションとファンファーレサウンド
             for (Player p : Bukkit.getOnlinePlayers()) {
-                p.sendTitle(ChatColor.GOLD + "地下" + floor + "階 踏破！",
-                        ChatColor.YELLOW + name + " が階層ボスを討伐！",
+                showTitle(p,
+                        Component.text("地下" + floor + "階 踏破！", NamedTextColor.GOLD),
+                        Component.text(name + " が階層ボスを討伐！", NamedTextColor.YELLOW),
                         10, 100, 20);
                 p.playSound(p.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
             }
@@ -357,8 +373,11 @@ public class DungeonListener implements Listener {
 
                 for (Player p : Bukkit.getOnlinePlayers()) {
                     if (manager.isInDungeon(p.getLocation())) {
-                        p.sendMessage(ChatColor.AQUA + "迷宮の崩壊が始まります！安全な場所へ転送されます...");
-                        p.sendTitle(ChatColor.GOLD + "迷宮脱出", ChatColor.YELLOW + "入口へ転送中...", 10, 40, 10);
+                        send(p, "迷宮の崩壊が始まります！安全な場所へ転送されます...", NamedTextColor.AQUA);
+                        showTitle(p,
+                                Component.text("迷宮脱出", NamedTextColor.GOLD),
+                                Component.text("入口へ転送中...", NamedTextColor.YELLOW),
+                                10, 40, 10);
                         p.teleport(exitLoc);
                         p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
                     }
@@ -374,12 +393,18 @@ public class DungeonListener implements Listener {
 
             boolean newlyGranted = stats.grantPermanentKeepInventory(killer.getUniqueId(), killer.getName());
             if (newlyGranted) {
-                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.LIGHT_PURPLE + "======== [ 迷宮完全踏破特典 ] ========");
-                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + killer.getName() + ChatColor.YELLOW
-                        + " は死の迷宮を制し、永続キープインベントリを獲得しました！");
-                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.LIGHT_PURPLE + "====================================");
-                killer.sendTitle(ChatColor.GOLD + "永続特典を獲得！",
-                        ChatColor.YELLOW + "今後は死亡してもアイテムと経験値を失いません", 10, 120, 20);
+                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin,
+                        Component.text("======== [ 迷宮完全踏破特典 ] ========", NamedTextColor.LIGHT_PURPLE));
+                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin,
+                        Component.text(killer.getName(), NamedTextColor.GOLD)
+                                .append(Component.text(" は死の迷宮を制し、永続キープインベントリを獲得しました！",
+                                        NamedTextColor.YELLOW)));
+                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin,
+                        Component.text("====================================", NamedTextColor.LIGHT_PURPLE));
+                showTitle(killer,
+                        Component.text("永続特典を獲得！", NamedTextColor.GOLD),
+                        Component.text("今後は死亡してもアイテムと経験値を失いません", NamedTextColor.YELLOW),
+                        10, 120, 20);
             }
 
             // 迷宮の再生成 (少しディレイを置く)
@@ -400,6 +425,20 @@ public class DungeonListener implements Listener {
 
     static boolean shouldBlockSpawnChange(boolean newSpawnInDungeon) {
         return newSpawnInDungeon;
+    }
+
+    private static void send(Player player, String message, NamedTextColor color) {
+        player.sendMessage(Component.text(message, color));
+    }
+
+    private static void showTitle(Player player, Component title, Component subtitle,
+            int fadeInTicks, int stayTicks, int fadeOutTicks) {
+        player.showTitle(Title.title(title, subtitle, Title.Times.times(
+                ticksToDuration(fadeInTicks), ticksToDuration(stayTicks), ticksToDuration(fadeOutTicks))));
+    }
+
+    private static Duration ticksToDuration(int ticks) {
+        return Duration.ofMillis(Math.max(0, ticks) * 50L);
     }
 
     static void applyPermanentKeepInventory(PlayerDeathEvent event) {
