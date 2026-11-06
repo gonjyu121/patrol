@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-06 - v1.9.189 自動イベント表示のAdventure Component化
+
+- **Version**: `1.9.189`
+- **Branch**: `maintenance/paper-26.3-auto-event-components-v1.9.189`
+- 自動イベントの開始・進捗・結果・報酬メッセージをAdventure Componentへ移行。
+- 配信カメラ向け開始タイトルをAdventure `Title` APIへ移行し、従来の表示時間を維持。
+- ポイント獲得アクションバーをAdventure APIへ移行し、Bungee互換APIと非推奨抑制を除去。
+
 ## 2026-11-06 - v1.9.188 迷宮リスナーのAdventure Component化
 
 - **Version**: `1.9.188`
