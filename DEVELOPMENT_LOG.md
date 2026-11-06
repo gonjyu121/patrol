@@ -1,5 +1,13 @@
 # PatrolSpectatorPlugin Development Log
 
+## 2026-11-06 - v1.9.186 YouTubeチャット転記のAsyncChatEvent対応
+
+- **Version**: `1.9.186`
+- **Branch**: `maintenance/paper-26.3-youtube-async-chat-v1.9.186`
+- MinecraftからYouTubeへのチャット転記をPaper `AsyncChatEvent`へ移行。
+- Adventure Componentの本文をPlainText化して既存の転記形式を維持。
+- 非推奨`AsyncPlayerChatEvent`と抑制指定を除去。
+
 ## 2026-11-06 - v1.9.185 構造物RegistryのPaper RegistryAccess対応
 
 - **Version**: `1.9.185`
