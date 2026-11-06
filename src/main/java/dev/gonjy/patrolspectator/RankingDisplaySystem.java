@@ -1,13 +1,16 @@
 package dev.gonjy.patrolspectator;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.AbstractMap.SimpleEntry;
+import java.time.Duration;
 
 /**
  * ランキング表示システム
@@ -20,7 +23,6 @@ import java.util.AbstractMap.SimpleEntry;
  * <li>イベントポイントランキング</li>
  * </ul>
  */
-@SuppressWarnings("deprecation") // Using legacy ChatColor, broadcastMessage, and sendTitle for compatibility
 public class RankingDisplaySystem {
 
     private final JavaPlugin plugin;
@@ -103,10 +105,9 @@ public class RankingDisplaySystem {
 
         // 通知
         for (Player player : CameraMessageRouter.recipients(plugin)) {
-            player.sendTitle(
-                    ChatColor.GOLD + "🏆 ランキング発表 🏆",
-                    ChatColor.YELLOW + "集計中...",
-                    10, 40, 10);
+            showRankingTitle(player,
+                    Component.text("🏆 ランキング発表 🏆", NamedTextColor.GOLD),
+                    Component.text("集計中...", NamedTextColor.YELLOW));
         }
 
         // 非同期でランキングを集計（重い処理をメインスレッドから逃がす）
@@ -174,9 +175,12 @@ public class RankingDisplaySystem {
                                 }
                                 displayDungeonBuildAnnouncement(discordSummary);
 
-                                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, "");
-                                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GRAY + "※ " + ChatColor.GOLD + "[★]" + ChatColor.GRAY
-                                                + " は " + ChatColor.RED + "ヴォイド・ドラゴン" + ChatColor.GRAY + " 討伐の証です");
+                                CameraMessageRouter.send(plugin, Component.empty());
+                                CameraMessageRouter.send(plugin, Component.text("※ ", NamedTextColor.GRAY)
+                                        .append(Component.text("[★]", NamedTextColor.GOLD))
+                                        .append(Component.text(" は ", NamedTextColor.GRAY))
+                                        .append(Component.text("ヴォイド・ドラゴン", NamedTextColor.RED))
+                                        .append(Component.text(" 討伐の証です", NamedTextColor.GRAY)));
                                 
                                 // Discordへ一括送信
                                 sendSummaryToDiscord(discordSummary.toString());
@@ -204,7 +208,8 @@ public class RankingDisplaySystem {
         boolean building = patrol.getDungeonBuilder() != null && patrol.getDungeonBuilder().isBuilding();
         String announcement = formatDungeonAnnouncement(building, manager.isBuilt(), planned, verified);
         if (announcement == null) return;
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.DARK_RED + "💀 " + ChatColor.YELLOW + announcement);
+        CameraMessageRouter.send(plugin, Component.text("💀 ", NamedTextColor.DARK_RED)
+                .append(Component.text(announcement, NamedTextColor.YELLOW)));
         discord.append("**💀 ").append(announcement).append("**\n\n");
     }
 
@@ -233,17 +238,16 @@ public class RankingDisplaySystem {
 
         // Title表示
         for (Player player : CameraMessageRouter.recipients(plugin)) {
-            player.sendTitle(
-                    ChatColor.GOLD + "🏆 累計プレイ時間ランキング",
-                    ChatColor.YELLOW + "サーバーで遊んでくれた時間の合計です",
-                    10, 40, 10);
+            showRankingTitle(player,
+                    Component.text("🏆 累計プレイ時間ランキング", NamedTextColor.GOLD),
+                    Component.text("サーバーで遊んでくれた時間の合計です", NamedTextColor.YELLOW));
         }
 
         // チャット表示
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "🏆 累計プレイ時間ランキング 🏆");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "  サーバーで遊んでくれた時間の合計です");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        sendLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD);
+        sendLine("🏆 累計プレイ時間ランキング 🏆", NamedTextColor.GOLD);
+        sendLine("  サーバーで遊んでくれた時間の合計です", NamedTextColor.YELLOW);
+        sendLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD);
 
         if (!ranking.isEmpty()) {
             for (int i = 0; i < Math.min(3, ranking.size()); i++) {
@@ -261,14 +265,12 @@ public class RankingDisplaySystem {
                     timeDisplay = totalMinutes + "分";
                 }
 
-                String line = "  " + medal + " " + status + " " + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": "
-                        + ChatColor.GOLD + timeDisplay;
-                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + line);
+                CameraMessageRouter.send(plugin, rankingLine(entry.getKey(), medal, status, timeDisplay, NamedTextColor.GOLD));
 
-                discord.append(ChatColor.stripColor(medal + " " + playerName + ": " + timeDisplay)).append("\n");
+                discord.append(medal).append(" ").append(playerName).append(": ").append(timeDisplay).append("\n");
             }
         } else {
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GRAY + "  📊 まだ記録保持者がいません。あなたの挑戦を待っています！");
+            sendLine("  📊 まだ記録保持者がいません。あなたの挑戦を待っています！", NamedTextColor.GRAY);
             discord.append("記録保持者なし\n");
         }
         discord.append("\n");
@@ -282,17 +284,16 @@ public class RankingDisplaySystem {
 
         // Title表示
         for (Player player : CameraMessageRouter.recipients(plugin)) {
-            player.sendTitle(
-                    ChatColor.GREEN + "📅 今日のプレイ時間ランキング",
-                    ChatColor.YELLOW + "本日（0時以降）のプレイ時間です",
-                    10, 40, 10);
+            showRankingTitle(player,
+                    Component.text("📅 今日のプレイ時間ランキング", NamedTextColor.GREEN),
+                    Component.text("本日（0時以降）のプレイ時間です", NamedTextColor.YELLOW));
         }
 
         // チャット表示
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GREEN + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GREEN + "📅 今日のプレイ時間ランキング 📅");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "  本日（0時以降）のプレイ時間です");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GREEN + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        sendLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GREEN);
+        sendLine("📅 今日のプレイ時間ランキング 📅", NamedTextColor.GREEN);
+        sendLine("  本日（0時以降）のプレイ時間です", NamedTextColor.YELLOW);
+        sendLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GREEN);
 
         if (!ranking.isEmpty()) {
             for (int i = 0; i < Math.min(3, ranking.size()); i++) {
@@ -310,14 +311,12 @@ public class RankingDisplaySystem {
                     timeDisplay = totalMinutes + "分";
                 }
 
-                String line = "  " + medal + " " + status + " " + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": "
-                        + ChatColor.GREEN + timeDisplay;
-                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, line);
+                CameraMessageRouter.send(plugin, rankingLine(entry.getKey(), medal, status, timeDisplay, NamedTextColor.GREEN));
 
-                discord.append(ChatColor.stripColor(medal + " " + playerName + ": " + timeDisplay)).append("\n");
+                discord.append(medal).append(" ").append(playerName).append(": ").append(timeDisplay).append("\n");
             }
         } else {
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GRAY + "  📅 まだ本日の記録保持者がいません。");
+            sendLine("  📅 まだ本日の記録保持者がいません。", NamedTextColor.GRAY);
             discord.append("記録保持者なし\n");
         }
         discord.append("\n");
@@ -331,17 +330,16 @@ public class RankingDisplaySystem {
 
         // Title表示
         for (Player player : CameraMessageRouter.recipients(plugin)) {
-            player.sendTitle(
-                    ChatColor.RED + "🔥 連続生存時間ランキング 🔥",
-                    ChatColor.YELLOW + "死なずにプレイできているランキングです。",
-                    10, 40, 10);
+            showRankingTitle(player,
+                    Component.text("🔥 連続生存時間ランキング 🔥", NamedTextColor.RED),
+                    Component.text("死なずにプレイできているランキングです。", NamedTextColor.YELLOW));
         }
 
         // チャット表示
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "🔥 連続生存時間ランキング 🔥");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "  死なずにプレイできているランキングです");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        sendLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.RED);
+        sendLine("🔥 連続生存時間ランキング 🔥", NamedTextColor.RED);
+        sendLine("  死なずにプレイできているランキングです", NamedTextColor.YELLOW);
+        sendLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.RED);
 
         if (!ranking.isEmpty()) {
             for (int i = 0; i < Math.min(3, ranking.size()); i++) {
@@ -359,13 +357,12 @@ public class RankingDisplaySystem {
                     timeDisplay = totalMinutes + "分";
                 }
 
-                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "  " + medal + " " + status + " "
-                        + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": " + ChatColor.RED + timeDisplay);
+                CameraMessageRouter.send(plugin, rankingLine(entry.getKey(), medal, status, timeDisplay, NamedTextColor.RED));
 
-                discord.append(ChatColor.stripColor(medal + " " + playerName + ": " + timeDisplay)).append("\n");
+                discord.append(medal).append(" ").append(playerName).append(": ").append(timeDisplay).append("\n");
             }
         } else {
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GRAY + "  🔥 まだ生存者はいません。生き残れ！");
+            sendLine("  🔥 まだ生存者はいません。生き残れ！", NamedTextColor.GRAY);
             discord.append("生存者なし\n");
         }
         discord.append("\n");
@@ -379,16 +376,15 @@ public class RankingDisplaySystem {
 
         // Title表示
         for (Player player : CameraMessageRouter.recipients(plugin)) {
-            player.sendTitle(
-                    ChatColor.RED + "⚔️ PK数ランキング ⚔️",
-                    "",
-                    10, 40, 10);
+            showRankingTitle(player,
+                    Component.text("⚔️ PK数ランキング ⚔️", NamedTextColor.RED),
+                    Component.empty());
         }
 
         // チャット表示
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "⚔️ PK数ランキング ⚔️");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        sendLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.RED);
+        sendLine("⚔️ PK数ランキング ⚔️", NamedTextColor.RED);
+        sendLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.RED);
 
         if (!ranking.isEmpty()) {
             for (int i = 0; i < Math.min(3, ranking.size()); i++) {
@@ -398,13 +394,12 @@ public class RankingDisplaySystem {
                 String medal = i == 0 ? "🥇" : i == 1 ? "🥈" : "🥉";
                 String status = Bukkit.getPlayer(entry.getKey()) != null ? "🟢" : "⚫";
 
-                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "  " + medal + " " + status + " "
-                        + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": " + ChatColor.RED + kills + "キル");
+                CameraMessageRouter.send(plugin, rankingLine(entry.getKey(), medal, status, kills + "キル", NamedTextColor.RED));
 
-                discord.append(ChatColor.stripColor(medal + " " + playerName + ": " + kills + "キル")).append("\n");
+                discord.append(medal).append(" ").append(playerName).append(": ").append(kills).append("キル\n");
             }
         } else {
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GRAY + "  ⚔️ まだPK王はいません。最初の王者になるのは誰だ！？");
+            sendLine("  ⚔️ まだPK王はいません。最初の王者になるのは誰だ！？", NamedTextColor.GRAY);
             discord.append("記録保持者なし\n");
         }
         discord.append("\n");
@@ -418,16 +413,15 @@ public class RankingDisplaySystem {
 
         // Title表示
         for (Player player : CameraMessageRouter.recipients(plugin)) {
-            player.sendTitle(
-                    ChatColor.LIGHT_PURPLE + "🐉 エンドラ討伐数ランキング 🐉",
-                    "",
-                    10, 40, 10);
+            showRankingTitle(player,
+                    Component.text("🐉 エンドラ討伐数ランキング 🐉", NamedTextColor.LIGHT_PURPLE),
+                    Component.empty());
         }
 
         // チャット表示
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.LIGHT_PURPLE + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.LIGHT_PURPLE + "🐉 エンダードラゴン討伐数ランキング 🐉");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.LIGHT_PURPLE + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        sendLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.LIGHT_PURPLE);
+        sendLine("🐉 エンダードラゴン討伐数ランキング 🐉", NamedTextColor.LIGHT_PURPLE);
+        sendLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.LIGHT_PURPLE);
 
         if (!ranking.isEmpty()) {
             for (int i = 0; i < Math.min(3, ranking.size()); i++) {
@@ -437,15 +431,13 @@ public class RankingDisplaySystem {
                 String medal = i == 0 ? "🥇" : i == 1 ? "🥈" : "🥉";
                 String status = Bukkit.getPlayer(entry.getKey()) != null ? "🟢" : "⚫";
 
-                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "  " + medal + " " + status + " "
-                        + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": " + ChatColor.LIGHT_PURPLE
-                        + dragonKills + "討伐");
+                CameraMessageRouter.send(plugin, rankingLine(entry.getKey(), medal, status,
+                        dragonKills + "討伐", NamedTextColor.LIGHT_PURPLE));
 
-                discord.append(ChatColor.stripColor(medal + " " + playerName + ": " + dragonKills + "討伐")).append("\n");
+                discord.append(medal).append(" ").append(playerName).append(": ").append(dragonKills).append("討伐\n");
             }
         } else {
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin,
-                    ChatColor.GRAY + "  🐉 まだドラゴンスレイヤーはいません。伝説を作るのはあなたです！");
+            sendLine("  🐉 まだドラゴンスレイヤーはいません。伝説を作るのはあなたです！", NamedTextColor.GRAY);
             discord.append("記録保持者なし\n");
         }
         discord.append("\n");
@@ -459,16 +451,15 @@ public class RankingDisplaySystem {
 
         // Title表示
         for (Player player : CameraMessageRouter.recipients(plugin)) {
-            player.sendTitle(
-                    ChatColor.AQUA + "🎮 イベントPtランキング 🎮",
-                    "",
-                    10, 40, 10);
+            showRankingTitle(player,
+                    Component.text("🎮 イベントPtランキング 🎮", NamedTextColor.AQUA),
+                    Component.empty());
         }
 
         // チャット表示
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.AQUA + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.AQUA + "🎮 イベントポイントランキング 🎮");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.AQUA + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        sendLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.AQUA);
+        sendLine("🎮 イベントポイントランキング 🎮", NamedTextColor.AQUA);
+        sendLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.AQUA);
 
         if (!ranking.isEmpty()) {
             for (int i = 0; i < Math.min(3, ranking.size()); i++) {
@@ -478,14 +469,13 @@ public class RankingDisplaySystem {
                 String medal = i == 0 ? "🥇" : i == 1 ? "🥈" : "🥉";
                 String status = Bukkit.getPlayer(entry.getKey()) != null ? "🟢" : "⚫";
 
-                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "  " + medal + " " + status + " "
-                        + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": " + ChatColor.AQUA + eventPoints
-                        + "ポイント");
+                CameraMessageRouter.send(plugin, rankingLine(entry.getKey(), medal, status,
+                        eventPoints + "ポイント", NamedTextColor.AQUA));
 
-                discord.append(ChatColor.stripColor(medal + " " + playerName + ": " + eventPoints + "ポイント")).append("\n");
+                discord.append(medal).append(" ").append(playerName).append(": ").append(eventPoints).append("ポイント\n");
             }
         } else {
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GRAY + "  🎮 まだイベント勝者はいません。次のイベントで勝利を掴め！");
+            sendLine("  🎮 まだイベント勝者はいません。次のイベントで勝利を掴め！", NamedTextColor.GRAY);
             discord.append("記録保持者なし\n");
         }
         discord.append("\n");
@@ -499,17 +489,16 @@ public class RankingDisplaySystem {
 
         // Title表示
         for (Player player : CameraMessageRouter.recipients(plugin)) {
-            player.sendTitle(
-                    ChatColor.DARK_RED + "💀 迷宮踏破ランキング 💀",
-                    ChatColor.YELLOW + "地下深く、魔境に挑んだ勇者たちです",
-                    10, 40, 10);
+            showRankingTitle(player,
+                    Component.text("💀 迷宮踏破ランキング 💀", NamedTextColor.DARK_RED),
+                    Component.text("地下深く、魔境に挑んだ勇者たちです", NamedTextColor.YELLOW));
         }
 
         // チャット表示
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.DARK_RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.DARK_RED + "💀 迷宮踏破ランキング 💀");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "  地下深く、魔境に挑んだ勇者たちです");
-        dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.DARK_RED + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        sendLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_RED);
+        sendLine("💀 迷宮踏破ランキング 💀", NamedTextColor.DARK_RED);
+        sendLine("  地下深く、魔境に挑んだ勇者たちです", NamedTextColor.YELLOW);
+        sendLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_RED);
 
         if (!ranking.isEmpty()) {
             for (int i = 0; i < Math.min(3, ranking.size()); i++) {
@@ -519,14 +508,13 @@ public class RankingDisplaySystem {
                 String medal = i == 0 ? "🥇" : i == 1 ? "🥈" : "🥉";
                 String status = Bukkit.getPlayer(entry.getKey()) != null ? "🟢" : "⚫";
 
-                dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.YELLOW + "  " + medal + " " + status + " "
-                        + ChatColor.WHITE + playerName + ChatColor.YELLOW + ": " + ChatColor.RED + "地下 " + level
-                        + " 階");
+                CameraMessageRouter.send(plugin, rankingLine(entry.getKey(), medal, status,
+                        "地下 " + level + " 階", NamedTextColor.RED));
 
-                discord.append(ChatColor.stripColor(medal + " " + playerName + ": 地下 " + level + " 階")).append("\n");
+                discord.append(medal).append(" ").append(playerName).append(": 地下 ").append(level).append(" 階\n");
             }
         } else {
-            dev.gonjy.patrolspectator.CameraMessageRouter.send(plugin, ChatColor.GRAY + "  まだ踏破記録はありません。最初の挑戦者を待っています！");
+            sendLine("  まだ踏破記録はありません。最初の挑戦者を待っています！", NamedTextColor.GRAY);
             discord.append("記録保持者なし\n");
         }
         discord.append("\n");
@@ -696,8 +684,34 @@ public class RankingDisplaySystem {
     private String getDisplayName(UUID uuid) {
         String name = statsStorage.getPlayerName(uuid);
         if (statsStorage.isHardDragonSlayer(uuid)) {
-            return name + ChatColor.GOLD + " [★]" + ChatColor.RESET;
+            return name + " [★]";
         }
         return name;
+    }
+
+    private Component getDisplayNameComponent(UUID uuid) {
+        Component name = Component.text(statsStorage.getPlayerName(uuid), NamedTextColor.WHITE);
+        if (statsStorage.isHardDragonSlayer(uuid)) {
+            return name.append(Component.text(" [★]", NamedTextColor.GOLD));
+        }
+        return name;
+    }
+
+    private Component rankingLine(UUID uuid, String medal, String status, String value, NamedTextColor valueColor) {
+        return Component.text("  " + medal + " " + status + " ", NamedTextColor.YELLOW)
+                .append(getDisplayNameComponent(uuid))
+                .append(Component.text(": ", NamedTextColor.YELLOW))
+                .append(Component.text(value, valueColor));
+    }
+
+    private void sendLine(String text, NamedTextColor color) {
+        CameraMessageRouter.send(plugin, Component.text(text, color));
+    }
+
+    private static void showRankingTitle(Player player, Component title, Component subtitle) {
+        player.showTitle(Title.title(
+                title,
+                subtitle,
+                Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(2), Duration.ofMillis(500))));
     }
 }
