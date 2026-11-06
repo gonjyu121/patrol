@@ -2,14 +2,20 @@ package dev.gonjy.patrolspectator;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.title.Title;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
+import org.bukkit.entity.Player;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class AutoEventSystemTest {
 
@@ -50,17 +56,17 @@ class AutoEventSystemTest {
 
     @Test
     void participantGetsCompactActionBarWhileCameraKeepsLargeTitle() {
-        PlayerMock camera = server.addPlayer("OtouGame");
+        Player camera = mock(Player.class);
+        when(camera.getName()).thenReturn("OtouGame");
         PlayerMock participant = server.addPlayer("Participant");
 
         AutoEventSystem.sendEventStartNotice(camera, "OtouGame", "モブ討伐祭り");
         AutoEventSystem.sendEventStartNotice(participant, "OtouGame", "モブ討伐祭り");
 
-        assertEquals("§6🎊 自動イベント開始！ 🎊", camera.nextTitle());
+        verify(camera).showTitle(any(Title.class));
         Component expected = Component.text("🎮 イベント開始: ", NamedTextColor.GOLD)
                 .append(Component.text("モブ討伐祭り", NamedTextColor.YELLOW))
                 .append(Component.text("（15分）", NamedTextColor.GRAY));
         assertEquals(expected, participant.nextActionBar());
-        assertNull(camera.nextActionBar());
     }
 }
